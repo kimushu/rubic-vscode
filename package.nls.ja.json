@@ -1,0 +1,14 @@
+{
+  "extension.description": "組み込みボード開発用 Visual Studio Code 拡張機能",
+  "rubic.command.setup.title": "Rubicで組み込みボードの開発を始める",
+  "rubic-debug.label": "Rubic",
+  "rubic-debug.snippet.launch.label": "Rubic: ダウンロードして実行",
+  "rubic-debug.snippet.launch.description": "プログラムをボードに転送し、実行を開始します。",
+  "rubic-debug.snippet.download.label": "Rubic: ダウンロード(PCからボードへ転送)",
+  "rubic-debug.snippet.download.description": "プログラムをボードに転送します。",
+  "rubic-debug.snippet.upload.label": "Rubic: アップロード(ボードからPCへ転送)",
+  "rubic-debug.snippet.upload.description": "プログラムをボードからPCへ転送します。",
+  "rubic-debug.launch.program.description": "実行するプログラムのファイル名を指定します。",
+  "rubic-debug.launch.board.description": "接続するボードの種類を指定します。この値は直接編集せず、Rubicカタログから選択することを推奨します。",
+  "dummy": "dummy"
+}

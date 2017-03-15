@@ -1,0 +1,121 @@
+{
+  "name": "rubic",
+  "displayName": "Rubic",
+  "description": "%extension.description%",
+  "version": "1.0.0",
+  "publisher": "kimushu",
+  "engines": {
+    "vscode": "^1.10.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "embedded",
+    "peridot",
+    "gr-citrus",
+    "wakayamarb",
+    "mruby"
+  ],
+  "activationEvents": [
+    "onCommand:extension.rubic.setup",
+    "workspaceContains:.rubic"
+  ],
+  "main": "./out/src/extension",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.rubic.setup",
+        "title": "%rubic.command.setup.title%"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "rubic",
+        "label": "%rubic-debug.label%",
+        "program": "./out/src/rubicDebug.js",
+        "runtime": "node",
+        "variables": {
+          "AskForProgramName": "extension.rubic.getProgramName"
+        },
+        "configurationSnippets": [
+          {
+            "label": "%rubic-debug.snippet.launch.label%",
+            "description": "%rubic-debug.snippet.launch.description%",
+            "body": {
+              "type": "rubic",
+              "request": "launch",
+              "name": "${2:Download and Launch Program}",
+              "program": "^\"\\${workspaceRoot}/${1:main.mrb}\""
+            }
+          },
+          {
+            "label": "%rubic-debug.snippet.download.label%",
+            "description": "%rubic-debug.snippet.download.description%",
+            "body": {
+              "type": "rubic",
+              "request": "launch",
+              "name": "${1:Download Program from PC to board}"
+            }
+          },
+          {
+            "label": "%rubic-debug.snippet.upload.label%",
+            "description": "%rubic-debug.snippet.upload.description%",
+            "body": {
+              "type": "rubic",
+              "request": "launch",
+              "name": "${1:Upload Program from board to PC}"
+            }
+          }
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program",
+              "board"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "%rubic-debug.launch.program.description%",
+                "default": "${workspaceRoot}/${comand:AskForProgramName}"
+              },
+              "board": {
+                "type": "string",
+                "description": "%rubic-debug.launch.board.description%",
+                "default": ""
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "node ./node_modules/vscode/bin/test",
+    "rebuild-serialport": "electron-rebuild-vsce -c 1.10.2 -w serialport"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.32",
+    "@types/node": "^6.0.40",
+    "electron-rebuild": "^1.5.7",
+    "electron-rebuild-vsce": "file:L:\\projects\\electron-rebuild-vsce",
+    "mocha": "^2.3.3",
+    "typescript": "^2.0.3",
+    "vscode": "^1.0.0"
+  },
+  "dependencies": {
+    "mruby-native": "github:kimushu/node-mruby-native",
+    "serialport": "4.0.7",
+    "vscode-debugadapter": "^1.17.0",
+    "vscode-debugprotocol": "^1.17.0",
+    "vscode-nls": "^2.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kimushu/vsce-rubic.git"
+  }
+}
