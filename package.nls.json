@@ -1,10 +1,20 @@
 {
-  "extension.description": "VSCode extension for Embedded-boards Developping",
-  "rubic-debug.label": "Rubic",
-  "rubic-debug.snippet.launch.label": "Rubic: Download and Launch Program",
-  "rubic-debug.snippet.launch.description": "Download program from PC to board and launch.",
-  "rubic-debug.snippet.download.label": "Rubic: Download Program",
-  "rubic-debug.snippet.download.description": "Download program from PC to board.",
-  "rubic-debug.snippet.upload.label": "Rubic: Upload Program",
-  "rubic-debug.snippet.upload.description": "Upload program from board to PC."
+  "extension.description": "VSCode extension for Embedded-boards Development",
+  "configuration.title": "Rubic",
+  "configuration.catalogUrl.description": "URL of board catalog repository. If not set, Rubic official repository will be used.",
+  "command.showCatalog.title": "Show Rubic board catalog",
+  "debug.rubic.label": "Rubic Debugger",
+  "debug.rubic.attribute.boardId.description": "ID of the board. Use Rubic catalog to change this value.",
+  "debug.rubic.attribute.boardPath.description": "Path of the board. Use Rubic catalog to change this value.",
+  "debug.rubic.attribute.firmwareId.description": "ID of the board firmware. Use Rubic catalog to change this value.",
+  "debug.rubic.attribute.workspaceRoot.description": "Path of the workspace",
+  "debug.rubic.launch.program.description": "Path of the program to launch on board",
+  "debug.rubic.attach.action.description": "Action to do (One of \"download\", \"upload\" and \"getinfo\")",
+  "debug.rubic.snippet.launch.label": "Rubic: Launch Program",
+  "debug.rubic.snippet.launch.description": "Write program to the board and launch",
+  "debug.rubic.snippet.launch.name": "Launch",
+  "debug.rubic.snippet.download.label": "Rubic: Write Program",
+  "debug.rubic.snippet.download.description": "Write program to the board (Do not launch)",
+  "debug.rubic.snippet.download.name": "Write",
+  "dummy": "dummy"
 }
