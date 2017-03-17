@@ -129,7 +129,8 @@ export class BoardCatalog implements TextDocumentContentProvider {
                 if (index >= 0) {
                     this._boardPath = ports[index].path;
                     this._updateStatusBar();
-                    this._testOnExtensionHost();
+                    console.warn("TODO: port change")
+                    //this._testOnExtensionHost();
                     return;
                 }
             })
