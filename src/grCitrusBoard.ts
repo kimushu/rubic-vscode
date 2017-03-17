@@ -12,7 +12,7 @@ export class GrCitrusBoard extends WakayamaRbBoard {
         {name: "Renesas GR-CITRUS", boardId: "grcitrus", vendorId: 0x2a50, productId: 0x0277}, // Akizuki
     ];
 
-    public getName(boardId: string): string {
+    static getName(boardId: string): string {
         return localize("grcitrus.name", "GR-CITRUS");
     }
 
