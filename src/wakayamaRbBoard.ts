@@ -2,7 +2,6 @@
 
 import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from './rubicBoard';
 import * as stream from 'stream';
-import * as Canarium from 'canarium';
 import { SerialPort } from 'serialport';
 import * as nls from 'vscode-nls';
 let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
