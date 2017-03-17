@@ -12,7 +12,7 @@ export interface BoardCandidate {
     /** path of the board */
     path: string;
     /** Board class */
-    boardClass: Function;
+    boardClass: BoardClass;
     /** Vendor ID */
     vendorId?: number;
     /** Product ID */
@@ -95,11 +95,6 @@ export class RubicBoard extends EventEmitter {
         return Promise.reject(Error("Not supported"));
     }
 
-    /** Get stdio streams */
-    getStdio(): Promise<BoardStdio> {
-        return Promise.reject(Error("Not supported"));
-    }
-
     /** Program firmware */
     programFirmware(): Promise<void> {
         return Promise.reject(Error("Not supported"));
@@ -107,6 +102,11 @@ export class RubicBoard extends EventEmitter {
 
     /** Run sketch */
     runSketch(path: string): Promise<void> {
+        return Promise.reject(Error("Not supported"));
+    }
+
+    /** Get stdio streams */
+    getStdio(): Promise<BoardStdio> {
         return Promise.reject(Error("Not supported"));
     }
 
