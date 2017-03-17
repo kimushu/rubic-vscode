@@ -312,7 +312,7 @@ export class WakayamaRbBoard extends RubicBoard {
         } else {
             let found = buffer.indexOf(waiter.token, waiter.offset);
             if (found < 0) {
-                //waiter.offset = buffer.byteLength - waiter.token.byteLength + 1;
+                waiter.offset = buffer.byteLength - waiter.token.byteLength + 1;
                 return;
             }
             waiter.length = found + waiter.token.byteLength;
