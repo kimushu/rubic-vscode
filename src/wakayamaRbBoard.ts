@@ -20,7 +20,7 @@ export class WakayamaRbBoard extends RubicBoard {
         offset?: number
     };
     private _received: Buffer;
-    private _DRAIN_INTERVAL_MS: 250;
+    private _DRAIN_INTERVAL_MS = 250;
 
     protected static _VID_PID_LIST = [
         {name: "WAKAYAMA.RB board", boardId: "wakayamarb", vendorId: 0x2129, productId: 0x0531}, // TOKUDEN
@@ -210,6 +210,46 @@ export class WakayamaRbBoard extends RubicBoard {
         }); // return Promise.resolve().then()...
     }
 
+    runSketch(path: string): Promise<void> {
+        return Promise.resolve(
+        ).then(() => {
+            return this._send(`R ${path}\r`);
+        }).then(() => {
+            // Skip "R xxx" line
+            return this._recv("\n")
+        }).then(() => {
+            let stdout = new stream.Readable({
+                encoding: "utf8",
+                read: (size) => {}
+            });
+            let stdoutReader = () => {
+                return this._recv("\n").then((resp: string) => {
+                    if (resp.match(/^WAKAYAMA\.RB .*H \[ENTER\]\)\r\n$/)) {
+                        stdout.push(null);
+                        this._stdio = null;
+                        this.emit("stop");
+                    } else {
+                        stdout.push(resp);
+                    }
+                }).then(() => {
+                    if (!this._stdio) { return; }
+                    return stdoutReader();
+                });
+            };
+            stdoutReader();
+            this._stdio = {stdout};
+            this.emit("start", path);
+        }); // return Promise.resolve().then()...
+    }
+
+    getStdio(): Promise<BoardStdio> {
+        return Promise.resolve(this._stdio);
+    }
+
+    isSketchRunning(): Promise<boolean> {
+        return Promise.resolve(!!this._stdio);
+    }
+
     private _flush(): Promise<void> {
         this._received = null;
         if (DEBUG) { console.log("_flush()"); }
@@ -248,13 +288,16 @@ export class WakayamaRbBoard extends RubicBoard {
                     if (DEBUG) { console.log("_recv():", waiter.token); }
                 }
                 this._waiter = waiter;
+                this._dataHandler(null);
             });
         });
     }
 
     private _dataHandler(raw: Buffer) {
         let buffer: Buffer;
-        if (!this._received) {
+        if (!raw) {
+            buffer = this._received;
+        } else if (!this._received) {
             buffer = this._received = Buffer.from(raw);
         } else {
             buffer = this._received = Buffer.concat([this._received, raw]);
@@ -262,7 +305,7 @@ export class WakayamaRbBoard extends RubicBoard {
 
         if (DEBUG) { console.log("_dataHandler():", raw); }
         let waiter = this._waiter;
-        if (!waiter) { return; }
+        if (!buffer || !waiter) { return; }
         if (typeof(waiter.length) !== "undefined") {
             if (buffer.byteLength < waiter.length) {
                 return;
