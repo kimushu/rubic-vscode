@@ -35,6 +35,7 @@ export class WakayamaRbBoard extends RubicBoard {
             //parser: SerialPort.parsers.readline("\r"),
         })
         this._port.on("data", this._dataHandler.bind(this));
+        this._port.on("error", this._errorHandler.bind(this));
     }
 
     static getIdList(): string[] {
@@ -261,6 +262,7 @@ export class WakayamaRbBoard extends RubicBoard {
 
         if (DEBUG) { console.log("_dataHandler():", raw); }
         let waiter = this._waiter;
+        if (!waiter) { return; }
         if (typeof(waiter.length) !== "undefined") {
             if (buffer.byteLength < waiter.length) {
                 return;
@@ -285,5 +287,9 @@ export class WakayamaRbBoard extends RubicBoard {
         this._received = buffer.slice(waiter.length);
         if (DEBUG) { console.log("_dataHandler:resolve():", part); }
         resolve(part)
+    }
+
+    private _errorHandler(error): void {
+        console.error(error);
     }
 }
