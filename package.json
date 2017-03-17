@@ -152,6 +152,7 @@
   "markdown": "github",
   "dependencies": {
     "canarium": "github:kimushu/canarium#develop",
+    "glob": "^7.1.1",
     "handlebars": "^4.0.6",
     "mruby-native": "github:kimushu/node-mruby-native",
     "node-ipc": "^8.10.3",

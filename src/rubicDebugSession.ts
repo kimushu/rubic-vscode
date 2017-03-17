@@ -2,33 +2,50 @@
 
 import {
     InitializedEvent,
+    OutputEvent,
+    TerminatedEvent,
     Thread
 } from 'vscode-debugadapter';
-import { debugAdapter } from './customDebugWrapper';
-const { CustomDebugSession } = debugAdapter;
+import { CustomDebugSession } from './customDebugAdapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
-import { RubicBoard } from "./rubicBoard";
-import { PeridotBoard } from "./peridotBoard";
-import { BoardCatalog } from "./boardCatalog";
+import { RubicBoard, BoardStdio } from "./rubicBoard";
+import { BoardClassList } from "./boardClassList";
+import * as path from 'path';
+import * as glob from 'glob';
+import { Writable } from "stream";
+import { readFileSync, writeFileSync } from 'fs';
+import * as nls from 'vscode-nls';
+let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
-export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
-    /** An absolute path to the program to debug */
-    program: string;
+const DEFAULT_TRANSFER_INCLUDE = ["*.mrb", "*.js"];
+const DEFAULT_TRANSFER_EXCLUDE = [];
+
+interface RubicRequestArguments {
     /** An absolute path to the workspace folder */
-    workspathRoot: string;
+    workspaceRoot: string;
     /** Board ID */
     boardId: string;
+    /** Board path */
+    boardPath: string;
     /** Firmware ID */
     firmwareId?: string;
 }
 
-export interface AttachRequestArguments extends DebugProtocol.AttachRequestArguments {
+export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments, RubicRequestArguments {
+    /** An absolute path to the program to debug */
+    program: string;
+}
+
+export interface AttachRequestArguments extends DebugProtocol.AttachRequestArguments, RubicRequestArguments {
 }
 
 class RubicDebugSession extends CustomDebugSession {
     private static THREAD_ID: number = 1;
     private static THREAD_NAME: string = "Main thread";
     private _board: RubicBoard;
+    protected workspaceRoot: string;
+    protected config: any;
+    private _stdin: Writable;
 
     public constructor() {
         super();
@@ -38,25 +55,206 @@ class RubicDebugSession extends CustomDebugSession {
 
     protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
         this.sendEvent(new InitializedEvent());
+        this.sendResponse(response);
     }
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
+        Promise.resolve(
+        ).then(() => {
+            return this.loadConfiguration(args);
+        }).then(() => {
+            return this.connectBoard(args);
+        }).then(() => {
+            return this.transferFiles();
+        }).then(() => {
+            return this.startProgram(args);
+        }).then(() => {
+            this.sendResponse(response);
+        }).catch((error) => {
+            this.sendErrorResponse(response, <DebugProtocol.Message>{
+                id: 1001,
+                format: (error || "unknown error").toString()
+            });
+        });
     }
 
     protected attachRequest(response: DebugProtocol.AttachResponse, args: AttachRequestArguments): void {
+        // TODO
     }
 
     protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
-        response.body.threads = [new Thread(RubicDebugSession.THREAD_ID, RubicDebugSession.THREAD_NAME)];
+        response.body = {
+            threads: [
+                new Thread(RubicDebugSession.THREAD_ID, RubicDebugSession.THREAD_NAME)
+            ]
+        };
         this.sendResponse(response);
     }
 
-    protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
-        // シリアル送信(stdinへ突っ込む)
+	protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
         response.body = {
-            result: "", variablesReference: 0
-        }
+            stackFrames: [],
+            totalFrames: 0
+        };
         this.sendResponse(response);
+    }
+
+	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
+        response.body = {
+            scopes: []
+        };
+        this.sendResponse(response);
+    }
+
+	protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
+        response.body = {
+            variables: []
+        };
+        this.sendResponse(response);
+    }
+
+    protected loadConfiguration(args: RubicRequestArguments): Promise<void> {
+        this.workspaceRoot = args.workspaceRoot;
+
+        return Promise.resolve(
+        ).then(() => {
+            // Read rubic configuration
+            let jsonname = path.join(this.workspaceRoot, ".vscode", "rubic.json");
+            let content = readFileSync(jsonname, "utf8");
+
+            // Parse JSON
+            this.config = JSON.parse(content);
+        }); // Promise.resolve().then()
+    }
+
+    protected connectBoard(args: RubicRequestArguments): Promise<void> {
+        return Promise.resolve(
+        ).then(() => {
+            let boardId = args.boardId || (this.config && this.config.boardId);
+            let boardPath = args.boardPath || (this.config && this.config.boardPath);
+
+            // Get board class constructor
+            let boardClass = BoardClassList.getClassFromBoardId(boardId);
+            if (!boardClass) {
+                return;
+            }
+
+            // Disconnect board (if old instance exists)
+            this._board && this._board.dispose();
+
+            // Instantiate new board
+            this._board = new boardClass(boardId, boardPath);
+
+            // Register event handlers
+            this._board.on("stop", this._handleBoardStop.bind(this));
+
+            // Connect
+            return this._board.connect();
+        }); // Promise.resolve().then()
+    }
+
+    protected transferFiles(config: any = this.config || {}): Promise<number> {
+        return Promise.resolve(
+        ).then(() => {
+            let includeGlob: string[] = config["transfer.include"] || DEFAULT_TRANSFER_INCLUDE;
+            let excludeGlob: string[] = config["transfer.exclude"] || DEFAULT_TRANSFER_EXCLUDE;
+
+            let files: string[] = [];
+
+            // Add files which match 'include' glob pattern
+            includeGlob.forEach((pattern) => {
+                let toBeIncluded: string[] = glob.sync(pattern, {cwd: this.workspaceRoot});
+                files.push(...toBeIncluded);
+            });
+
+            // Then, remove files which match 'exclude' glob pattern
+            excludeGlob.forEach((pattern) => {
+                let toBeExcluded: string[] = glob.sync(pattern, {cwd: this.workspaceRoot});
+                files = files.filter((file) => {
+                    return (toBeExcluded.indexOf(file) == -1);
+                });
+            });
+
+            // Now, 'files' are array of file names (relative path from workspaceRoot)
+
+            if (files.length == 0) {
+                this.sendEvent(new OutputEvent(
+                    localize("no-file-to-transfer", "No file to transfer")
+                ));
+                return 0;
+            }
+
+            this.sendEvent(
+                new OutputEvent(
+                    (files.length == 1) ?
+                        localize("start-transfer-1", "Start transfer {0} file", 1)
+                    :   localize("start-transfer-n", "Start transfer {0} files", files.length)
+            ));
+
+            let skipped = 0;
+
+            // Start file transfer
+            return files.reduce(
+                (promise, file) => {
+                    let newContent: Buffer;
+                    return promise.then(() => {
+                        this.sendEvent(new OutputEvent(
+                            localize("writing-file-x", "Writing file: {0}", file)
+                        ));
+
+                        // Read new file content
+                        newContent = readFileSync(path.join(this.workspaceRoot, file));
+
+                        // Start read back from board
+                        return this._board.readFile(file).catch(() => {
+                            // Ignore all errors during read back
+                            return Promise.resolve(<Buffer>null);
+                        });
+                    }).then((oldContent?: Buffer) => {
+                        if (oldContent && oldContent.equals(newContent)) {
+                            ++skipped;
+                            return; // File is already identical (Skip writing)
+                        }
+                        // Start write new content to board
+                        return this._board.writeFile(file, newContent);
+                    });
+                }, Promise.resolve()
+            ).then(() => {
+                let msg = localize("transfer-complete", "Transfer complete");
+                if (skipped == 1) {
+                    msg += " (" + localize("skipped-file-1", "Skipped {0} unchanged file", 1) + ")";
+                } else if (skipped > 1) {
+                    msg += " (" + localize("skipped-file-n", "Skipped {0} unchanged files", skipped) + ")";
+                }
+                this.sendEvent(new OutputEvent(msg));
+                return files.length;
+            }); // return files.reduce().then()
+        }); // Promise.resolve().then()
+    }
+
+    protected startProgram(args: LaunchRequestArguments): Promise<void> {
+        let file = path.relative(this.workspaceRoot, args.program);
+        this.sendEvent(new OutputEvent(
+            localize("run-program-x", "Run program: {0}", file)
+        ));
+        return this._board.runSketch(file).then(() => {
+            return this._board.getStdio();
+        }).then(({stdin, stderr, stdout}) => {
+            this._stdin = stdin;
+            stdout && stdout.on("data", this._handleOutputData.bind(this, "stdout"));
+            stderr && stderr.on("data", this._handleOutputData.bind(this, "stderr"));
+        });
+    }
+
+    private _handleOutputData(category: "stdout"|"stderr", chunk: Buffer): void {
+        this.sendEvent(new OutputEvent(chunk.toString(), category));
+    }
+
+    private _handleBoardStop(): void {
+        this.sendEvent(new OutputEvent(
+            localize("program-ended", "Program ended")
+        ));
+        this.sendEvent(new TerminatedEvent());
     }
 }
 
