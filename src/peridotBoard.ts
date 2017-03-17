@@ -16,7 +16,20 @@ const J7ID_TO_RUBICID: any = {
     "J72A": "peridot_classic",
 };
 
+function buf2ab(buf: Buffer): ArrayBuffer {
+    return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+}
+
+function finallyPromise(f): [Function, Function] {
+    let action = () => Promise.resolve(f()).catch(() => null);
+    return [
+        (result) => action().then(() => result),
+        (reason) => action().then(() => Promise.reject(reason))
+    ];
+}
+
 export class PeridotBoard extends RubicBoard {
+    private _storageRoot: string = "/mnt/internal";
     private _canarium: Canarium;
     private _stdio: BoardStdio;
 
@@ -60,7 +73,7 @@ export class PeridotBoard extends RubicBoard {
     }
 
     dispose(): void {
-        this._canarium.close();
+        this._canarium.close().catch(() => null);
     }
 
     getInfo(): Promise<BoardInformation> {
@@ -71,6 +84,46 @@ export class PeridotBoard extends RubicBoard {
                 path: this._path,
                 serialNumber: info.serialcode,
             };
+        });
+    }
+
+    writeFile(path: string, data: Buffer): Promise<void> {
+        return Promise.resolve(
+        ).then(() => {
+            return this._canarium.openRemoteFile(
+                this._storageRoot + "/" + path,
+                {O_WRONLY: true}
+            );
+        }).then((fd) => {
+            return fd.write(buf2ab(data), true).then(...finallyPromise(() => {
+                return fd.close();
+            }));
+        });
+    }
+
+    runSketch(path: string): Promise<void> {
+        return Promise.resolve(
+        ).then(() => {
+            return this._canarium.openRemoteFile(
+                "/sys/rubic/run",
+                {O_WRONLY: true}
+            );
+        }).then((fd) => {
+            return fd.write(buf2ab(Buffer.from(path)), true).then(...finallyPromise(() => {
+                return fd.close();
+            }));
+        });
+    }
+
+    stopSketch(): Promise<void> {
+        return Promise.resolve(
+        ).then(() => {
+            return this._canarium.openRemoteFile(
+                "/sys/rubic/stop",
+                {O_WRONLY: true}
+            );
+        }).then((fd) => {
+            return fd.close();
         });
     }
 
@@ -123,9 +176,7 @@ class CanariumWritableStream extends stream.Writable {
     }
 
     protected _write(chunk: Buffer, encoding: string, callback: Function) {
-        let ab: ArrayBuffer;
-        ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
-        this._file.write(ab, true).then(
+        this._file.write(buf2ab(chunk), true).then(
             () => { callback(); },
             (error) => { callback(error); }
         );
