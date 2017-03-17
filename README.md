@@ -1,16 +1,25 @@
-# rubic README
+# Rubic
 
-This is the README for your extension "rubic". After writing up a brief description, we recommend including the following sections.
+Provides embedded-board development support for following boards:
+* [PERIDOT board](http://osafune.github.io/peridot.html)
+* [GR-CITRUS](http://gadget.renesas.com/en/product/citrus.html)
+* [Wakayama.rb board](https://github.com/wakayamarb/wrbb-v2lib-firm)
+
+Supported programming language:
+* Ruby (mruby engine)
+* JavaScript (Duktape engine)
+
+## Quick Start
+
+This extension is *alpha* version. Currently, there is setup command and you are required to
+make ".vscode/rubic.json" and ".vscode/launch.json" files manually to start Rubic extension. Sorry.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+* Compiling Ruby source (\*.rb) into mruby binary (\*.mrb)
+* Communicate with boards via VCP (Serial port)
+* Reading and writing files on internal storage of the board
+* Launching program on the board
 
 ## Requirements
 
@@ -18,48 +27,21 @@ If you have any requirements or dependencies, add a section describing those and
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+Currently, no extension settings are implemented.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+## Feedback
+
+* File a bug in [GitHub issues](https://github.com/kimushu/vsce-rubic/issues)
+* [Tweet me](https://twitter.com/kimu_shu) with other feedback
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.99.1
 
-### 1.0.0
+Initial release (alpha version) for [NT Kyoto 2017](http://j.nicotech.jp/ntkyoto2017)
 
-Initial release of ...
+## License
 
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on OSX or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on OSX or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (OSX) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+MIT
