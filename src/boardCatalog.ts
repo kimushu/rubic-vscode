@@ -7,11 +7,8 @@ import {
     Disposable, TextDocumentContentProvider, QuickPickItem,
     commands, window, workspace
 } from 'vscode';
-import { PeridotBoard } from "./peridotBoard";
-import { WakayamaRbBoard } from "./wakayamaRbBoard";
-import { GrCitrusBoard } from "./grCitrusBoard";
 import { RubicBoard, BoardClass } from "./rubicBoard";
-import { FileWatcher } from "./fileWatcher";
+import { BoardClassList } from "./boardClassList";
 import * as path from 'path';
 import * as util from 'util';
 import * as Handlebars from 'handlebars';
@@ -24,13 +21,6 @@ const CMD_SHOW_CATALOG = "extension.rubic.showCatalog";
 const CMD_SELECT_PORT  = "extension.rubic.selectPort";
 
 export class BoardCatalog implements TextDocumentContentProvider {
-    public BOARD_CLASSES: any[] = [
-        PeridotBoard,
-        GrCitrusBoard,
-        WakayamaRbBoard,
-    ];
-    private _idMap: any;
-
     private _sbiBoard: StatusBarItem;
     private _sbiPort: StatusBarItem;
     private _boardId: string;
@@ -58,8 +48,6 @@ export class BoardCatalog implements TextDocumentContentProvider {
             BoardCatalog._instance.dispose();
         }
         BoardCatalog._instance = this;
-
-        this._updateIdMap();
 
         let subscriptions: Disposable[] = [];
 
@@ -180,7 +168,7 @@ export class BoardCatalog implements TextDocumentContentProvider {
             return;
         }
 
-        let boardClass: BoardClass = this._idMap[cfg.boardId];
+        let boardClass: BoardClass = BoardClassList.getClassFromBoardId(cfg.boardId);
         if (!boardClass) {
             window.showErrorMessage(localize(
                 "unknown-board-id",
@@ -229,18 +217,6 @@ export class BoardCatalog implements TextDocumentContentProvider {
         });
     }
 
-    private _updateIdMap(): void {
-        if (!this._idMap) {
-            this._idMap = {};
-            this.BOARD_CLASSES.forEach((_class: BoardClass) => {
-                let idList: string[] = _class.getIdList();
-                idList.forEach((boardId) => {
-                    this._idMap[boardId] = _class;
-                })
-            })
-        }
-    }
-
     private _testOnExtensionHost(): void {
         let board = new this._boardClass(this._boardId, this._boardPath);
         let wfile = "test.bin";
@@ -248,7 +224,7 @@ export class BoardCatalog implements TextDocumentContentProvider {
         Promise.resolve(
         ).then(() => {
             return board.connect();
-        }).then(() => {
+        }).then(() => {/*
             return board.getInfo();
         }).then((info) => {
             window.showInformationMessage(util.format(info));
@@ -263,7 +239,10 @@ export class BoardCatalog implements TextDocumentContentProvider {
                 return window.showInformationMessage(`verify OK! ${buf.length} bytes`);
             } else {
                 return window.showErrorMessage(`verify NG! ${buf.length} bytes`);    
-            }
+            }*/
+            return board.runSketch("main.mrb");
+        }).then(() => {
+            return window.showInformationMessage("running...");
         }).then(() => {
             return board.disconnect();
         }).then(() => {
