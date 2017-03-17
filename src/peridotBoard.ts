@@ -1,34 +1,38 @@
 'use strict';
 
-import { RubicBoard, BoardCandidate, BoardStdio } from './rubicBoard';
+import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from './rubicBoard';
 import * as stream from 'stream';
 import { Canarium } from 'canarium';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
+const LOCALIZED_NAMES: any = {
+    "peridot_classic": localize("classic.name", "PERIDOT Classic"),
+    "peridot_newgen": localize("newgen.name", "PERIDOT NewGen")
+};
+
+const J7ID_TO_RUBICID: any = {
+    "J72A": "peridot_classic",
+};
+
 export class PeridotBoard extends RubicBoard {
     private _canarium: Canarium;
     private _stdio: BoardStdio;
 
-    private static _localizedNames: any = {
-        "peridot_classic": localize("classic.name", "PERIDOT Classic"),
-        "peridot_newgen": localize("newgen.name", "PERIDOT NewGen")
-    };
-
     public constructor(private _boardId: string, private _path: string) {
         super();
         this._canarium = new Canarium();
+        this._canarium.onClosed = this.onClosed.bind(this);
         this._stdio = null;
-        this._canarium.onClosed(this.onClosed.bind(this))
     }
 
     static getIdList(): string[] {
-        return Object.keys(this._localizedNames)
+        return Object.keys(LOCALIZED_NAMES)
     }
 
     static getName(boardId: string): string {
-        return this._localizedNames[boardId];
+        return LOCALIZED_NAMES[boardId];
     }
 
     static list(): Promise<BoardCandidate[]> {
@@ -53,6 +57,21 @@ export class PeridotBoard extends RubicBoard {
 
     disconnect(): Promise<void> {
         return this._canarium.close();
+    }
+
+    dispose(): void {
+        this._canarium.close();
+    }
+
+    getInfo(): Promise<BoardInformation> {
+        return this._canarium.getinfo().then((info: {id: string, serialcode: string}) => {
+            return {
+                boardId: J7ID_TO_RUBICID[info.id] || "peridot",
+                firmwareId: null,
+                path: this._path,
+                serialNumber: info.serialcode,
+            };
+        });
     }
 
     getStdio(options?: {stdin?: string, stdout?: string, stderr?:string}): Promise<BoardStdio> {
