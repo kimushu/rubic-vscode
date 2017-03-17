@@ -46,6 +46,8 @@ export interface BoardClass {
     getName: (boardId: string) => string;
     /** Enumerate boards */
     list: () => Promise<BoardCandidate[]>;
+    /** Constructor */
+    new (boardId: string, path: string): RubicBoard;
 }
 
 export class RubicBoard extends EventEmitter {
@@ -89,7 +91,7 @@ export class RubicBoard extends EventEmitter {
     }
 
     /** Enumerate files */
-    enumerateFiles(dir: string): Promise<Array<string>> {
+    enumerateFiles(dir: string): Promise<string[]> {
         return Promise.reject(Error("Not supported"));
     }
 
@@ -124,6 +126,6 @@ export class RubicBoard extends EventEmitter {
     }
 
     /** Dispose this instance */
-    protected dispose() {
+    public dispose() {
     }
 }
