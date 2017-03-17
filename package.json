@@ -177,7 +177,8 @@
     "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "node ./node_modules/vscode/bin/test",
     "localize": "vscl out/src/*.js",
-    "rebuild-serialport": "electron-rebuild-vsce -c 1.10.2 -w serialport"
+    "rebuild-serialport": "electron-rebuild-vsce -c 1.10.2 -w serialport",
+    "clean": "rimraf out/src/*.js out/src/*.js.map out/src/*.nls.json"
   },
   "icon": "images/rubic_cube2x2.svg",
   "repository": {
