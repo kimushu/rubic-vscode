@@ -46,5 +46,6 @@ export class DebugHelper {
 
     private _guessProgramName(): any {
         console.warn("TODO");
+        return "main.mrb";
     }
 }
