@@ -7,6 +7,8 @@ import { SerialPort } from 'serialport';
 import * as nls from 'vscode-nls';
 let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
+const DEBUG = false;
+
 export class WakayamaRbBoard extends RubicBoard {
     private _port: SerialPort;
     private _info: BoardInformation;
@@ -89,6 +91,10 @@ export class WakayamaRbBoard extends RubicBoard {
         return this._portCall("close")
     }
 
+    dispose(): void {
+        this._port && this._port.close();
+    }
+
     getInfo(): Promise<BoardInformation> {
         if (this._info) {
             return Promise.resolve(this._info);
@@ -97,12 +103,12 @@ export class WakayamaRbBoard extends RubicBoard {
         ).then(() => {
             return this._flush();
         }).then(() => {
-            return this._send("H\n");
+            return this._send("H\r");
         }).then(() => {
-            return this._recv("(H [ENTER])\r>");
+            return this._recv("H [ENTER])\r\n>");
         }).then((resp: string) => {
             let firmwareId: string = null;
-            resp.split("\r").forEach((line) => {
+            resp.split("\r\n").forEach((line) => {
                 let match = line.match(/^WAKAYAMA\.RB Board Ver\.([^,]+),/);
                 if (match) { firmwareId = match[1]; }
             });
@@ -117,16 +123,101 @@ export class WakayamaRbBoard extends RubicBoard {
                 firmwareId: firmwareId,
             };
             return this._info;
-        });
+        }); // return Promise.resolve().then()...
+    }
+
+    writeFile(path: string, data: Buffer): Promise<void> {
+        let ascii: Buffer = Buffer.allocUnsafe(data.byteLength * 2);
+        let hex: number[] = [0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x41,0x42,0x43,0x44,0x45,0x46];
+        for (let byteOffset = 0; byteOffset < data.byteLength; ++byteOffset) {
+            let v = data[byteOffset];
+            ascii[byteOffset*2+0] = hex[v >>> 4];
+            ascii[byteOffset*2+1] = hex[v & 15];
+        }
+        return Promise.resolve(
+        ).then(() => {
+            return this._send(`U ${path} ${ascii.byteLength}\r`);
+        }).then(() => {
+            return this._recv(" 60");
+        }).then(() => {
+            return this._send(ascii);
+        }).then(() => {
+            return this._recv("Saving");
+        }).then(() => {
+            return this._recv("\r\n>");
+        }).then(() => {
+            return;
+        }); // return Promise.resolve().then()...
+    }
+
+    readFile(path: string): Promise<Buffer> {
+        let len: number = NaN;
+        return Promise.resolve(
+        ).then(() => {
+            return this._send(`F ${path}\r`);
+        }).then(() => {
+            return this._recv(" 60");
+        }).then(() => {
+            return this._send("\r");
+        }).then(() => {
+            return this._recv(" 60");
+        }).then((resp: string) => {
+            let lines = resp.split("\r\n");
+            let waiting = lines.findIndex((line) => line.startsWith("Waiting"));
+            len = parseInt(lines[waiting - 1]);
+            return this._send("\r");
+        }).then(() => {
+            return this._recv("\r\n>");
+        }).then((resp: string) => {
+            let lines = resp.split("\r\n");
+            let footer = lines.findIndex((line) => line.startsWith("WAKAYAMA"));
+            let ascii = lines[footer - 1];
+            ascii = ascii && ascii.substr(-(len * 2));
+            if (!isNaN(len) && ascii && ascii.length == (len * 2)) {
+                let buf = Buffer.allocUnsafe(len);
+                for (let byteOffset = 0; byteOffset < len; ++byteOffset) {
+                    let byte = parseInt(ascii.substr(byteOffset * 2, 2), 16);
+                    if (isNaN(byte)) { buf = null; break; }
+                    buf[byteOffset] = byte;
+                }
+                if (buf) { return buf; }
+            }
+            return Promise.reject(
+                Error(localize("read-error", "Failed to read file"))
+            );
+        }); // return Promise.resolve().then()...
+    }
+
+    enumerateFiles(dir: string): Promise<string[]> {
+        return Promise.resolve(
+        ).then(() => {
+            return this._send("L\r");
+        }).then(() => {
+            return this._recv("\r\n>");
+        }).then((resp: string) => {
+            let files: string[] = [];
+            if (dir !== "" && !dir.endsWith('/')) {
+                dir = dir + "/";
+            }
+            resp.split("\r\n").forEach((line) => {
+                let m = line.match(/^ (.+) (\d+) byte$/);
+                if (m && m[1].startsWith(dir)) {
+                    files.push(m[1].substring(dir.length));
+                }
+            })
+            return files;
+        }); // return Promise.resolve().then()...
     }
 
     private _flush(): Promise<void> {
         this._received = null;
+        if (DEBUG) { console.log("_flush()"); }
         return this._portCall("flush");
     }
 
     private _send(data: string|Buffer): Promise<void> {
         let buf = Buffer.from(<any>data);
+        if (DEBUG) { console.log("_send():", buf); }
         return this._portCall("write", buf);
     }
 
@@ -146,12 +237,14 @@ export class WakayamaRbBoard extends RubicBoard {
                 );
                 if (typeof(trig) == "number") {
                     waiter.length = trig;
+                    if (DEBUG) { console.log("_recv():", trig); }
                 } else {
                     if (typeof(trig) == "string") {
                         waiter.string = true;
                     }
                     waiter.token = Buffer.from(<any>trig);
                     waiter.offset = 0;
+                    if (DEBUG) { console.log("_recv():", waiter.token); }
                 }
                 this._waiter = waiter;
             });
@@ -166,6 +259,7 @@ export class WakayamaRbBoard extends RubicBoard {
             buffer = this._received = Buffer.concat([this._received, raw]);
         }
 
+        if (DEBUG) { console.log("_dataHandler():", raw); }
         let waiter = this._waiter;
         if (typeof(waiter.length) !== "undefined") {
             if (buffer.byteLength < waiter.length) {
@@ -174,7 +268,7 @@ export class WakayamaRbBoard extends RubicBoard {
         } else {
             let found = buffer.indexOf(waiter.token, waiter.offset);
             if (found < 0) {
-                waiter.offset = buffer.byteLength - waiter.token.byteLength + 1;
+                //waiter.offset = buffer.byteLength - waiter.token.byteLength + 1;
                 return;
             }
             waiter.length = found + waiter.token.byteLength;
@@ -189,6 +283,7 @@ export class WakayamaRbBoard extends RubicBoard {
             part = part.toString();
         }
         this._received = buffer.slice(waiter.length);
+        if (DEBUG) { console.log("_dataHandler:resolve():", part); }
         resolve(part)
     }
 }
