@@ -3,3 +3,4 @@ out/**/*.map
 out/**/*.nls.json
 tmp
 node_modules
+*.vsix
