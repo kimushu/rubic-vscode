@@ -19,8 +19,7 @@
     "wakayamarb",
     "mruby"
   ],
-  "galleryBanner": {
-  },
+  "galleryBanner": {},
   "preview": true,
   "main": "./out/src/extension",
   "contributes": {
@@ -28,7 +27,10 @@
       "title": "%configuration.title%",
       "properties": {
         "rubic.catalogUrl": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "default": null,
           "description": "%configuration.catalogUrl.description%"
         }
@@ -47,7 +49,8 @@
           ".rb"
         ],
         "aliases": [
-          "Ruby", "mruby"
+          "Ruby",
+          "mruby"
         ]
       },
       {
@@ -68,20 +71,11 @@
         "runtime": "node",
         "configurationAttributes": {
           "launch": {
-            "required": ["boardId", "boardPath", "workspaceRoot", "program"],
+            "required": [
+              "workspaceRoot",
+              "program"
+            ],
             "properties": {
-              "boardId": {
-                "type": "string",
-                "description": "%debug.rubic.attribute.boardId.description%"
-              },
-              "boardPath": {
-                "type": "string",
-                "description": "%debug.rubic.attribute.boardPath.description%"
-              },
-              "firmwareId": {
-                "type": "string",
-                "description": "%debug.rubic.attribute.firmwareId.description%"
-              },
               "workspaceRoot": {
                 "type": "string",
                 "description": "%debug.rubic.attribute.workspaceRoot.description%"
@@ -93,20 +87,11 @@
             }
           },
           "attach": {
-            "required": ["boardId", "boardPath", "workspaceRoot", "action"],
+            "required": [
+              "workspaceRoot",
+              "action"
+            ],
             "properties": {
-              "boardId": {
-                "type": "string",
-                "description": "%debug.rubic.attribute.boardId.description%"
-              },
-              "boardPath": {
-                "type": "string",
-                "description": "%debug.rubic.attribute.boardPath.description%"
-              },
-              "firmwareId": {
-                "type": "string",
-                "description": "%debug.rubic.attribute.firmwareId.description%"
-              },
               "workspaceRoot": {
                 "type": "string",
                 "description": "%debug.rubic.attribute.workspaceRoot.description%"
@@ -127,8 +112,6 @@
               "type": "rubic",
               "request": "launch",
               "name": "%debug.rubic.snippet.launch.name%",
-              "boardId": "TODO",
-              "boardPath": "auto",
               "workspaceRoot": "^\"\\${workspaceRoot}\"",
               "program": "^\"\\${workspaceRoot}/\\${command:GuessProgramName}\""
             }
@@ -140,8 +123,6 @@
               "type": "rubic",
               "request": "attach",
               "name": "%debug.rubic.snippet.download.name%",
-              "boardId": "TODO",
-              "boardPath": "auto",
               "workspaceRoot": "^\"\\${workspaceRoot}\"",
               "action": "download"
             }
@@ -154,23 +135,24 @@
     ],
     "jsonValidation": [
       {
-        "fileMatch": ".rubic",
-        "url": "dotRubicSchema.json"
+        "fileMatch": "rubic.json",
+        "url": "./dotRubicSchema.json"
       }
     ]
   },
   "activationEvents": [
     "onCommand:extension.rubic.showCatalog",
+    "onCommand:extension.rubic.selectPort",
     "onCommand:extension.rubic.provideInitialConfigurations",
     "onCommand:extension.rubic.guessProgramName",
     "onDebug:rubic",
     "workspaceContains:.vscode/rubic.json"
   ],
-  "badges": [
-  ],
+  "badges": [],
   "markdown": "github",
   "dependencies": {
     "canarium": "github:kimushu/canarium#develop",
+    "handlebars": "^4.0.6",
     "mruby-native": "github:kimushu/node-mruby-native",
     "node-ipc": "^8.10.3",
     "serialport": "github:kimushu/node-serialport#4.0.7-electron-1.4.6",
@@ -188,13 +170,13 @@
     "vscode": "^1.0.0",
     "vscode-nls-dev": "^2.0.1"
   },
-  "extensionDependencies": [
-  ],
+  "extensionDependencies": [],
   "scripts": {
-    "vscode:prepublish": "tsc -p ./",
+    "vscode:prepublish": "tsc -p ./ && npm run localize",
     "compile": "rimraf node_modules/serialport/build && tsc -watch -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "node ./node_modules/vscode/bin/test",
+    "localize": "vscl out/src/*.js",
     "rebuild-serialport": "electron-rebuild-vsce -c 1.10.2 -w serialport"
   },
   "icon": "images/rubic_cube2x2.svg",

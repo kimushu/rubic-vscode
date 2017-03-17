@@ -1,2 +1,4 @@
-out
+out/**/*.js
+out/**/*.map
+out/**/*.nls.json
 node_modules

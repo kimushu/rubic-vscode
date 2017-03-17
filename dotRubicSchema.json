@@ -1,4 +1,22 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema",
-  "title": "JSON schema for .rubic file"
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "JSON schema for .vscode/rubic.json file",
+  "type": "object",
+  "required": [
+    "boardId"
+  ],
+  "properties": {
+    "boardId": {
+      "description": "An identifier of board",
+      "type": "string"
+    },
+    "boardPath": {
+      "description": "A path of board (When VCP: \"COMxx\" for Windows, \"/dev/xx\" for Linux and Mac)",
+      "type": "string"
+    },
+    "firmwareId": {
+      "description": "An identifier of board firmware",
+      "type": "string"
+    }
+  }
 }

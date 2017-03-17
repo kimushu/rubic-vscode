@@ -1,0 +1,10 @@
+{
+    "messages": [
+        "PERIDOT Classic",
+        "PERIDOT NewGen"
+    ],
+    "keys": [
+        "classic.name",
+        "newgen.name"
+    ]
+}

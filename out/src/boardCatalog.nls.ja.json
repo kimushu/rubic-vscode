@@ -1,0 +1,26 @@
+{
+    "messages": [
+        "ここをクリックすると、Rubicボードカタログを表示します",
+        "ここをクリックすると、接続先ポートを選択できます",
+        "Rubicボードカタログ",
+        "ボードが接続されていません",
+        "Rubic設定ファイル ({0})",
+        "正しいJSONフォーマットではありません。",
+        "文字列の値を持つ'boardId'キーが必要です。",
+        "対応していないボードID '{0}'",
+        "ボード未選択",
+        "接続先未選択"
+    ],
+    "keys": [
+        "click-to-show-catalog",
+        "click-to-select-port",
+        "catalog-title",
+        "board-not-connected",
+        "rubic-cfg-file",
+        "invalid-rubic-cfg",
+        "invalid-board-id",
+        "unknown-board-id",
+        "no-board",
+        "no-port"
+    ]
+}
