@@ -19,7 +19,7 @@
       "type": "string"
     },
     "transfer.include": {
-      "description": "Files to be transfered to board. Wildcards can be used.",
+      "description": "Files to be transfered to board. Accepts filename and glob patterns.",
       "type": "array",
       "items": {
         "type": "string"
@@ -27,7 +27,7 @@
       "uniqueItems": true
     },
     "transfer.exclude": {
-      "description": "Files not to be transfered to board. Wildcards can be used. This is prior to 'include' field.",
+      "description": "Files not to be transfered to board. Accepts filename and glob patterns. This is prior to 'include' field.",
       "type": "array",
       "items": {
         "type": "string"
