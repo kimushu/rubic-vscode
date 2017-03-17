@@ -1,4 +1,5 @@
 out/**/*.js
 out/**/*.map
 out/**/*.nls.json
+tmp
 node_modules

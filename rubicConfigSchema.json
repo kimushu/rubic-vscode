@@ -17,6 +17,22 @@
     "firmwareId": {
       "description": "An identifier of board firmware",
       "type": "string"
+    },
+    "transfer.include": {
+      "description": "Files to be transfered to board. Wildcards can be used.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "transfer.exclude": {
+      "description": "Files not to be transfered to board. Wildcards can be used. This is prior to 'include' field.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
     }
   }
 }

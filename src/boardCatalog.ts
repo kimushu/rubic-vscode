@@ -24,7 +24,7 @@ const CMD_SHOW_CATALOG = "extension.rubic.showCatalog";
 const CMD_SELECT_PORT  = "extension.rubic.selectPort";
 
 export class BoardCatalog implements TextDocumentContentProvider {
-    public BOARD_CLASSES: BoardClass[] = [
+    public BOARD_CLASSES: any[] = [
         PeridotBoard,
         GrCitrusBoard,
         WakayamaRbBoard,
@@ -141,6 +141,7 @@ export class BoardCatalog implements TextDocumentContentProvider {
                 if (index >= 0) {
                     this._boardPath = ports[index].path;
                     this._updateStatusBar();
+                    this._testOnExtensionHost();
                     return;
                 }
             })
@@ -161,10 +162,11 @@ export class BoardCatalog implements TextDocumentContentProvider {
         } catch (error) {
             if (this._errorPopupBarrier === "invalid-rubic-cfg") { return; }
             this._errorPopupBarrier = "invalid-rubic-cfg";
+            window.showErrorMessage(error.toString()).then(() => {
             window.showErrorMessage(localize(
                 "invalid-rubic-cfg",
                 "Incorrect JSON format",
-            ) + suffix).then(() => { this._errorPopupBarrier = null; });
+            ) + suffix).then(() => { this._errorPopupBarrier = null; });});
             return;
         }
 
@@ -237,5 +239,39 @@ export class BoardCatalog implements TextDocumentContentProvider {
                 })
             })
         }
+    }
+
+    private _testOnExtensionHost(): void {
+        let board = new this._boardClass(this._boardId, this._boardPath);
+        let wfile = "test.bin";
+        let written: Buffer;
+        Promise.resolve(
+        ).then(() => {
+            return board.connect();
+        }).then(() => {
+            return board.getInfo();
+        }).then((info) => {
+            window.showInformationMessage(util.format(info));
+        }).then(() => {
+            written = Buffer.alloc(123);
+            for (let i = 0; i < written.byteLength; ++i) { written[i] = i & 255; }
+            return board.writeFile(wfile, written);
+        }).then(() => {
+            return board.readFile(wfile);
+        }).then((buf) => {
+            if (buf.equals(written)) {
+                return window.showInformationMessage(`verify OK! ${buf.length} bytes`);
+            } else {
+                return window.showErrorMessage(`verify NG! ${buf.length} bytes`);    
+            }
+        }).then(() => {
+            return board.disconnect();
+        }).then(() => {
+            window.showInformationMessage("test done");
+            board.dispose();
+        }).catch((err) => {
+            window.showErrorMessage(err.toString());
+            board.dispose();
+        })
     }
 }
