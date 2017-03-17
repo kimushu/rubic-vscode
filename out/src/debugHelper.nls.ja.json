@@ -1,0 +1,10 @@
+{
+    "messages": [
+        "mrubyコンパイラ",
+        "mrubyのコンパイルに失敗しました"
+    ],
+    "keys": [
+        "mruby-compiler",
+        "mruby-compile-failed"
+    ]
+}

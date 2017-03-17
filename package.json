@@ -69,6 +69,7 @@
         "label": "%debug.rubic.label%",
         "program": "./out/src/rubicDebugSession.js",
         "runtime": "node",
+        "startSessionCommand": "extension.rubic.startDebugSession",
         "configurationAttributes": {
           "launch": {
             "required": [
@@ -143,6 +144,7 @@
   "activationEvents": [
     "onCommand:extension.rubic.showCatalog",
     "onCommand:extension.rubic.selectPort",
+    "onCommand:extension.rubic.startDebugSession",
     "onCommand:extension.rubic.provideInitialConfigurations",
     "onCommand:extension.rubic.guessProgramName",
     "onDebug:rubic",

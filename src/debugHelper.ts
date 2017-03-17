@@ -1,7 +1,15 @@
 'use strict';
 
-import { Disposable, commands, window } from 'vscode';
+import { Disposable, commands, OutputChannel, window, workspace } from 'vscode';
+import { RubicConfig } from "./rubicConfig";
+import * as glob from 'glob';
+import * as path from 'path';
+import * as mrbc from 'mruby-native';
 
+import * as nls from 'vscode-nls';
+let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+
+const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
 const CMD_PROVIDE_INIT_CFG = "extension.rubic.provideInitialConfigurations";
 const CMD_GUESS_PROGRAM_NAME = "extension.rubic.guessProgramName";
 
@@ -16,6 +24,8 @@ export class DebugHelper {
         this._disposable.dispose();
     }
 
+    private _mrubyChannel: OutputChannel;
+
     public constructor(private _extensionPath: string) {
         if (DebugHelper._instance) {
             console.warn("Multiple DebugHelper instances!");
@@ -24,6 +34,12 @@ export class DebugHelper {
         DebugHelper._instance = this;
         
         let subscriptions: Disposable[] = [];
+
+        subscriptions.push(
+            commands.registerCommand(CMD_START_DEBUG_SESSION, (config) => {
+                return this._startDebugSession(config);
+            })
+        );
 
         subscriptions.push(
             commands.registerCommand(CMD_PROVIDE_INIT_CFG, () => {
@@ -37,7 +53,75 @@ export class DebugHelper {
             })
         );
 
+        subscriptions.push(
+            this._mrubyChannel = window.createOutputChannel(
+                localize("mruby-compiler", "mruby Compiler")
+            )
+        );
+
         this._disposable = Disposable.from(...subscriptions);
+    }
+
+    private _startDebugSession(config: any): Thenable<any> {
+        let mergedConfig = Object.assign({}, config);
+        return Promise.resolve(
+        ).then(() => {
+            return RubicConfig.load(workspace.rootPath);
+        }).then((rubicConfig) => {
+            return this._compileSources(rubicConfig);
+        }).then(() => {
+            commands.executeCommand("vscode.startDebug", config);
+            return {status: "ok"};
+        });
+    }
+
+    private _compileSources(rubicConfig: RubicConfig): Promise<void> {
+        return Promise.resolve(
+        ).then(() => {
+            let files: string[] = [];
+            let opt = {cwd: rubicConfig.workspaceRoot};
+            rubicConfig.compile_include.forEach((pattern) => {
+                let includedFiles: string[] = glob.sync(pattern, opt);
+                files.push(...includedFiles);
+            });
+            rubicConfig.compile_exclude.forEach((pattern) => {
+                let excludedFiles: string[] = glob.sync(pattern, opt);
+                if (excludedFiles.length === 0) { return; }
+                files = files.filter((file) => { return excludedFiles.indexOf(file) === -1; });
+            });
+            return files.reduce(
+                (promise, file) => {
+                    return promise.then(() => {
+                        switch (path.extname(file)) {
+                        case ".rb":
+                            return this._compileMruby(rubicConfig, file);
+                        case ".ts":
+                            return Promise.reject(Error("TypeScript is not supported yet"));
+                        }
+                    });
+                }, Promise.resolve()
+            );
+        }); // Promise.resolve().then()
+    }
+
+    private _compileMruby(rubicConfig: RubicConfig, file: string): Promise<void> {
+        return new Promise<any>((resolve, reject) => {
+            mrbc.compile(
+                file,
+                {cwd: rubicConfig.workspaceRoot},
+                (err, stdout, stderr) => {
+                    stdout && this._mrubyChannel.append(stdout);
+                    stderr && this._mrubyChannel.append(stderr);
+                    if (stdout || stderr) { this._mrubyChannel.show(); }
+                    if (err) {
+                        return reject(Error(
+                            localize("mruby-compile-failed", "mruby compile failed")
+                        ));
+                    }
+                    return resolve();
+                }
+            );
+        });
     }
 
     private _provideInitConfig(): any {

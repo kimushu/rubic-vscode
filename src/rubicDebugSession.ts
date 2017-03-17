@@ -14,11 +14,12 @@ import * as path from 'path';
 import * as glob from 'glob';
 import { Writable } from "stream";
 import { readFileSync, writeFileSync } from 'fs';
+import { RubicConfig } from "./rubicConfig";
 import * as nls from 'vscode-nls';
 let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
-const DEFAULT_TRANSFER_INCLUDE = ["*.mrb", "*.js"];
-const DEFAULT_TRANSFER_EXCLUDE = [];
+const SEPARATOR_RUN  = "----------------------------------------------------------------";
+const SEPARATOR_STOP = "----------------------------------------------------------------";
 
 interface RubicRequestArguments {
     /** An absolute path to the workspace folder */
@@ -43,8 +44,7 @@ class RubicDebugSession extends CustomDebugSession {
     private static THREAD_ID: number = 1;
     private static THREAD_NAME: string = "Main thread";
     private _board: RubicBoard;
-    protected workspaceRoot: string;
-    protected config: any;
+    private _config: RubicConfig;
     private _stdin: Writable;
 
     public constructor() {
@@ -61,8 +61,9 @@ class RubicDebugSession extends CustomDebugSession {
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
         Promise.resolve(
         ).then(() => {
-            return this.loadConfiguration(args);
-        }).then(() => {
+            return RubicConfig.load(args.workspaceRoot);
+        }).then((config) => {
+            this._config = config;
             return this.connectBoard(args);
         }).then(() => {
             return this.transferFiles();
@@ -113,25 +114,20 @@ class RubicDebugSession extends CustomDebugSession {
         this.sendResponse(response);
     }
 
-    protected loadConfiguration(args: RubicRequestArguments): Promise<void> {
-        this.workspaceRoot = args.workspaceRoot;
-
-        return Promise.resolve(
-        ).then(() => {
-            // Read rubic configuration
-            let jsonname = path.join(this.workspaceRoot, ".vscode", "rubic.json");
-            let content = readFileSync(jsonname, "utf8");
-
-            // Parse JSON
-            this.config = JSON.parse(content);
-        }); // Promise.resolve().then()
-    }
+/*
+	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
+		response.body = {
+			result: `evaluate(context: '${args.context}', '${args.expression}')`,
+			variablesReference: 0
+		};
+		this.sendResponse(response);
+	}*/
 
     protected connectBoard(args: RubicRequestArguments): Promise<void> {
         return Promise.resolve(
         ).then(() => {
-            let boardId = args.boardId || (this.config && this.config.boardId);
-            let boardPath = args.boardPath || (this.config && this.config.boardPath);
+            let boardId = args.boardId || this._config.boardId;
+            let boardPath = args.boardPath || this._config.boardPath;
 
             // Get board class constructor
             let boardClass = BoardClassList.getClassFromBoardId(boardId);
@@ -153,23 +149,23 @@ class RubicDebugSession extends CustomDebugSession {
         }); // Promise.resolve().then()
     }
 
-    protected transferFiles(config: any = this.config || {}): Promise<number> {
+    protected transferFiles(): Promise<number> {
         return Promise.resolve(
         ).then(() => {
-            let includeGlob: string[] = config["transfer.include"] || DEFAULT_TRANSFER_INCLUDE;
-            let excludeGlob: string[] = config["transfer.exclude"] || DEFAULT_TRANSFER_EXCLUDE;
+            let includeGlob: string[] = this._config.transfer_include;
+            let excludeGlob: string[] = this._config.transfer_exclude;
 
             let files: string[] = [];
 
             // Add files which match 'include' glob pattern
             includeGlob.forEach((pattern) => {
-                let toBeIncluded: string[] = glob.sync(pattern, {cwd: this.workspaceRoot});
+                let toBeIncluded: string[] = glob.sync(pattern, {cwd: this._config.workspaceRoot});
                 files.push(...toBeIncluded);
             });
 
             // Then, remove files which match 'exclude' glob pattern
             excludeGlob.forEach((pattern) => {
-                let toBeExcluded: string[] = glob.sync(pattern, {cwd: this.workspaceRoot});
+                let toBeExcluded: string[] = glob.sync(pattern, {cwd: this._config.workspaceRoot});
                 files = files.filter((file) => {
                     return (toBeExcluded.indexOf(file) == -1);
                 });
@@ -203,7 +199,7 @@ class RubicDebugSession extends CustomDebugSession {
                         ));
 
                         // Read new file content
-                        newContent = readFileSync(path.join(this.workspaceRoot, file));
+                        newContent = readFileSync(path.join(this._config.workspaceRoot, file));
 
                         // Start read back from board
                         return this._board.readFile(file).catch(() => {
@@ -233,10 +229,11 @@ class RubicDebugSession extends CustomDebugSession {
     }
 
     protected startProgram(args: LaunchRequestArguments): Promise<void> {
-        let file = path.relative(this.workspaceRoot, args.program);
+        let file = path.relative(this._config.workspaceRoot, args.program);
         this.sendEvent(new OutputEvent(
             localize("run-program-x", "Run program: {0}", file)
         ));
+        this.sendEvent(new OutputEvent(SEPARATOR_RUN));
         return this._board.runSketch(file).then(() => {
             return this._board.getStdio();
         }).then(({stdin, stderr, stdout}) => {
@@ -251,6 +248,7 @@ class RubicDebugSession extends CustomDebugSession {
     }
 
     private _handleBoardStop(): void {
+        this.sendEvent(new OutputEvent(SEPARATOR_STOP));
         this.sendEvent(new OutputEvent(
             localize("program-ended", "Program ended")
         ));

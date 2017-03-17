@@ -27,7 +27,23 @@
       "uniqueItems": true
     },
     "transfer.exclude": {
-      "description": "Files not to be transfered to board. Accepts filename and glob patterns. This is prior to 'include' field.",
+      "description": "Files not to be transfered to board. Accepts filename and glob patterns. This is prior to 'transfer.include' field.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "mruby.include": {
+      "description": "Files to be compiled for mruby. Accepts filename and glob patterns.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "mruby.exclude": {
+      "description": "Files not to be compiled for mruby. Accepts filename and glob patterns. This is prior to 'mruby.include' field.",
       "type": "array",
       "items": {
         "type": "string"
