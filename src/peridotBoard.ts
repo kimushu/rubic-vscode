@@ -123,7 +123,9 @@ export class PeridotBoard extends RubicBoard {
                 return fd.lseek(0, {SEEK_SET: true});
             }).then(() => {
                 if (fileLength == 0) { return Buffer.alloc(0); }
-                return fd.read(fileLength, true);
+                return fd.read(fileLength, true).then((ab: ArrayBuffer) => {
+                    return Buffer.from(ab);
+                });
             }).then(...finallyPromise(() => {
                 return fd.close();
             }));
