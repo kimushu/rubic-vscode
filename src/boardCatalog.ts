@@ -130,7 +130,7 @@ export class BoardCatalog implements TextDocumentContentProvider {
                     this._boardPath = ports[index].path;
                     this._updateStatusBar();
                     console.warn("TODO: port change")
-                    //this._testOnExtensionHost();
+                    this._testOnExtensionHost();
                     return;
                 }
             })
@@ -220,8 +220,8 @@ export class BoardCatalog implements TextDocumentContentProvider {
 
     private _testOnExtensionHost(): void {
         let board = new this._boardClass(this._boardId, this._boardPath);
-        let wfile = "test.bin";
-        let written: Buffer;
+        let wfile = "main.js";
+        let written: Buffer = readFileSync(path.join(workspace.rootPath, wfile));
         Promise.resolve(
         ).then(() => {
             return board.connect();
@@ -241,7 +241,12 @@ export class BoardCatalog implements TextDocumentContentProvider {
             } else {
                 return window.showErrorMessage(`verify NG! ${buf.length} bytes`);    
             }*/
-            return board.runSketch("main.mrb");
+        }).then(() => {
+            return board.formatStorage();
+        }).then(() => {
+            //return board.writeFile(wfile, written);
+        }).then(() => {
+            //return board.runSketch(wfile);
         }).then(() => {
             return window.showInformationMessage("running...");
         }).then(() => {
