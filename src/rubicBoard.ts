@@ -100,6 +100,11 @@ export class RubicBoard extends EventEmitter {
         return Promise.reject(Error("Not supported"));
     }
 
+    /** Format internal storage */
+    formatStorage(): Promise<void> {
+        return Promise.reject(Error("Not supported"));
+    }
+
     /** Run sketch */
     runSketch(filename: string): Promise<void> {
         return Promise.reject(Error("Not supported"));

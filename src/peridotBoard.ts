@@ -7,6 +7,13 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
+/*
+Canarium.verbosity = 3;
+//Canarium.BaseComm.verbosity = 3;
+Canarium.RpcClient.verbosity = 3;
+Canarium.RemoteFile.verbosity = 3;
+*/
+
 const LOCALIZED_NAMES: any = {
     "peridot_classic": localize("classic.name", "PERIDOT Classic"),
     "peridot_newgen": localize("newgen.name", "PERIDOT NewGen")
@@ -120,6 +127,20 @@ export class PeridotBoard extends RubicBoard {
             }).then(...finallyPromise(() => {
                 return fd.close();
             }));
+        });
+    }
+
+    formatStorage(): Promise<void> {
+        return Promise.resolve(
+        ).then(() => {
+            return this._canarium.openRemoteFile(
+                "/sys/rubic/format",
+                {O_WRONLY: true, O_TRUNC: true}
+            );
+        }).then((fd) => {
+            return fd.close();
+        }).then(() => {
+            return;
         });
     }
 

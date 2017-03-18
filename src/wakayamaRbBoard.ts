@@ -209,6 +209,17 @@ export class WakayamaRbBoard extends RubicBoard {
         }); // return Promise.resolve().then()...
     }
 
+    formatStorage(): Promise<void> {
+        return Promise.resolve(
+        ).then(() => {
+            return this._send("Z\r");
+        }).then(() => {
+            return this._recv("\r\n>");
+        }).then(() => {
+            return;
+        }); // return Promise.resolve().then()...
+    }
+
     runSketch(filename: string): Promise<void> {
         return Promise.resolve(
         ).then(() => {
