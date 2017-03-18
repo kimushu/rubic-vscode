@@ -81,12 +81,12 @@ export class RubicBoard extends EventEmitter {
     }
 
     /** Write file */
-    writeFile(path: string, data: Buffer): Promise<void> {
+    writeFile(filename: string, data: Buffer): Promise<void> {
         return Promise.reject(Error("Not implemented"));
     }
 
     /** Read file */
-    readFile(path: string): Promise<Buffer> {
+    readFile(filename: string): Promise<Buffer> {
         return Promise.reject(Error("Not supported"));
     }
 
@@ -101,7 +101,7 @@ export class RubicBoard extends EventEmitter {
     }
 
     /** Run sketch */
-    runSketch(path: string): Promise<void> {
+    runSketch(filename: string): Promise<void> {
         return Promise.reject(Error("Not supported"));
     }
 

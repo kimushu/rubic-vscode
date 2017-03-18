@@ -126,7 +126,7 @@ export class WakayamaRbBoard extends RubicBoard {
         }); // return Promise.resolve().then()...
     }
 
-    writeFile(path: string, data: Buffer): Promise<void> {
+    writeFile(filename: string, data: Buffer): Promise<void> {
         let ascii: Buffer = Buffer.allocUnsafe(data.byteLength * 2);
         let hex: number[] = [0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x41,0x42,0x43,0x44,0x45,0x46];
         for (let byteOffset = 0; byteOffset < data.byteLength; ++byteOffset) {
@@ -136,7 +136,7 @@ export class WakayamaRbBoard extends RubicBoard {
         }
         return Promise.resolve(
         ).then(() => {
-            return this._send(`U ${path} ${ascii.byteLength}\r`);
+            return this._send(`U ${filename} ${ascii.byteLength}\r`);
         }).then(() => {
             return this._recv(" 60");
         }).then(() => {
@@ -150,11 +150,11 @@ export class WakayamaRbBoard extends RubicBoard {
         }); // return Promise.resolve().then()...
     }
 
-    readFile(path: string): Promise<Buffer> {
+    readFile(filename: string): Promise<Buffer> {
         let len: number = NaN;
         return Promise.resolve(
         ).then(() => {
-            return this._send(`F ${path}\r`);
+            return this._send(`F ${filename}\r`);
         }).then(() => {
             return this._recv(" 60");
         }).then(() => {
@@ -209,10 +209,10 @@ export class WakayamaRbBoard extends RubicBoard {
         }); // return Promise.resolve().then()...
     }
 
-    runSketch(path: string): Promise<void> {
+    runSketch(filename: string): Promise<void> {
         return Promise.resolve(
         ).then(() => {
-            return this._send(`R ${path}\r`);
+            return this._send(`R ${filename}\r`);
         }).then(() => {
             // Skip "R xxx" line
             return this._recv("\n")
@@ -237,7 +237,7 @@ export class WakayamaRbBoard extends RubicBoard {
             };
             stdoutReader();
             this._stdio = {stdout};
-            this.emit("start", path);
+            this.emit("start", filename);
         }); // return Promise.resolve().then()...
     }
 

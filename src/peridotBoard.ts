@@ -87,12 +87,12 @@ export class PeridotBoard extends RubicBoard {
         });
     }
 
-    writeFile(path: string, data: Buffer): Promise<void> {
+    writeFile(filename: string, data: Buffer): Promise<void> {
         return Promise.resolve(
         ).then(() => {
             return this._canarium.openRemoteFile(
-                this._storageRoot + "/" + path,
-                {O_WRONLY: true}
+                this._getStoragePath(filename),
+                {O_WRONLY: true, O_CREAT: true, O_TRUNC: true}
             );
         }).then((fd) => {
             return fd.write(buf2ab(data), true).then(...finallyPromise(() => {
@@ -101,15 +101,39 @@ export class PeridotBoard extends RubicBoard {
         });
     }
 
-    runSketch(path: string): Promise<void> {
+    readFile(filename: string): Promise<Buffer> {
+        return Promise.resolve(
+        ).then(() => {
+            return this._canarium.openRemoteFile(
+                this._getStoragePath(filename),
+                {O_RDONLY: true}
+            );
+        }).then((fd) => {
+            let fileLength: number;
+            return fd.lseek(0, {SEEK_END: true}).then((size) => {
+                fileLength = size;
+                if (fileLength == 0) { return; }
+                return fd.lseek(0, {SEEK_SET: true});
+            }).then(() => {
+                if (fileLength == 0) { return Buffer.alloc(0); }
+                return fd.read(fileLength, true);
+            }).then(...finallyPromise(() => {
+                return fd.close();
+            }));
+        });
+    }
+
+    runSketch(filename: string): Promise<void> {
         return Promise.resolve(
         ).then(() => {
             return this._canarium.openRemoteFile(
                 "/sys/rubic/run",
-                {O_WRONLY: true}
+                {O_WRONLY: true, O_TRUNC: true}
             );
         }).then((fd) => {
-            return fd.write(buf2ab(Buffer.from(path)), true).then(...finallyPromise(() => {
+            return fd.write(buf2ab(
+                Buffer.from(this._getStoragePath(filename))
+            ), true).then(...finallyPromise(() => {
                 return fd.close();
             }));
         });
@@ -120,7 +144,7 @@ export class PeridotBoard extends RubicBoard {
         ).then(() => {
             return this._canarium.openRemoteFile(
                 "/sys/rubic/stop",
-                {O_WRONLY: true}
+                {O_WRONLY: true, O_TRUNC: true}
             );
         }).then((fd) => {
             return fd.close();
@@ -167,6 +191,10 @@ export class PeridotBoard extends RubicBoard {
 
     private onClosed() {
         this._stdio = null;
+    }
+
+    private _getStoragePath(filename: string): string {
+        return this._storageRoot + "/" + filename;
     }
 }
 
