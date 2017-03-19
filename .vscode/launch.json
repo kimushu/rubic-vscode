@@ -23,6 +23,26 @@
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/out/test/**/*.js" ],
             "preLaunchTask": "npm"
+        },
+        {
+            "name": "Launch Server",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "program": "${workspaceRoot}/out/src/rubicDebugSession.js",
+            "args": ["--server=4711"],
+            "sourceMaps": true,
+            "outFiles": ["${workspaceRoot}/out/**/*.js"],
+            "runtimeExecutable": "C:\\Program Files (x86)\\Microsoft VS Code\\Code.exe",
+            "env": {
+                "ELECTRON_RUN_AS_NODE": "1"
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Extension & Server",
+            "configurations": ["Launch Extension", "Launch Server"]
         }
     ]
 }
