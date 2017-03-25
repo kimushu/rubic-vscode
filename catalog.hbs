@@ -3,55 +3,52 @@
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <base href="{{extensionPath}}/">
+  <link rel="stylesheet" type="text/css" href="catalog.css" media="all">
 </head>
 
 <body>
-  <div>{{currentPage}}</div>
-  <a href="{{cmd}}">TEST</a>
-  <div class="col-md-12">
-    <div class="media media-bordered" id="board-PeridotBoard" style="" data-name="PeridotBoard">
-      <div class="media-left">
-        <img class="media-object" src="{{extensionPath}}/images/boards/peridot_64x64.png" height="72" width="72">
-      </div>
-      <div class="media-body">
-        <h4 class="media-heading"><span class="placeholder">PERIDOT</span>
-          <button class="board-use-this pull-right btn btn-info btn-xs i18n" title=""><span class="glyphicon glyphicon-ok board-when-selected">&nbsp;</span>このボードを使う</button>
-        </h4>
-        <span class="placeholder">ハードウェア構成をカスタマイズできるFPGA搭載のArduino互換形状ボード。スクリプト言語エンジンはmrubyを搭載。</span>
-        <br><span class="i18n" title="">作者</span>:
-        <span class="placeholder">J-7SYSTEM WORKS</span>&nbsp;/&nbsp;
-        <a href="https://osafune.github.io/peridot.html" class="placeholder i18n" target="_blank" title="">WEBサイト</a>
-      </div>
+  {{#each panels}}
+  <div class="catalog-panel{{#if active}} catalog-panel-opened{{/if}}{{#if disabled}} catalog-panel-disabled{{/if}}"
+    style="margin-top: calc(28px * {{@index}}); margin-bottom: calc(28px * ({{../panels.length}} - {{@index}} - 1));">
+    <div class="catalog-header icon-triangle">
+      <span class="catalog-header-label">{{label}} :</span>
+      {{#if decision}}<span class="catalog-decision">{{decision}}</span>{{/if}}
     </div>
-    <div class="media media-bordered" id="board-GrCitrusBoard" style="" data-name="GrCitrusBoard">
-      <div class="media-left">
-        <img class="media-object" src="{{extensionPath}}/images/boards/grcitrus_64x64.png" height="72" width="72">
+    {{#if active}}{{#if items}}
+    <div class="catalog-list">
+      {{#each items}}
+      <div class="catalog-item{{#if ../withIcons}} catalog-item-with-icon{{/if}}">
+        {{#if ../withIcons}}
+        <div class="catalog-item-icon">
+          <img class="catalog-image-64" src="images/{{#if icon}}{{icon}}{{else}}no_image_64x64.png{{/if}}" width="64" height="64" />
+        </div>
+        {{/if}}
+        <div class="catalog-item-line">
+          <span class="catalog-item-title">{{title}}</span>
+          {{#if preview}}
+          <span class="catalog-badge catalog-badge-pill catalog-badge-lightblue ">{{preview}}</span>
+          {{/if}}
+        </div>
+        <div class="catalog-item-description">{{description}}</div>
+        <div class="catalog-item-author">{{author}}</div>
+        {{#if tags}}
+        <div class="catalog-item-tags">
+          {{#each tags}}
+          <span class="catalog-badge{{#if color}} catalog-badge-{{color}}{{/if}}">{{name}}</span>
+          {{/each}}
+        </div>
+        {{/if}}
+        <span class="catalog-item-config icon-gear">&nbsp;</span>
       </div>
-      <div class="media-body">
-        <h4 class="media-heading"><span class="placeholder">GR-CITRUS</span>
-          <button class="board-use-this pull-right btn btn-info btn-xs i18n" title=""><span class="glyphicon glyphicon-ok board-when-selected">&nbsp;</span>このボードを使う</button>
-        </h4>
-        <span class="placeholder">GR-CITRUSはRubyが気軽に使える小型ボード。ルネサス32ビットマイコンRX631グループMCUを搭載しています。</span>
-        <br><span class="i18n" title="">作者</span>:
-        <span class="placeholder">Wakayama.rb</span>&nbsp;/&nbsp;
-        <a href="https://github.com/wakayamarb/" class="placeholder i18n" target="_blank" title="">WEBサイト</a>
-      </div>
+      {{else}}
+      {{/each}}
     </div>
-    <div class="media media-bordered" id="board-WakayamaRbBoard" style="" data-name="WakayamaRbBoard">
-      <div class="media-left">
-        <img class="media-object" src="{{extensionPath}}/images/boards/wrbb_64x64.png" height="72" width="72">
-      </div>
-      <div class="media-body">
-        <h4 class="media-heading"><span class="placeholder">Wakayama.rb ボード</span>
-          <button class="board-use-this pull-right btn btn-info btn-xs i18n" title=""><span class="glyphicon glyphicon-ok board-when-selected">&nbsp;</span>このボードを使う</button>
-        </h4>
-        <span class="placeholder">Wakayama.rbボードはmrubyを搭載した小型のRubyボードです。</span>
-        <br><span class="i18n" title="">作者</span>:
-        <span class="placeholder">Minao Yamamoto</span>&nbsp;/&nbsp;
-        <a href="https://github.com/tarosay/Wakayama-mruby-board" class="placeholder i18n" target="_blank" title="">WEBサイト</a>
-      </div>
-    </div>
+    {{/if}}{{/if}}
   </div>
+  {{/each}}
+  <a id="sendCommand" href="command:{{command}}?" style="display: none"></a>
+  <script src="{{extensionPath}}/out/src/catalogPage.js"></script>
 </body>
 
 </html>

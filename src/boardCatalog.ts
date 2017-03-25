@@ -7,6 +7,7 @@ import {
     Disposable, TextDocumentContentProvider, QuickPickItem,
     commands, window, workspace
 } from 'vscode';
+
 import { RubicBoard, BoardClass } from "./rubicBoard";
 import { BoardClassList } from "./boardClassList";
 import * as path from 'path';
@@ -53,8 +54,8 @@ export class BoardCatalog implements TextDocumentContentProvider {
 
         // Register commands
         subscriptions.push(
-            commands.registerCommand(CMD_SHOW_CATALOG, () => {
-                this.showCatalog();
+            commands.registerCommand(CMD_SHOW_CATALOG, (param) => {
+                this.showCatalog(param);
             })
         );
         subscriptions.push(
@@ -97,8 +98,11 @@ export class BoardCatalog implements TextDocumentContentProvider {
         this._disposable = Disposable.from(...subscriptions);
     }
 
-    public showCatalog(): void {
-        console.log("TODO: show catalog");
+    public showCatalog(param): void {
+        console.log("TODO: show catalog:" + util.format(param));
+        if (param) {
+            return;
+        }
         let active = window.activeTextEditor;
         commands.executeCommand("vscode.previewHtml",
             Uri.parse("rubic://catalog"),
@@ -108,6 +112,7 @@ export class BoardCatalog implements TextDocumentContentProvider {
     }
 
     public selectPort(...args): void {
+        console.log("TODO: selectPort:" + util.format(args));
         if (!this._boardClass) { return; }
 
         this._boardClass.list().then((ports) => {
@@ -117,6 +122,11 @@ export class BoardCatalog implements TextDocumentContentProvider {
                     label: port.path,
                     description: port.name
                 });
+            });
+            list.push({
+                description: "description",
+                detail: "detail",
+                label: "label"
             });
             if (list.length === 0) {
                 window.showErrorMessage(
@@ -212,7 +222,60 @@ export class BoardCatalog implements TextDocumentContentProvider {
             let context: any = {
                 currentPage: uri.query,
                 extensionPath: this._extensionPath,
-                cmd: encodeURI(`command:${CMD_SELECT_PORT}?${JSON.stringify(["hoo"])}`)
+                command: CMD_SHOW_CATALOG,
+                website: localize("website", "Website"),
+                panels: [{
+                    label: "ボード",
+                    decision: "GR-CITRUS",
+                    active: true,
+                    withIcons: true,
+                    items: [{
+                        icon: "boards/peridot_64x64.png",
+                        title: "PERIDOT Classic",
+                        preview: "プレビュー版",
+                        description: "ハードウェア構成をカスタマイズできるFPGA搭載のArduino互換形状ボード。",
+                        tags: [{
+                            name: "FPGA"
+                        },{
+                            color: "red",
+                            name: "Ruby"
+                        },{
+                            color: "orange",
+                            name: "JavaScript"
+                        }],
+                        author: "J-7SYSTEM WORKS",
+                        website: "http://hoge/bar"
+                    },{
+                        icon: "boards/grcitrus_64x64.png",
+                        title: "GR-CITRUS",
+                        description: "Rubyが気軽に使える小型マイコンボード。ルネサス製32ビットマイコンRX631グループMCUを搭載。",
+                        tags: [{
+                            name: "RXマイコン",
+                        },{
+                            color: "red",
+                            name: "Ruby"
+                        }],
+                        author: "Wakayama.rb"
+                    },{
+                        icon: "boards/wrbb_64x64.png",
+                        title: "Wakayama.rb ボード",
+                        description: "mrubyを搭載した小型マイコンボード。",
+                        tags: [{
+                            name: "RXマイコン",
+                        },{
+                            color: "red",
+                            name: "Ruby"
+                        }],
+                        author: "Minao Yamamoto"
+                    }]
+                },{
+                    label: "ファームウェア",
+                    disabled: true
+                },{
+                    label: "リリース"
+                },{
+                    label: "バリエーション"
+                }]
             };
             return template(context);
         });
@@ -242,11 +305,17 @@ export class BoardCatalog implements TextDocumentContentProvider {
                 return window.showErrorMessage(`verify NG! ${buf.length} bytes`);    
             }*/
         }).then(() => {
-            return board.formatStorage();
+            //return board.formatStorage();
         }).then(() => {
-            //return board.writeFile(wfile, written);
+            return board.readFile(wfile);
+        }).then((cnt: Buffer) => {
+            if (cnt.equals(written)) {
+                console.log("write skip");
+                return;
+            }
+            return board.writeFile(wfile, written);
         }).then(() => {
-            //return board.runSketch(wfile);
+            return board.runSketch(wfile);
         }).then(() => {
             return window.showInformationMessage("running...");
         }).then(() => {
