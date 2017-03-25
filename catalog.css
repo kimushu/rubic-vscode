@@ -43,8 +43,13 @@ body {
     display: inline;
     font-weight: bold;
 }
-.catalog-header-decision {
-    display: inline;
+.catalog-header-settled {
+    float: right;
+    margin-right: 4px;
+    transition: opacity 0.5s ease;
+}
+.catalog-panel-opened .catalog-header-settled {
+    opacity: 0.0;
 }
 .catalog-list {
     display: block;

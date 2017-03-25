@@ -223,7 +223,12 @@ export class BoardCatalog implements TextDocumentContentProvider {
                 currentPage: uri.query,
                 extensionPath: this._extensionPath,
                 command: CMD_SHOW_CATALOG,
-                website: localize("website", "Website"),
+                localized: {
+                    website: localize("website", "Website"),
+                    settled: localize("settled", "Settled"),
+                    not_selected: localize("not-selected", "Not selected"),
+                    unselectable: localize("unselectable", "Unselectable")
+                },
                 panels: [{
                     label: "ボード",
                     decision: "GR-CITRUS",

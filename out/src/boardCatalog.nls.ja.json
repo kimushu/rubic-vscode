@@ -9,7 +9,11 @@
         "文字列の値を持つ'boardId'キーが必要です。",
         "対応していないボードID '{0}'",
         "ボード未選択",
-        "接続先未選択"
+        "接続先未選択",
+        "WEBサイト",
+        "決定",
+        "未選択",
+        "選択不可"
     ],
     "keys": [
         "click-to-show-catalog",
@@ -21,6 +25,10 @@
         "invalid-board-id",
         "unknown-board-id",
         "no-board",
-        "no-port"
+        "no-port",
+        "website",
+        "settled",
+        "not-selected",
+        "unselectable"
     ]
 }

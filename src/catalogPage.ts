@@ -34,3 +34,11 @@ const sendCommand = (() => {
         }
     })(i); }
 })();
+
+// Register event handler for items
+(() => {
+    var elements = document.getElementsByClassName("catalog-item");
+    for (var i = 0; i < elements.length; ++i) { ((i) => {
+        
+    })(i); }
+})();

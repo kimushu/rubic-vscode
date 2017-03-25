@@ -10,15 +10,25 @@
 <body>
   {{#each panels}}
   <div class="catalog-panel{{#if active}} catalog-panel-opened{{/if}}{{#if disabled}} catalog-panel-disabled{{/if}}"
-    style="margin-top: calc(28px * {{@index}}); margin-bottom: calc(28px * ({{../panels.length}} - {{@index}} - 1));">
+    style="margin-top: calc(28px * {{@index}}); margin-bottom: calc(28px * ({{../panels.length}} - {{@index}} - 1));"
+    {{#if id}}id="id-{{id}}"{{/if}}>
     <div class="catalog-header icon-triangle">
-      <span class="catalog-header-label">{{label}} :</span>
-      {{#if decision}}<span class="catalog-decision">{{decision}}</span>{{/if}}
+      <span class="catalog-header-label">{{label}} :
+        {{#if decision}}
+          {{decision}} <span class="catalog-header-settled catalog-badge catalog-badge-blue">{{@root.localized.settled}}</span>
+        {{else}}
+          {{#if disabled}}
+            ({{@root.localized.unselectable}})
+          {{else}}
+            ({{@root.localized.not_selected}})
+          {{/if}}
+        {{/if}}
+      </span>
     </div>
     {{#if active}}{{#if items}}
     <div class="catalog-list">
       {{#each items}}
-      <div class="catalog-item{{#if ../withIcons}} catalog-item-with-icon{{/if}}">
+      <div class="catalog-item{{#if ../withIcons}} catalog-item-with-icon{{/if}}"{{#if id}} id="id-{{../id}}-{{id}}"{{/if}}>
         {{#if ../withIcons}}
         <div class="catalog-item-icon">
           <img class="catalog-image-64" src="images/{{#if icon}}{{icon}}{{else}}no_image_64x64.png{{/if}}" width="64" height="64" />
