@@ -7,12 +7,12 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
-/*
+//*
 Canarium.verbosity = 3;
 //Canarium.BaseComm.verbosity = 3;
 Canarium.RpcClient.verbosity = 3;
 Canarium.RemoteFile.verbosity = 3;
-*/
+//-*/
 
 const LOCALIZED_NAMES: any = {
     "peridot_classic": localize("classic.name", "PERIDOT Classic"),
@@ -27,7 +27,7 @@ function buf2ab(buf: Buffer): ArrayBuffer {
     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 }
 
-function finallyPromise(f): [Function, Function] {
+function finallyPromise(f: any): [any, any] {
     let action = () => Promise.resolve(f()).catch(() => null);
     return [
         (result) => action().then(() => result),
@@ -102,9 +102,12 @@ export class PeridotBoard extends RubicBoard {
                 {O_WRONLY: true, O_CREAT: true, O_TRUNC: true}
             );
         }).then((fd) => {
-            return fd.write(buf2ab(data), true).then(...finallyPromise(() => {
-                return fd.close();
-            }));
+            return fd.write(buf2ab(data), true).then(
+                (result) => fd.close().then(() => result),
+                (reason) => fd.close().catch(() => null).then(() => Promise.reject(reason))
+            );
+        }).then((written) => {
+            return;
         });
     }
 
@@ -121,14 +124,15 @@ export class PeridotBoard extends RubicBoard {
                 fileLength = size;
                 if (fileLength == 0) { return; }
                 return fd.lseek(0, {SEEK_SET: true});
-            }).then(() => {
+            }).then((offset) => {
                 if (fileLength == 0) { return Buffer.alloc(0); }
                 return fd.read(fileLength, true).then((ab: ArrayBuffer) => {
                     return Buffer.from(ab);
                 });
-            }).then(...finallyPromise(() => {
-                return fd.close();
-            }));
+            }).then(
+                (result) => fd.close().then(() => result),
+                (reason) => fd.close().catch(() => null).then(() => Promise.reject(reason))
+            );
         });
     }
 
@@ -156,9 +160,12 @@ export class PeridotBoard extends RubicBoard {
         }).then((fd) => {
             return fd.write(buf2ab(
                 Buffer.from(this._getStoragePath(filename))
-            ), true).then(...finallyPromise(() => {
-                return fd.close();
-            }));
+            ), true).then(
+                (result) => fd.close().then(() => result),
+                (reason) => fd.close().catch(() => null).then(() => Promise.reject(reason))
+            );
+        }).then((result) => {
+            return;
         });
     }
 
