@@ -6,6 +6,7 @@ src/**
 **/*.map
 tmp/**
 .gitignore
+typings/**
 tsconfig.json
 vsc-extension-quickstart.md
 node_modules/serialport/bin/win32*/**
