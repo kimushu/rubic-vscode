@@ -169,7 +169,7 @@
     "electron-rebuild-vsce": "github:kimushu/electron-rebuild-vsce",
     "mocha": "^2.3.3",
     "rimraf": "^2.6.1",
-    "typescript": "^2.0.3",
+    "typescript": "^2.2.1",
     "vscode": "^1.0.0",
     "vscode-nls-dev": "^2.0.1"
   },
