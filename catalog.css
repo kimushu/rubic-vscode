@@ -2,22 +2,20 @@ body {
     -webkit-user-select: none;
     user-select: none;
 }
-.move-animated {
-    transition: top 0.2s ease, bottom 0.2s ease;
-}
 .catalog-panel {
     display: block;
     position: absolute;
     width: 100%;
     top: 0px;
     bottom: calc(100% - 4*28px);
+    transition: top 0.2s ease, bottom 0.2s ease;
 }
 .catalog-panel-opened {
     bottom: 0px;
 }
 .catalog-panel-opened ~ .catalog-panel {
     top: calc(100% - 4*28px);
-    bottom: 0;
+    bottom: 0px;
 }
 .catalog-header {
     display: block;
