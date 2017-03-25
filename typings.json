@@ -1,4 +1,11 @@
 {
   "name": "rubic",
-  "dependencies": {}
+  "dependencies": {
+    "glob": "registry:npm/glob#6.0.0+20160723033700",
+    "semver": "registry:npm/semver#5.0.0+20160723033700"
+  },
+  "globalDependencies": {
+    "handlebars": "registry:dt/handlebars#4.0.5+20170310072326",
+    "serialport": "registry:dt/serialport#4.0.0+20170321071437"
+  }
 }
