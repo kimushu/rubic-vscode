@@ -14,14 +14,15 @@ import * as path from 'path';
 import * as util from 'util';
 import * as Handlebars from 'handlebars';
 import { readFileSync, watch, FSWatcher } from 'fs';
-
 import * as nls from 'vscode-nls';
+
 let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
 const CMD_SHOW_CATALOG = "extension.rubic.showCatalog";
 const CMD_SELECT_PORT  = "extension.rubic.selectPort";
 
-export class BoardCatalog implements TextDocumentContentProvider {
+export class BoardCatalogViewer implements TextDocumentContentProvider {
+    private _content: any; // TODO: add declaration from rubic-catalog
     private _sbiBoard: StatusBarItem;
     private _sbiPort: StatusBarItem;
     private _boardId: string;
@@ -32,8 +33,8 @@ export class BoardCatalog implements TextDocumentContentProvider {
     private _watcher: FSWatcher;
     private _errorPopupBarrier: string = null;
 
-    private static _instance: BoardCatalog;
-    public static get instance(): BoardCatalog {
+    private static _instance: BoardCatalogViewer;
+    public static get instance(): BoardCatalogViewer {
         return this._instance;
     }
 
@@ -44,11 +45,13 @@ export class BoardCatalog implements TextDocumentContentProvider {
     }
 
     public constructor(private _extensionPath: string) {
-        if (BoardCatalog._instance) {
+        super();
+
+        if (BoardCatalogViewer._instance) {
             console.warn("Multiple BoardCatalog instances!");
-            BoardCatalog._instance.dispose();
+            BoardCatalogViewer._instance.dispose();
         }
-        BoardCatalog._instance = this;
+        BoardCatalogViewer._instance = this;
 
         let subscriptions: Disposable[] = [];
 
@@ -144,6 +147,49 @@ export class BoardCatalog implements TextDocumentContentProvider {
                     return;
                 }
             })
+        });
+    }
+
+    /**
+     * Load catalog
+     */
+    public load(update?: boolean, force?: boolean): Promise<void> {
+        return Promise.resolve({
+        }).then(() => {
+            return update && this.updateCache(force);
+        }).then(() => {
+            return CacheStorage.readFile(CATALOG_JSON, "utf8");
+        }).then((content: string) => {
+            this._content = JSON.parse(content);
+        });
+    }
+
+    /**
+     * Update cache
+     */
+    public updateCache(force?: boolean): Promise<boolean> {
+        let lastFetched = CacheStorage.getMementoData("lastFetched", 0);
+        let nextFetch = lastFetched + (UPDATE_PERIOD_MINUTES * 60 * 1000);
+        return CacheStorage.readFile(CATALOG_JSON, "utf8").then((content: string) => {
+            JSON.parse(content);
+            // JSON is valid
+            if (!force && Date.now() < nextFetch) {
+                return false;   // Success without update
+            }
+            // Too old. Try update
+            return Promise.reject(null);
+        }).catch(() => {
+            // Reject reason is one of them
+            //   1. Cache is not readable
+            //   2. Cache is not valid JSON
+            //   3. Cache is too old
+            return readGithubFile(OFFICIAL_CATALOG, CATALOG_JSON).then((content) => {
+                JSON.parse(content.toString());
+                // JSON is valid
+                return CacheStorage.writeFile(CATALOG_JSON, content);
+            }).then(() => {
+                return true;    // Success with update
+            });
         });
     }
 
@@ -280,6 +326,8 @@ export class BoardCatalog implements TextDocumentContentProvider {
                     label: "リリース"
                 },{
                     label: "バリエーション"
+                },{
+                    label: "まとめ"
                 }]
             };
             return template(context);
