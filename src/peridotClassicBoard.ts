@@ -14,11 +14,6 @@ Canarium.RpcClient.verbosity = 3;
 Canarium.RemoteFile.verbosity = 3;
 //-*/
 
-const LOCALIZED_NAMES: any = {
-    "peridot_classic": localize("classic.name", "PERIDOT Classic"),
-    "peridot_newgen": localize("newgen.name", "PERIDOT NewGen")
-};
-
 const J7ID_TO_RUBICID: any = {
     "J72A": "peridot_classic",
 };
@@ -35,34 +30,25 @@ function finallyPromise(f: any): [any, any] {
     ];
 }
 
-export class PeridotBoard extends RubicBoard {
+export class PeridotClassicBoard extends RubicBoard {
     private _storageRoot: string = "/mnt/internal";
     private _canarium: Canarium;
     private _stdio: BoardStdio;
 
-    public constructor(private _boardId: string, private _path: string) {
+    public constructor(private _path: string) {
         super();
         this._canarium = new Canarium();
         this._canarium.onClosed = this.onClosed.bind(this);
         this._stdio = null;
     }
 
-    static getIdList(): string[] {
-        return Object.keys(LOCALIZED_NAMES)
-    }
-
-    static getName(boardId: string): string {
-        return LOCALIZED_NAMES[boardId];
-    }
-
     static list(): Promise<BoardCandidate[]> {
         return Canarium.enumerate().then((boards: any[]) => {
             return boards.map((board) => {
                 let candidate: BoardCandidate = {
-                    boardId: "peridot_classic", // TODO
+                    boardClass: this.name,
                     name: board.name,
                     path: board.path,
-                    boardClass: this
                 };
                 if (board.vendorId) { candidate.vendorId = parseInt(board.vendorId, 16); }
                 if (board.productId) { candidate.productId = parseInt(board.productId, 16); }
