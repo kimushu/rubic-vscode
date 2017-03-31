@@ -3,7 +3,8 @@
 import { RubicBoard, BoardClass } from './rubicBoard'
 
 const CLASS_NAMES = [
-    "PeridotBoard",
+    "PeridotClassicBoard",
+    "PeridotPiccoloBoard",
     "WakayamaRbBoard",
     "GrCitrusBoard",
 ];
@@ -22,9 +23,9 @@ export class BoardClassList {
         return constructors;
     }
 
-    static getClassFromBoardId(boardId: string): BoardClass {
+    static getClass(boardClass: string): BoardClass {
         return this.classes.find((_class) => {
-            return (_class.getIdList().indexOf(boardId) >= 0);
+            return (_class.name === boardClass);
         });
     }
 }

@@ -37,16 +37,6 @@ export class WakayamaRbBoard extends RubicBoard {
         this._port.on("error", this._errorHandler.bind(this));
     }
 
-    static getIdList(): string[] {
-        return Array.from(new Set(this._VID_PID_LIST.map((entry) => {
-            return entry.boardId
-        })));
-    }
-
-    static getName(boardId: string): string {
-        return localize("wakayamarb.name", "WAKAYAMA.RB board");
-    }
-
     public static list(): Promise<BoardCandidate[]> {
         return new Promise((resolve, reject) => {
             SerialPort.list((err, ports: any[]) => {
@@ -60,10 +50,9 @@ export class WakayamaRbBoard extends RubicBoard {
                     });
                     if (entry) {
                         result.push({
+                            boardClass: this.name,
                             path: port.comName,
                             name: entry.name,
-                            boardId: entry.boardId,
-                            boardClass: this,
                             vendorId: vid,
                             productId: pid
                         });
