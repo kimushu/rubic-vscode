@@ -1,7 +1,7 @@
 'use strict';
 
-import { Disposable, commands, OutputChannel, window, workspace } from 'vscode';
-import { RubicConfig } from "./rubicConfig";
+import { Disposable, commands, OutputChannel, window, workspace, ExtensionContext } from 'vscode';
+import { Sketch } from "./sketch";
 import * as glob from 'glob';
 import * as path from 'path';
 import * as mrbc from 'mruby-native';
@@ -26,7 +26,7 @@ export class DebugHelper {
 
     private _mrubyChannel: OutputChannel;
 
-    public constructor(private _extensionPath: string) {
+    public constructor(private _context: ExtensionContext) {
         if (DebugHelper._instance) {
             console.warn("Multiple DebugHelper instances!");
             DebugHelper._instance.dispose();
@@ -66,7 +66,8 @@ export class DebugHelper {
         let mergedConfig = Object.assign({}, config);
         return Promise.resolve(
         ).then(() => {
-            return RubicConfig.load(workspace.rootPath);
+            //return Sketch.load(workspace.rootPath);
+            return <any>{};
         }).then((rubicConfig) => {
             return this._compileSources(rubicConfig);
         }).then(() => {
@@ -75,7 +76,7 @@ export class DebugHelper {
         });
     }
 
-    private _compileSources(rubicConfig: RubicConfig): Promise<void> {
+    private _compileSources(rubicConfig: Sketch): Promise<void> {
         return Promise.resolve(
         ).then(() => {
             let files: string[] = [];
@@ -104,7 +105,7 @@ export class DebugHelper {
         }); // Promise.resolve().then()
     }
 
-    private _compileMruby(rubicConfig: RubicConfig, file: string): Promise<void> {
+    private _compileMruby(rubicConfig: Sketch, file: string): Promise<void> {
         return new Promise<any>((resolve, reject) => {
             mrbc.compile(
                 file,

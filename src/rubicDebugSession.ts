@@ -14,7 +14,7 @@ import * as path from 'path';
 import * as glob from 'glob';
 import { Writable } from "stream";
 import { readFileSync, writeFileSync } from 'fs';
-import { RubicConfig } from "./rubicConfig";
+import { Sketch } from "./sketch";
 import * as nls from 'vscode-nls';
 let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
@@ -44,7 +44,7 @@ class RubicDebugSession extends CustomDebugSession {
     private static THREAD_ID: number = 1;
     private static THREAD_NAME: string = "Main thread";
     private _board: RubicBoard;
-    private _config: RubicConfig;
+    private _config: Sketch;
     private _stdin: Writable;
 
     public constructor() {
@@ -61,7 +61,8 @@ class RubicDebugSession extends CustomDebugSession {
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
         Promise.resolve(
         ).then(() => {
-            return RubicConfig.load(args.workspaceRoot);
+            //return Sketch.load(args.workspaceRoot);
+            return <any>{};
         }).then((config) => {
             this._config = config;
             return this.connectBoard(args);
@@ -126,11 +127,11 @@ class RubicDebugSession extends CustomDebugSession {
     protected connectBoard(args: RubicRequestArguments): Promise<void> {
         return Promise.resolve(
         ).then(() => {
-            let boardId = args.boardId || this._config.boardId;
+            let boardId = args.boardId || this._config.boardClass;
             let boardPath = args.boardPath || this._config.boardPath;
 
             // Get board class constructor
-            let boardClass = BoardClassList.getClassFromBoardId(boardId);
+            let boardClass = BoardClassList.getClass(boardId);
             if (!boardClass) {
                 return;
             }
@@ -139,7 +140,7 @@ class RubicDebugSession extends CustomDebugSession {
             this._board && this._board.dispose();
 
             // Instantiate new board
-            this._board = new boardClass(boardId, boardPath);
+            this._board = new boardClass(boardPath);
 
             // Register event handlers
             this._board.on("stop", this._handleBoardStop.bind(this));
