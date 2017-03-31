@@ -1,7 +1,10 @@
 {
   "name": "rubic",
   "dependencies": {
+    "fs-extra": "registry:dt/fs-extra#2.0.0+20170306033830",
     "glob": "registry:npm/glob#6.0.0+20160723033700",
+    "pify": "registry:npm/pify#2.3.0+20160522191845",
+    "rimraf": "registry:npm/rimraf#2.5.0+20160723033700",
     "semver": "registry:npm/semver#5.0.0+20160723033700"
   },
   "globalDependencies": {
