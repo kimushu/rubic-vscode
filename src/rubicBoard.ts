@@ -5,14 +5,12 @@ import { EventEmitter } from "events";
 import * as stream from "stream";
 
 export interface BoardCandidate {
-    /** ID of the board */
-    boardId: string;
+    /** Board class name */
+    boardClass: string;
     /** name of the board */
     name: string;
     /** path of the board */
     path: string;
-    /** Board class */
-    boardClass: BoardClass;
     /** Vendor ID */
     vendorId?: number;
     /** Product ID */
@@ -40,14 +38,10 @@ export interface BoardStdio {
 }
 
 export interface BoardClass {
-    /** Get list of IDs */
-    getIdList: () => string[];
-    /** Get human readable name from board ID */
-    getName: (boardId: string) => string;
     /** Enumerate boards */
     list: () => Promise<BoardCandidate[]>;
     /** Constructor */
-    new (boardId: string, path: string): RubicBoard;
+    new (path: string): RubicBoard;
 }
 
 export class RubicBoard extends EventEmitter {
