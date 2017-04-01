@@ -1,6 +1,6 @@
 'use strict';
 
-///<reference path="catalog.d.ts" />
+///<reference path="../schema/catalog.d.ts" />
 import { CacheStorage } from './cacheStorage';
 import { readGithubFile, GitHubRepository } from './githubFetcher';
 import * as semver from 'semver';

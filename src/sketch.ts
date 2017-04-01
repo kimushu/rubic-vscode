@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as semver from 'semver';
 import { RUBIC_VERSION } from './rubicVersion';
-///<reference path="./sketchData.d.ts" />
+///<reference path="../schema/sketch.d.ts" />
 
 // Declaration only
 import vscode = require("vscode");
@@ -90,6 +90,9 @@ export class Sketch implements vscode.Disposable {
 
     /** Check if sketch is loaded */
     get loaded() { return (this._data != null); }
+
+    /** Get watcher */
+    get watcher() { return this._watcher; }
 
     /** Get board class */
     get boardClass() { return this._data && this._data.boardClass; }
