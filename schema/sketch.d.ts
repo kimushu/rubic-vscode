@@ -1,24 +1,24 @@
 declare namespace V1_0_x {
     interface Top {
-        /** Version of Rubic which saved configuration latest */
+        /** DO NOT EDIT: Version of Rubic which saved configuration latest */
         rubicVersion: string;
-        /** Minimum version of Rubic which saved this configuration */
+        /** DO NOT EDIT: Minimum version of Rubic which saved this configuration */
         minRubicVersion?: string;
-        /** Maximum version of Rubic which saved this configuration */
+        /** DO NOT EDIT: Maximum version of Rubic which saved this configuration */
         maxRubicVersion?: string;
-        /** Board class */
+        /** USE BOARD CATALOG TO EDIT THIS VALUE: Board class */
         boardClass: string;
-        /** Firmware UUID */
+        /** USE BOARD CATALOG TO EDIT THIS VALUE: Firmware UUID */
         firmwareUuid: string;
-        /** Release tag */
+        /** USE BOARD CATALOG TO EDIT THIS VALUE: Release tag */
         releaseTag: string;
-        /** Variation path */
+        /** USE BOARD CATALOG TO EDIT THIS VALUE: Variation path */
         variationPath: string;
         /** Path or address of board */
         boardPath?: string;
-        /** List of files to be transfered */
+        /** List of files (or wildcards) to be transfered */
         "transfer.include": string[];
-        /** List of files to be NOT transfered */
+        /** List of files (or wildcards) NOT to be transfered */
         "transfer.exclude": string[];
     }
 }

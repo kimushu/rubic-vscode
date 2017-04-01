@@ -1,0 +1,295 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "definitions": {
+        "RubicCatalog.Board": {
+            "description": "ボード定義 (catalog.jsonの一部)",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "作者名"
+                },
+                "class": {
+                    "description": "ボードクラス名 (Rubic内部実装と合わせる)\n(分かりやすさのためCamelCaseで書いているが、実際には\n  大文字小文字は区別されない)\n※ワークスペースのボード指定に使用されるIDであり、公開後の変更禁止。",
+                    "type": "string"
+                },
+                "description": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "説明文"
+                },
+                "firmwares": {
+                    "description": "ファームウェア一覧\nこの配列の順番が原則としてカタログ上の表示順序となる。",
+                    "items": {
+                        "$ref": "#/definitions/RubicCatalog.FirmwareSummary"
+                    },
+                    "type": "array"
+                },
+                "icon": {
+                    "description": "アイコン画像(Rubic相対パス or URL)",
+                    "type": "string"
+                },
+                "name": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "ボード名称"
+                },
+                "preview": {
+                    "description": "プレビュー版か否か(省略時=false)",
+                    "type": "boolean"
+                },
+                "topics": {
+                    "description": "トピック一覧",
+                    "items": {
+                        "$ref": "#/definitions/RubicCatalog.Topic"
+                    },
+                    "type": "array"
+                },
+                "website": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "WEBサイト URL"
+                }
+            },
+            "type": "object"
+        },
+        "RubicCatalog.FirmwareDetail": {
+            "description": "ファームウェア詳細定義 (firmware.json)",
+            "properties": {
+                "description": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "説明"
+                },
+                "name": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "名前"
+                },
+                "preview": {
+                    "description": "プレビュー版か否か(省略時=false)",
+                    "type": "boolean"
+                },
+                "releases": {
+                    "description": "リリース一覧",
+                    "items": {
+                        "$ref": "#/definitions/RubicCatalog.ReleaseSummary"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "RubicCatalog.FirmwareSummary": {
+            "description": "ファームウェア概要情報 (catalog.jsonの一部)",
+            "properties": {
+                "branch": {
+                    "description": "ブランチ名(省略時=master)",
+                    "type": "string"
+                },
+                "cache": {
+                    "$ref": "#/definitions/RubicCatalog.FirmwareDetail",
+                    "description": "詳細情報(firmware.jsonの中身)"
+                },
+                "disabled": {
+                    "description": "無効化されているか否か(省略時=false)",
+                    "type": "boolean"
+                },
+                "host": {
+                    "description": "ホスティングサイト",
+                    "enum": [
+                        "github"
+                    ],
+                    "type": "string"
+                },
+                "official": {
+                    "description": "ボードベンダーの公式ファームか否か(省略時=false)",
+                    "type": "boolean"
+                },
+                "owner": {
+                    "description": "所有者",
+                    "type": "string"
+                },
+                "repo": {
+                    "description": "リポジトリ名",
+                    "type": "string"
+                },
+                "uuid": {
+                    "description": "UUID\n※ワークスペースのファーム指定に使用されるIDであり、公開後の変更禁止。",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "RubicCatalog.LocalizedString": {
+            "description": "多言語対応文字列 (英語は必須)",
+            "properties": {
+                "de": {
+                    "type": "string"
+                },
+                "en": {
+                    "type": "string"
+                },
+                "es": {
+                    "type": "string"
+                },
+                "fr": {
+                    "type": "string"
+                },
+                "it": {
+                    "type": "string"
+                },
+                "ja": {
+                    "type": "string"
+                },
+                "ko": {
+                    "type": "string"
+                },
+                "ru": {
+                    "type": "string"
+                },
+                "zh-cn": {
+                    "type": "string"
+                },
+                "zh-tw": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "RubicCatalog.ReleaseDetail": {
+            "description": "リリース詳細定義 (release.jsonの中身そのもの)",
+            "properties": {
+                "description": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "リリースの説明文 (存在しない場合、Summaryのdescriptionから引用)"
+                },
+                "name": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "リリースの名称 (存在しない場合、Summaryのnameから引用)"
+                },
+                "variations": {
+                    "description": "バリエーション一覧",
+                    "items": {
+                        "$ref": "#/definitions/RubicCatalog.Variation"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "RubicCatalog.ReleaseSummary": {
+            "description": "リリース概要定義 (catalog.jsonの一部)",
+            "properties": {
+                "author": {
+                    "description": "作者名 (GitHubのauthorのログインID)",
+                    "type": "string"
+                },
+                "cache": {
+                    "$ref": "#/definitions/RubicCatalog.ReleaseDetail",
+                    "description": "zipに格納された release.json のキャッシュ"
+                },
+                "description": {
+                    "description": "リリースの説明 (GitHubリリース説明、英語のみ)",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "リリースの名称 (GitHubリリース名、英語のみ)",
+                    "type": "string"
+                },
+                "preview": {
+                    "description": "プレビュー版か否か(省略時=false)",
+                    "type": "boolean"
+                },
+                "published_at": {
+                    "description": "公開日 (GitHubのリリース情報 published_at より。ただし値は Date.now() フォーマット)",
+                    "type": "number"
+                },
+                "tag": {
+                    "description": "リリースのタグ名\n※ワークスペースのファーム指定に使用されるIDであり、公開後の変更禁止。",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "更新日 (assetのupdated_atより)",
+                    "type": "number"
+                },
+                "url": {
+                    "description": "zip assetのURL",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "RubicCatalog.Runtime.Common": {
+            "description": "ランタイム共通定義",
+            "properties": {
+                "name": {
+                    "description": "ランタイムの名前",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "RubicCatalog.Topic": {
+            "description": "トピック定義",
+            "properties": {
+                "color": {
+                    "description": "色",
+                    "enum": [
+                        "blue",
+                        "gray",
+                        "green",
+                        "lightblue",
+                        "orange",
+                        "red"
+                    ],
+                    "type": "string"
+                },
+                "name": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "トピックの名前"
+                }
+            },
+            "type": "object"
+        },
+        "RubicCatalog.Variation": {
+            "description": "バリエーション定義 (release.jsonの一部)",
+            "properties": {
+                "description": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "バリエーションの説明文"
+                },
+                "name": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "バリエーションの名前"
+                },
+                "path": {
+                    "description": "アーカイブ(zip)内のパス\n※ワークスペースのファーム指定に使用されるIDであり、公開後の変更禁止。",
+                    "type": "string"
+                },
+                "runtimes": {
+                    "description": "ランタイムの一覧",
+                    "items": {
+                        "$ref": "#/definitions/RubicCatalog.Runtime.Common"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "description": "カタログ情報ルート (公式カタログサイトのcatalog.jsonそのもの)",
+    "properties": {
+        "boards": {
+            "description": "ボード一覧\nこの配列の順番が原則としてカタログ上の表示順序となる。",
+            "items": {
+                "$ref": "#/definitions/RubicCatalog.Board"
+            },
+            "type": "array"
+        },
+        "lastModified": {
+            "description": "このJSONの最終更新時刻 (Date.now()の値)",
+            "type": "number"
+        },
+        "rubicVersion": {
+            "description": "対応するRubicのバージョン\nこれを満たさないバージョンのRubic利用者はカタログを更新できず、\nアップデートを推奨される。",
+            "type": "string"
+        }
+    },
+    "type": "object"
+}
+
