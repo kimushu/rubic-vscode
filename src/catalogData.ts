@@ -7,6 +7,8 @@ import * as semver from 'semver';
 import { RubicExtension } from "./extension";
 import * as nls from 'vscode-nls';
 
+import vscode = require("vscode");
+
 const CATALOG_JSON = "catalog.json";
 const CATALOG_ENCODING = "utf8";
 const OFFICIAL_CATALOG: GitHubRepository = {
@@ -28,10 +30,16 @@ export function toLocalizedString(ls: RubicCatalog.LocalizedString): string {
     return (<any>ls).toString();
 }
 
-export class CatalogData {
+export class CatalogData implements vscode.Disposable {
     private _root: RubicCatalog.Root;
 
+    /** Construct instance */
     constructor() {
+    }
+
+    /** Dispose this instance */
+    dispose() {
+        this._root = null;
     }
 
     /** Check if catalog data is loaded */

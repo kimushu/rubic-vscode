@@ -24,8 +24,9 @@ export enum SketchLoadResult {
  * Rubic configuration for each workspace
  * (.vscode/rubic.json)
  */
-export class Sketch {
+export class Sketch implements vscode.Disposable {
     private _filename: string;
+    private _watcher: fs.FSWatcher;
     private _data: V1_0_x.Top;
 
     /**
@@ -42,6 +43,7 @@ export class Sketch {
      */
     load(convert: boolean = false): Promise<SketchLoadResult> {
         let result = SketchLoadResult.LOAD_SUCCESS;
+        this.close();
         return Promise.resolve(
         ).then(() => {
             // Read sketch data
@@ -60,9 +62,24 @@ export class Sketch {
                 }
             })
         }).then((jsonText: string) => {
-            this._data = jsonText && JSON.parse(jsonText);
+            if (jsonText) {
+                this._data = JSON.parse(jsonText);
+                this._watcher = fs.watch(this._filename);
+            }
             return result;
         });
+    }
+
+    /** Close sketch */
+    close() {
+        this._watcher && this._watcher.close();
+        this._watcher = null;
+        this._data = null;
+    }
+
+    /** Dispose this instance */
+    dispose() {
+        this.close();
     }
 
     /** Path of workspace */

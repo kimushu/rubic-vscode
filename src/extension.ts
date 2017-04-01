@@ -54,8 +54,10 @@ export class RubicExtension {
         RubicExtension._version = require(path.join(__dirname, "..", "..", "package.json")).version;
         this._catalogViewer = new CatalogViewer(_context);
         this._debugHelper = new DebugHelper(_context);
+
         this._sketch = new Sketch(workspace.rootPath, window);
         this._catalogData = new CatalogData();
+        _context.subscriptions.push(this._sketch, this._catalogData);
 
         // Load sketch & catalog (background)
         Promise.resolve(
