@@ -20,8 +20,9 @@ export module CacheStorage {
 
     /** writeFile */
     export function writeFile(filename: string, data: any): Promise<void> {
-        return pify(fse.ensureDir)(_baseDir).then(() => {
-            return pify(fse.writeFile)(getFullPath(filename), data);
+        let fullPath = getFullPath(filename);
+        return pify(fse.ensureDir)(path.dirname(fullPath)).then(() => {
+            return pify(fse.writeFile)(fullPath, data);
         });
     }
 
