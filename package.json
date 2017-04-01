@@ -154,6 +154,7 @@
   "markdown": "github",
   "dependencies": {
     "canarium": "github:kimushu/canarium#develop",
+    "comment-json": "^1.1.3",
     "fs-extra": "^2.1.2",
     "github": "^9.2.0",
     "glob": "^7.1.1",

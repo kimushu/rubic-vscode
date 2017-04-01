@@ -11,6 +11,7 @@ import { RUBIC_VERSION } from './rubicVersion';
 import vscode = require("vscode");
 
 const SKETCH_ENCODING = "utf8";
+const LAUNCH_ENCODING = "utf8";
 let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
 export enum SketchLoadResult {
@@ -25,7 +26,8 @@ export enum SketchLoadResult {
  * (.vscode/rubic.json)
  */
 export class Sketch implements vscode.Disposable {
-    private _filename: string;
+    private _rubicFile: string;
+    private _launchFile: string;
     private _watcher: fs.FSWatcher;
     private _data: V1_0_x.Top;
 
@@ -35,7 +37,8 @@ export class Sketch implements vscode.Disposable {
      * @param _window vscode window module (for extension host process)
      */
     constructor(private _workspaceRoot: string, private _window?: typeof vscode.window) {
-        this._filename = path.join(_workspaceRoot, ".vscode", "rubic.json");
+        this._rubicFile = path.join(_workspaceRoot, ".vscode", "rubic.json");
+        this._launchFile = path.join(_workspaceRoot, ".vscode", "launch.json");
     }
 
     /**
@@ -47,7 +50,7 @@ export class Sketch implements vscode.Disposable {
         return Promise.resolve(
         ).then(() => {
             // Read sketch data
-            return fs.readFileSync(this._filename, SKETCH_ENCODING);
+            return fs.readFileSync(this._rubicFile, SKETCH_ENCODING);
         }).catch((reason) => {
             if (!convert || !this._window) {
                 result = SketchLoadResult.NO_SKETCH;
@@ -58,13 +61,13 @@ export class Sketch implements vscode.Disposable {
                 result = migrateResult;
                 if (result === SketchLoadResult.LOAD_MIGRATED) {
                     // Read migrated data again
-                    return fs.readFileSync(this._filename, SKETCH_ENCODING);
+                    return fs.readFileSync(this._rubicFile, SKETCH_ENCODING);
                 }
             })
         }).then((jsonText: string) => {
             if (jsonText) {
                 this._data = JSON.parse(jsonText);
-                this._watcher = fs.watch(this._filename);
+                this._watcher = fs.watch(this._rubicFile);
             }
             return result;
         });
@@ -86,7 +89,7 @@ export class Sketch implements vscode.Disposable {
     get workspaceRoot() { return this._workspaceRoot; }
 
     /** Filename of sketch data */
-    get filename() { return this._filename; }
+    get filename() { return this._rubicFile; }
 
     /** Check if sketch is loaded */
     get loaded() { return (this._data != null); }
@@ -229,7 +232,7 @@ export class Sketch implements vscode.Disposable {
                 top.minRubicVersion = v09x.rubicVersion;
 
                 // TODO: edit launch.json
-                fs.writeFileSync(this._filename, JSON.stringify(top));
+                fs.writeFileSync(this._rubicFile, JSON.stringify(top));
                 if (!keepOld) {
                     fs.unlink(oldFile);
                 }
@@ -243,5 +246,49 @@ export class Sketch implements vscode.Disposable {
             }
             return Promise.reject(error);
         });
+    }
+
+    private _mergeLaunchConfig(): Promise<void> {
+        return Promise.resolve({
+        }).then(() => {
+            return this._ensureSaved(this._launchFile);
+        }).then(() => {
+            return fs.readFileSync(this._launchFile, LAUNCH_ENCODING);
+        }).catch((error) => {
+            // Ignore error here
+            return "{}";
+        }).then((jsonText: string) => {
+            return JSON.parse(jsonText);
+        }).then((obj) => {
+
+        });
+    }
+
+    private _ensureSaved(fileName: string, confirm: boolean = true): Promise<void> {
+        let name = path.relative(fileName, this._workspaceRoot);
+        let editor = this._window.visibleTextEditors.find((editor) => {
+            return path.relative(editor.document.fileName, fileName) === "";
+        });
+        if (!editor || !editor.document.isDirty) {
+            return Promise.resolve();
+        }
+        if (!confirm) {
+            return Promise.reject(Error(
+                localize(
+                    "file-x-not-saved",
+                    "File \"{0}\" is modified and not saved",
+                    name
+                )
+            ));
+        }
+        return Promise.resolve(this._window.showInformationMessage(
+            localize(
+                "save-close-x-to-continue",
+                "Save or close editor of \"{0}\" to continue",
+                name
+            )
+        )).then(() => {
+            return this._ensureSaved(fileName, false);
+        })
     }
 }
