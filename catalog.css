@@ -3,6 +3,12 @@ body {
     -webkit-user-select: none;
     user-select: none;
 }
+.catalog-wrapper {
+    position: absolute;
+    min-height: 240px;
+    width: 100%;
+    height: 100%;
+}
 .catalog-panel {
     display: block;
     position: absolute;
@@ -258,11 +264,22 @@ img.catalog-image-64 {
     color: #ccc;
     background-color: #3a3a3a;
 }
+.vscode-light .catalog-summary-button {
+    border: 1px solid #ccc;
+    color: #6c6c6c;
+    background-color: #e2e2e2;
+}
 .vscode-dark .catalog-summary-button:hover {
     background-color: #464646;
 }
+.vscode-light .catalog-summary-button:hover {
+    background-color: #d9d9d9;
+}
 .vscode-dark .catalog-summary-button:active {
     background-color: #505050;
+}
+.vscode-light .catalog-summary-button:active {
+    background-color: #c9c9c9;
 }
 .vscode-dark .icon-triangle {
     background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath fill='%23e8e8e8' d='M6 4v8l4-4-4-4zm1 2.414L8.586 8 7 9.586V6.414z'/%3E%3C/svg%3E") no-repeat;

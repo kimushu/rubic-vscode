@@ -9,82 +9,81 @@
 </head>
 
 <body>
-  {{#each panels}}
-  <div class="catalog-panel{{#if opened}} catalog-panel-opened{{/if
-  }}{{#if not_selected}} catalog-panel-not-selected{{/if
-  }}{{#if disabled}} catalog-panel-disabled{{/if}}{{#if changed}} catalog-panel-changed{{/if}}"
-   style="margin-top: calc(28px * {{@index}}); margin-bottom: calc(1px + 28px * ({{../panels.length}} - {{@index}} - 1));"
-   data-id="{{id}}">
-    <div class="catalog-header icon-triangle">
-      <span class="catalog-header-label">{{label}} :
-        <span class="catalog-header-decision">{{decision}}</span>
-        <span class="catalog-header-loading">{{@root.localized.loading}}</span>
-        <span class="catalog-header-disabled">{{@root.localized.unselectable}}</span>
-        <span class="catalog-header-not-selected">{{@root.localized.not_selected}}</span>
-        <span class="catalog-header-changed catalog-badge catalog-badge-green">{{@root.localized.changed}}</span>
-      </span>
-    </div>
-    <div class="catalog-content-loading">
-      <div class="catalog-spinner-text">{{@root.localized.loading}}</div>
-    </div>
-    {{#with summary}}
-    <div class="catalog-summary">
-      <div class="catalog-summary-image">
-        <img class="catalog-image-64" src="{{icon}}" width="64" height="64" />
+  <div class="catalog-wrapper">
+    {{#each panels}}
+    <div class="catalog-panel{{#if opened}} catalog-panel-opened{{/if
+    }}{{#if not_selected}} catalog-panel-not-selected{{/if
+    }}{{#if disabled}} catalog-panel-disabled{{/if}}{{#if changed}} catalog-panel-changed{{/if}}"
+    style="margin-top: calc(28px * {{@index}}); margin-bottom: calc(1px + 28px * ({{../panels.length}} - {{@index}} - 1));"
+    data-id="{{id}}">
+      <div class="catalog-header icon-triangle">
+        <span class="catalog-header-label">{{label}} :
+          <span class="catalog-header-decision">{{decision}}</span>
+          <span class="catalog-header-loading">{{@root.localized.loading}}</span>
+          <span class="catalog-header-disabled">{{@root.localized.unselectable}}</span>
+          <span class="catalog-header-not-selected">{{@root.localized.not_selected}}</span>
+          <span class="catalog-header-changed catalog-badge catalog-badge-green">{{@root.localized.changed}}</span>
+        </span>
       </div>
-      {{#each groups}}
-      <div class="catalog-summary-line catalog-summary-header">{{header}}</div>
-      {{#if text}}
-      <div class="catalog-summary-line catalog-summary-data">{{text}}</div>
-      {{/if}}
-      {{#if buttons}}
-      <div class="catalog-summary-line catalog-summary-data">
-        {{#each buttons}}
-        <span class="catalog-summary-button{{#if dropdown}} catalog-summary-button-dropdown{{/if}}">{{text}}</span>
-        {{/each}}
+      <div class="catalog-content-loading">
+        <div class="catalog-spinner-text">{{@root.localized.loading}}</div>
       </div>
-      {{/if}}
-      {{/each}}{{!--groups--}}
-    </div>
-    {{else}}{{!--with summary--}}
-    <div class="catalog-list">
-      {{#each items}}
-      <div class="catalog-item{{#if settled}} catalog-item-settled{{/if}}{{#if ../withIcons}} catalog-item-with-icon{{/if}}" data-id="{{id}}">
-        {{#if ../withIcons}}
-        <div class="catalog-item-icon">
-          <img class="catalog-image-64" src="{{#if icon}}{{icon}}{{else}}images/no_image_64x64.png{{/if}}" width="64" height="64" />
+      {{#with summary}}
+      <div class="catalog-summary">
+        <div class="catalog-summary-image">
+          <img class="catalog-image-64" src="{{icon}}" width="64" height="64" />
         </div>
+        {{#each groups}}
+        <div class="catalog-summary-line catalog-summary-header">{{header}}</div>
+        {{#if text}}
+        <div class="catalog-summary-line catalog-summary-data">{{text}}</div>
         {{/if}}
-        <div class="catalog-item-line">
-          <span class="catalog-item-title">{{title}}</span>
-          {{#if preview}}
-          <span class="catalog-badge catalog-badge-pill catalog-badge-lightblue">{{@root.localized.preview}}</span>
-          {{/if}}
-          {{#if obsolete}}
-          <span class="catalog-badge catalog-badge-pill catalog-badge-red">{{@root.localized.obsolete}}</span>
-          {{/if}}
-        </div>
-        <div class="catalog-item-description">{{description}}</div>
-        <div class="catalog-item-author">{{author}}</div>
-        {{#if topics}}
-        <div class="catalog-item-topics">
-          {{#each topics}}
-          <span class="catalog-badge{{#if color}} catalog-badge-{{color}}{{/if}}">{{name}}</span>
+        {{#if buttons}}
+        <div class="catalog-summary-line catalog-summary-data">
+          {{#each buttons}}
+          <span class="catalog-summary-button{{#if dropdown}} catalog-summary-button-dropdown{{/if}}">{{text}}</span>
           {{/each}}
         </div>
         {{/if}}
-        <!--<span class="catalog-item-config icon-gear">&nbsp;</span>-->
+        {{/each}}{{!--groups--}}
       </div>
-      {{else}}
-      <div class="catalog-item-none">{{@root.localized.no_item}}</div>
-      {{/each}}
+      {{else}}{{!--with summary--}}
+      <div class="catalog-list">
+        {{#each items}}
+        <div class="catalog-item{{#if settled}} catalog-item-settled{{/if}}{{#if ../withIcons}} catalog-item-with-icon{{/if}}" data-id="{{id}}">
+          {{#if ../withIcons}}
+          <div class="catalog-item-icon">
+            <img class="catalog-image-64" src="{{#if icon}}{{icon}}{{else}}images/no_image_64x64.png{{/if}}" width="64" height="64" />
+          </div>
+          {{/if}}
+          <div class="catalog-item-line">
+            <span class="catalog-item-title">{{title}}</span>
+            {{#if preview}}
+            <span class="catalog-badge catalog-badge-pill catalog-badge-lightblue">{{@root.localized.preview}}</span>
+            {{/if}}
+            {{#if obsolete}}
+            <span class="catalog-badge catalog-badge-pill catalog-badge-red">{{@root.localized.obsolete}}</span>
+            {{/if}}
+          </div>
+          <div class="catalog-item-description">{{description}}</div>
+          <div class="catalog-item-author">{{author}}</div>
+          {{#if topics}}
+          <div class="catalog-item-topics">
+            {{#each topics}}
+            <span class="catalog-badge{{#if color}} catalog-badge-{{color}}{{/if}}">{{name}}</span>
+            {{/each}}
+          </div>
+          {{/if}}
+          <!--<span class="catalog-item-config icon-gear">&nbsp;</span>-->
+        </div>
+        {{else}}
+        <div class="catalog-item-none">{{@root.localized.no_item}}</div>
+        {{/each}}
+      </div>
+      {{/with}}{{!--summary--}}
     </div>
-    {{/with}}{{!--summary--}}
+    {{/each}}
   </div>
-  {{/each}}
-  <!--<div class="catalog-panel catalog-panel-after" style="margin-top: calc(28px * {{panels.length}});">
-    hogehoge
-  </div>-->
   <a id="sendCommand" href="command:{{command}}?" style="display: none"></a>
   <script src="{{extensionPath}}/out/src/catalogPage.js"></script>
 </body>
