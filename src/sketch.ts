@@ -31,27 +31,28 @@ export class Sketch {
     /**
      * Construct sketch instance
      * @param _workspaceRoot Root path of workspace
+     * @param _window vscode window module (for extension host process)
      */
-    constructor(private _workspaceRoot: string) {
+    constructor(private _workspaceRoot: string, private _window?: typeof vscode.window) {
         this._filename = path.join(_workspaceRoot, ".vscode", "rubic.json");
     }
 
     /**
      * Load configuration (with migration when window argument passed)
      */
-    load(window?: typeof vscode.window): Promise<SketchLoadResult> {
+    load(convert: boolean = false): Promise<SketchLoadResult> {
         let result = SketchLoadResult.LOAD_SUCCESS;
         return Promise.resolve(
         ).then(() => {
             // Read sketch data
             return fs.readFileSync(this._filename, SKETCH_ENCODING);
         }).catch((reason) => {
-            if (!window) {
+            if (!convert || !this._window) {
                 result = SketchLoadResult.NO_SKETCH;
                 return null;
             }
             // Try migration from Rubic 0.9.x or earlier
-            return this._migrateFromChrome(window).then((migrateResult) => {
+            return this._migrateFromChrome().then((migrateResult) => {
                 result = migrateResult;
                 if (result === SketchLoadResult.LOAD_MIGRATED) {
                     // Read migrated data again
@@ -112,7 +113,7 @@ export class Sketch {
     /**
      * Migrate from Chrome App Rubic (<= 0.9.x)
      */
-    private _migrateFromChrome(window: typeof vscode.window): Promise<SketchLoadResult> {
+    private _migrateFromChrome(): Promise<SketchLoadResult> {
         let oldFile = path.join(this._workspaceRoot, "sketch.json");
         return Promise.resolve({
         }).then(() => {
@@ -154,7 +155,7 @@ export class Sketch {
             // Confirm to user
             return Promise.resolve(
             ).then(() => {
-                return window.showInformationMessage(
+                return this._window.showInformationMessage(
                     localize(
                         "convert-sketch-confirm",
                         "This sketch was created by old version of Rubic. Are you sure to convert?"
@@ -163,7 +164,7 @@ export class Sketch {
                 );
             }).then((item) => {
                 if (item.isCloseAffordance) { return Promise.reject(SketchLoadResult.LOAD_CANCELED); }
-                return window.showWarningMessage(
+                return this._window.showWarningMessage(
                     localize(
                         "convertion-warning",
                         "Are you sure to delete old settings? (This cannot be undone)"

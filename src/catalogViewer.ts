@@ -85,7 +85,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
         }).then(() => {
             if (sketch.loaded) { return SketchLoadResult.LOAD_SUCCESS; }
             // Load sketch (with migration)
-            return sketch.load(window);
+            return sketch.load(true);
         }).then((result) => {
             if (result === SketchLoadResult.LOAD_CANCELED) { return; }
             this._provSelect = {

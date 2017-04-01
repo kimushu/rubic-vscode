@@ -1,6 +1,6 @@
 'use strict';
 
-import { ExtensionContext, Disposable, workspace } from 'vscode';
+import { ExtensionContext, Disposable, window, workspace } from 'vscode';
 import { Sketch, SketchLoadResult } from './sketch';
 import { CatalogViewer } from './catalogViewer';
 import { DebugHelper } from './debugHelper';
@@ -54,7 +54,7 @@ export class RubicExtension {
         RubicExtension._version = require(path.join(__dirname, "..", "..", "package.json")).version;
         this._catalogViewer = new CatalogViewer(_context);
         this._debugHelper = new DebugHelper(_context);
-        this._sketch = new Sketch(workspace.rootPath);
+        this._sketch = new Sketch(workspace.rootPath, window);
         this._catalogData = new CatalogData();
 
         // Load sketch & catalog (background)
