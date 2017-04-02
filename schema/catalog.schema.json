@@ -2,19 +2,23 @@
     "$schema": "http://json-schema.org/draft-04/schema#",
     "definitions": {
         "RubicCatalog.Board": {
-            "description": "ボード定義 (catalog.jsonの一部)",
+            "description": "ja: ボード定義 (catalog.jsonの一部)\nen: Board definition",
             "properties": {
                 "author": {
                     "$ref": "#/definitions/RubicCatalog.LocalizedString",
                     "description": "作者名"
                 },
                 "class": {
-                    "description": "ボードクラス名 (Rubic内部実装と合わせる)\n(分かりやすさのためCamelCaseで書いているが、実際には\n  大文字小文字は区別されない)\n※ワークスペースのボード指定に使用されるIDであり、公開後の変更禁止。",
+                    "description": "ja: ボードクラス名 (Rubic内部実装と合わせる)\n(分かりやすさのためCamelCaseで書いているが、実際には\n  大文字小文字は区別されない)\n※ワークスペースのボード指定に使用されるIDであり、公開後の変更禁止。",
                     "type": "string"
                 },
                 "description": {
                     "$ref": "#/definitions/RubicCatalog.LocalizedString",
                     "description": "説明文"
+                },
+                "disabled": {
+                    "description": "ja: 無効化して表示対象から除外するかどうか\nen: Is disabled (Disabled board is excluded from list)",
+                    "type": "boolean"
                 },
                 "firmwares": {
                     "description": "ファームウェア一覧\nこの配列の順番が原則としてカタログ上の表示順序となる。",
@@ -116,7 +120,7 @@
             "type": "object"
         },
         "RubicCatalog.LocalizedString": {
-            "description": "多言語対応文字列 (英語は必須)",
+            "description": "ja: 多言語対応文字列 (英語は必須)\nen: Multiligual string (English is always required. Other languages are optional)",
             "properties": {
                 "de": {
                     "type": "string"
@@ -225,10 +229,10 @@
             "type": "object"
         },
         "RubicCatalog.Topic": {
-            "description": "トピック定義",
+            "description": "ja: トピック定義\nen: Topic definition",
             "properties": {
                 "color": {
-                    "description": "色",
+                    "description": "ja: 色\nen: Color of topic",
                     "enum": [
                         "blue",
                         "gray",
@@ -241,7 +245,7 @@
                 },
                 "name": {
                     "$ref": "#/definitions/RubicCatalog.LocalizedString",
-                    "description": "トピックの名前"
+                    "description": "ja: トピックの名前\nen: Name of topic"
                 }
             },
             "type": "object"
@@ -272,21 +276,21 @@
             "type": "object"
         }
     },
-    "description": "カタログ情報ルート (公式カタログサイトのcatalog.jsonそのもの)",
+    "description": "ja: カタログ情報ルート (公式カタログサイトのcatalog.jsonそのもの)\nen: Root structure of catalog information",
     "properties": {
         "boards": {
-            "description": "ボード一覧\nこの配列の順番が原則としてカタログ上の表示順序となる。",
+            "description": "ja: ボード一覧 (この配列の順番が原則としてカタログ上の表示順序となる)\nen: List of board definitions (The order of this array will be used as the order of catalog list)",
             "items": {
                 "$ref": "#/definitions/RubicCatalog.Board"
             },
             "type": "array"
         },
         "lastModified": {
-            "description": "このJSONの最終更新時刻 (Date.now()の値)",
+            "description": "ja: このJSONの最終更新時刻 (Date.now()の値)\nen: Timestamp of last modified (by Date.now() value)",
             "type": "number"
         },
         "rubicVersion": {
-            "description": "対応するRubicのバージョン\nこれを満たさないバージョンのRubic利用者はカタログを更新できず、\nアップデートを推奨される。",
+            "description": "ja: 対応するRubicのバージョンの範囲 (これを満たさないRubic利用者はカタログ更新不可)\nen: Range of version of Rubic which supports this catalog",
             "type": "string"
         }
     },

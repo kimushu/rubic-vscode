@@ -1,29 +1,31 @@
 declare namespace RubicCatalog {
     /**
-     * カタログ情報ルート (公式カタログサイトのcatalog.jsonそのもの)
+     * ja: カタログ情報ルート (公式カタログサイトのcatalog.jsonそのもの)
+     * en: Root structure of catalog information
      */
     interface Root {
         /**
-         * 対応するRubicのバージョン
-         * これを満たさないバージョンのRubic利用者はカタログを更新できず、
-         * アップデートを推奨される。
+         * ja: 対応するRubicのバージョンの範囲 (これを満たさないRubic利用者はカタログ更新不可)
+         * en: Range of version of Rubic which supports this catalog
          */
         rubicVersion: string;
 
         /**
-         * このJSONの最終更新時刻 (Date.now()の値)
+         * ja: このJSONの最終更新時刻 (Date.now()の値)
+         * en: Timestamp of last modified (by Date.now() value)
          */
         lastModified: number;
 
         /**
-         * ボード一覧
-         * この配列の順番が原則としてカタログ上の表示順序となる。
+         * ja: ボード一覧 (この配列の順番が原則としてカタログ上の表示順序となる)
+         * en: List of board definitions (The order of this array will be used as the order of catalog list)
          */
         boards: Board[];
     }
 
     /**
-     * 多言語対応文字列 (英語は必須)
+     * ja: 多言語対応文字列 (英語は必須)
+     * en: Multiligual string (English is always required. Other languages are optional)
      */
     interface LocalizedString {
         en:  string;        /** English (always required) */
@@ -38,26 +40,42 @@ declare namespace RubicCatalog {
         "zh-tw"?: string;   /** Chinese (Taiwan) */
     }
 
-    /** トピック定義 */
+    /**
+     * ja: トピック定義
+     * en: Topic definition
+     */
     interface Topic {
-        /** トピックの名前 */
+        /**
+         * ja: トピックの名前
+         * en: Name of topic
+         */
         name: LocalizedString;
 
-        /** 色 */
+        /**
+         * ja: 色
+         * en: Color of topic
+         */
         color: null|"gray"|"blue"|"green"|"lightblue"|"orange"|"red";
     }
 
     /**
-     * ボード定義 (catalog.jsonの一部)
+     * ja: ボード定義 (catalog.jsonの一部)
+     * en: Board definition
      */
     interface Board {
         /**
-         * ボードクラス名 (Rubic内部実装と合わせる)
+         * ja: ボードクラス名 (Rubic内部実装と合わせる)
          * (分かりやすさのためCamelCaseで書いているが、実際には
          *  大文字小文字は区別されない)
          * ※ワークスペースのボード指定に使用されるIDであり、公開後の変更禁止。
          */
         class: string;
+
+        /**
+         * ja: 無効化して表示対象から除外するかどうか
+         * en: Is disabled (Disabled board is excluded from list)
+         */
+        disabled?: boolean;
 
         /** ボード名称 */
         name: LocalizedString;
