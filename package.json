@@ -137,7 +137,7 @@
     "jsonValidation": [
       {
         "fileMatch": "rubic.json",
-        "url": "./rubicConfigSchema.json"
+        "url": "./schema/sketch.schema.json"
       }
     ]
   },
