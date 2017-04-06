@@ -20,13 +20,6 @@
                     "description": "ja: 無効化して表示対象から除外するかどうか\nen: Is disabled (Disabled board is excluded from list)",
                     "type": "boolean"
                 },
-                "firmwares": {
-                    "description": "ファームウェア一覧\nこの配列の順番が原則としてカタログ上の表示順序となる。",
-                    "items": {
-                        "$ref": "#/definitions/RubicCatalog.FirmwareSummary"
-                    },
-                    "type": "array"
-                },
                 "icon": {
                     "description": "アイコン画像(Rubic相対パス or URL)",
                     "type": "string"
@@ -39,6 +32,13 @@
                     "description": "プレビュー版か否か(省略時=false)",
                     "type": "boolean"
                 },
+                "repositories": {
+                    "description": "リポジトリ一覧\nこの配列の順番が原則としてカタログ上の表示順序となる。",
+                    "items": {
+                        "$ref": "#/definitions/RubicCatalog.RepositorySummary"
+                    },
+                    "type": "array"
+                },
                 "topics": {
                     "description": "トピック一覧",
                     "items": {
@@ -49,72 +49,6 @@
                 "website": {
                     "$ref": "#/definitions/RubicCatalog.LocalizedString",
                     "description": "WEBサイト URL"
-                }
-            },
-            "type": "object"
-        },
-        "RubicCatalog.FirmwareDetail": {
-            "description": "ファームウェア詳細定義 (firmware.json)",
-            "properties": {
-                "description": {
-                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
-                    "description": "説明"
-                },
-                "name": {
-                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
-                    "description": "名前"
-                },
-                "preview": {
-                    "description": "プレビュー版か否か(省略時=false)",
-                    "type": "boolean"
-                },
-                "releases": {
-                    "description": "リリース一覧",
-                    "items": {
-                        "$ref": "#/definitions/RubicCatalog.ReleaseSummary"
-                    },
-                    "type": "array"
-                }
-            },
-            "type": "object"
-        },
-        "RubicCatalog.FirmwareSummary": {
-            "description": "ファームウェア概要情報 (catalog.jsonの一部)",
-            "properties": {
-                "branch": {
-                    "description": "ブランチ名(省略時=master)",
-                    "type": "string"
-                },
-                "cache": {
-                    "$ref": "#/definitions/RubicCatalog.FirmwareDetail",
-                    "description": "詳細情報(firmware.jsonの中身)"
-                },
-                "disabled": {
-                    "description": "無効化されているか否か(省略時=false)",
-                    "type": "boolean"
-                },
-                "host": {
-                    "description": "ホスティングサイト",
-                    "enum": [
-                        "github"
-                    ],
-                    "type": "string"
-                },
-                "official": {
-                    "description": "ボードベンダーの公式ファームか否か(省略時=false)",
-                    "type": "boolean"
-                },
-                "owner": {
-                    "description": "所有者",
-                    "type": "string"
-                },
-                "repo": {
-                    "description": "リポジトリ名",
-                    "type": "string"
-                },
-                "uuid": {
-                    "description": "UUID\n※ワークスペースのファーム指定に使用されるIDであり、公開後の変更禁止。",
-                    "type": "string"
                 }
             },
             "type": "object"
@@ -213,6 +147,72 @@
                 },
                 "url": {
                     "description": "zip assetのURL",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "RubicCatalog.RepositoryDetail": {
+            "description": "リポジトリ詳細定義 (rubic-repository.json)",
+            "properties": {
+                "description": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "説明"
+                },
+                "name": {
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "名前"
+                },
+                "preview": {
+                    "description": "プレビュー版か否か(省略時=false)",
+                    "type": "boolean"
+                },
+                "releases": {
+                    "description": "リリース一覧",
+                    "items": {
+                        "$ref": "#/definitions/RubicCatalog.ReleaseSummary"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "RubicCatalog.RepositorySummary": {
+            "description": "リポジトリ概要情報 (catalog.jsonの一部)",
+            "properties": {
+                "branch": {
+                    "description": "ブランチ名(省略時=master)",
+                    "type": "string"
+                },
+                "cache": {
+                    "$ref": "#/definitions/RubicCatalog.RepositoryDetail",
+                    "description": "詳細情報(firmware.jsonの中身)"
+                },
+                "disabled": {
+                    "description": "無効化されているか否か(省略時=false)",
+                    "type": "boolean"
+                },
+                "host": {
+                    "description": "ホスティングサイト",
+                    "enum": [
+                        "github"
+                    ],
+                    "type": "string"
+                },
+                "official": {
+                    "description": "ボードベンダーの公式ファームか否か(省略時=false)",
+                    "type": "boolean"
+                },
+                "owner": {
+                    "description": "所有者",
+                    "type": "string"
+                },
+                "repo": {
+                    "description": "リポジトリ名",
+                    "type": "string"
+                },
+                "uuid": {
+                    "description": "UUID\n※ワークスペースのファーム指定に使用されるIDであり、公開後の変更禁止。",
                     "type": "string"
                 }
             },

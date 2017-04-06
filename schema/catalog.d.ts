@@ -99,16 +99,16 @@ declare namespace RubicCatalog {
         topics: Topic[];
 
         /**
-         * ファームウェア一覧
+         * リポジトリ一覧
          * この配列の順番が原則としてカタログ上の表示順序となる。
          */
-        firmwares: FirmwareSummary[];
+        repositories: RepositorySummary[];
     }
 
     /**
-     * ファームウェア概要情報 (catalog.jsonの一部)
+     * リポジトリ概要情報 (catalog.jsonの一部)
      */
-    interface FirmwareSummary {
+    interface RepositorySummary {
         /**
          * UUID
          * ※ワークスペースのファーム指定に使用されるIDであり、公開後の変更禁止。
@@ -134,13 +134,13 @@ declare namespace RubicCatalog {
         branch?: string;
 
         /** 詳細情報(firmware.jsonの中身) */
-        cache?: FirmwareDetail;
+        cache?: RepositoryDetail;
     }
 
     /**
-     * ファームウェア詳細定義 (firmware.json)
+     * リポジトリ詳細定義 (rubic-repository.json)
      */
-    interface FirmwareDetail {
+    interface RepositoryDetail {
         /** 名前 */
         name: LocalizedString;
 

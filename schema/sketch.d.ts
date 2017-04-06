@@ -8,8 +8,8 @@ declare namespace V1_0_x {
         maxRubicVersion?: string;
         /** USE BOARD CATALOG TO EDIT THIS VALUE: Board class */
         boardClass: string;
-        /** USE BOARD CATALOG TO EDIT THIS VALUE: Firmware UUID */
-        firmwareUuid: string;
+        /** USE BOARD CATALOG TO EDIT THIS VALUE: Repository UUID */
+        repositoryUuid: string;
         /** USE BOARD CATALOG TO EDIT THIS VALUE: Release tag */
         releaseTag: string;
         /** USE BOARD CATALOG TO EDIT THIS VALUE: Variation path */

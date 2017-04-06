@@ -17,7 +17,7 @@
         "選択不可",
         "項目なし",
         "ボード",
-        "ファームウェア",
+        "リポジトリ",
         "リリース",
         "バリエーション",
         "まとめ",
@@ -47,7 +47,7 @@
         "unselectable",
         "no-item",
         "board",
-        "firmware",
+        "repository",
         "release",
         "variation",
         "summary",
@@ -57,7 +57,6 @@
         "select-port",
         "test-connection",
         "exec-engine",
-        "firmware",
         "write-firmware"
     ]
 }

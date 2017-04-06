@@ -30,7 +30,7 @@ const UPDATE_PERIOD_MINUTES = 12 * 60;
 
 interface CatalogSelection {
     boardClass: string;
-    firmwareUuid: string;
+    repositoryUuid: string;
     releaseTag: string;
     variationPath: string;
 }
@@ -95,7 +95,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
             if (result === SketchLoadResult.LOAD_CANCELED) { return; }
             this._provSelect = {
                 boardClass: sketch.boardClass,
-                firmwareUuid: sketch.firmwareUuid,
+                repositoryUuid: sketch.repositoryUuid,
                 releaseTag: sketch.releaseTag,
                 variationPath: sketch.variationPath
             };
@@ -121,8 +121,8 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 this._provSelect.boardClass = id;
                 id = null;
                 // fall through
-            case "firmware":
-                this._provSelect.firmwareUuid = id;
+            case "repository":
+                this._provSelect.repositoryUuid = id;
                 id = null;
                 // fall through
             case "release":
@@ -138,12 +138,12 @@ export class CatalogViewer implements TextDocumentContentProvider {
         this._currentPanel = null;
         this._onDidChange.fire(URI_CATALOG);
         if ((this._provSelect.boardClass != null) &&
-            (this._provSelect.firmwareUuid != null) &&
+            (this._provSelect.repositoryUuid != null) &&
             (this._provSelect.releaseTag != null) &&
             (this._provSelect.variationPath != null)) {
             let {sketch} = RubicExtension.instance;
             if ((this._provSelect.boardClass !== sketch.boardClass) ||
-                (this._provSelect.firmwareUuid !== sketch.firmwareUuid) ||
+                (this._provSelect.repositoryUuid !== sketch.repositoryUuid) ||
                 (this._provSelect.releaseTag !== sketch.releaseTag) ||
                 (this._provSelect.variationPath !== sketch.variationPath)) {
                 /*
@@ -306,8 +306,8 @@ export class CatalogViewer implements TextDocumentContentProvider {
                     favorites: true,
                     items: []
                 },{
-                    id: "firmware",
-                    label: localize("firmware", "Firmware"),
+                    id: "repository",
+                    label: localize("repository", "Repository"),
                     disabled: true,
                     items: []
                 },{
@@ -332,10 +332,10 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 this._provSelect = <any>{};
             }
             let favoriteBoards = context.globalState.get("favoriteBoards", []);
-            let [pb, pf, pr, pv, ps] = variables.panels;
+            let [pb, pr, pe, pv, ps] = variables.panels;
             let sb: RubicCatalog.Board;
-            let sf: RubicCatalog.FirmwareSummary;
-            let sr: RubicCatalog.ReleaseSummary;
+            let sr: RubicCatalog.RepositorySummary;
+            let se: RubicCatalog.ReleaseSummary;
             let sv: RubicCatalog.Variation;
 
             // List boards
@@ -369,17 +369,17 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 return a._index - b._index;
             });
 
-            // List firmwares (If board is selected)
+            // List repositories (If board is selected)
             if (sb) {
-                pf.disabled = false;
-                pf.not_selected = (this._provSelect.firmwareUuid == null);
-                pf.changed = !pf.not_selected && (this._provSelect.firmwareUuid !== sketch.firmwareUuid);
-                sb.firmwares.forEach((firm) => {
+                pr.disabled = false;
+                pr.not_selected = (this._provSelect.repositoryUuid == null);
+                pr.changed = !pr.not_selected && (this._provSelect.repositoryUuid !== sketch.repositoryUuid);
+                sb.repositories.forEach((firm) => {
                     if (firm.disabled) { return; }
                     if (!firm.cache) { return; }
                     let title = toLocalizedString(firm.cache.name);
-                    let settled = !pf.not_selected && (firm.uuid === this._provSelect.firmwareUuid);
-                    pf.items.push({
+                    let settled = !pr.not_selected && (firm.uuid === this._provSelect.repositoryUuid);
+                    pr.items.push({
                         id: firm.uuid,
                         title: title,
                         description: toLocalizedString(firm.cache.description),
@@ -388,26 +388,26 @@ export class CatalogViewer implements TextDocumentContentProvider {
                         official: !!firm.official,
                         preview: !!firm.cache.preview,
                         settled: settled,
-                        _index: pf.items.length
+                        _index: pr.items.length
                     });
                     if (settled) {
-                        pf.decision = title;
-                        sf = firm;
+                        pr.decision = title;
+                        sr = firm;
                         defaultPanel = 2;
                     }
                 });
             }
 
-            // List releases (If firmware is selected)
-            if (sf) {
-                pr.disabled = false;
-                pr.not_selected = (this._provSelect.releaseTag == null);
-                pr.changed = !pr.not_selected && (this._provSelect.releaseTag !== sketch.releaseTag);
-                sf.cache.releases.forEach((rel) => {
+            // List repositories (If repository is selected)
+            if (sr) {
+                pe.disabled = false;
+                pe.not_selected = (this._provSelect.releaseTag == null);
+                pe.changed = !pe.not_selected && (this._provSelect.releaseTag !== sketch.releaseTag);
+                sr.cache.releases.forEach((rel) => {
                     if (!rel.cache) { return; }
                     let title = toLocalizedString(rel.cache.name || {en: rel.name});
-                    let settled = !pr.not_selected && (rel.tag === this._provSelect.releaseTag);
-                    pr.items.push({
+                    let settled = !pe.not_selected && (rel.tag === this._provSelect.releaseTag);
+                    pe.items.push({
                         id: rel.tag,
                         title: title,
                         description: toLocalizedString(rel.cache.description || {en: rel.description}),
@@ -416,26 +416,26 @@ export class CatalogViewer implements TextDocumentContentProvider {
                             } : ${new Date(rel.published_at).toLocaleDateString()}`,
                         preview: !!rel.preview,
                         settled: settled,
-                        _index: pr.items.length
+                        _index: pe.items.length
                     });
                     if (settled) {
-                        pr.decision = title;
-                        sr = rel;
+                        pe.decision = title;
+                        se = rel;
                         defaultPanel = 3;
                     }
                 });
             }
 
             // List variations (If release is selected)
-            if (sr) {
+            if (se) {
                 pv.disabled = false;
-                if (sr.cache.variations.length === 1 && this._provSelect.variationPath == null) {
+                if (se.cache.variations.length === 1 && this._provSelect.variationPath == null) {
                     // Select variation automatically
-                    this._provSelect.variationPath = sr.cache.variations[0].path;
+                    this._provSelect.variationPath = se.cache.variations[0].path;
                 }
                 pv.not_selected = (this._provSelect.variationPath == null);
                 pv.changed = !pv.not_selected && (this._provSelect.variationPath !== sketch.variationPath);
-                sr.cache.variations.forEach((vary) => {
+                se.cache.variations.forEach((vary) => {
                     let title = toLocalizedString(vary.name);
                     let settled = !pv.not_selected && (vary.path === this._provSelect.variationPath);
                     pv.items.push({

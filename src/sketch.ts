@@ -103,8 +103,8 @@ export class Sketch implements vscode.Disposable {
     /** Get board path */
     get boardPath() { return this._data && this._data.boardPath; }
 
-    /** Get firmware UUID */
-    get firmwareUuid() { return this._data && this._data.firmwareUuid; }
+    /** Get repository UUID */
+    get repositoryUuid() { return this._data && this._data.repositoryUuid; }
 
     /** Get release tag */
     get releaseTag() { return this._data && this._data.releaseTag; }
@@ -207,19 +207,19 @@ export class Sketch implements vscode.Disposable {
                 switch (v09x.board.__class__) {
                     case "PeridotBoard":
                         top.boardClass = "PeridotClassicBoard";
-                        top.firmwareUuid = "d0a9b0f1-ff57-4f3b-b121-d8e5ad173725";
+                        top.repositoryUuid = "d0a9b0f1-ff57-4f3b-b121-d8e5ad173725";
                         top.releaseTag = "v0.1.x";
                         top.variationPath = "plain_plain_epcs4_auto.rpd";
                         break;
                     case "GrCitrusBoard":
                         top.boardClass = "GrCitrusBoard";
-                        top.firmwareUuid = "809d1206-8cd8-46f6-a657-2f60c050d7c9";
+                        top.repositoryUuid = "809d1206-8cd8-46f6-a657-2f60c050d7c9";
                         top.releaseTag = "v2.12";
                         top.variationPath = "citrus_sketch.bin";
                         break;
                     case "WakayamaRbBoard":
                         top.boardClass = "WakayamaRbBoard";
-                        top.firmwareUuid = "1ac3a112-1640-482f-8ca3-cf5afc181fe6";
+                        top.repositoryUuid = "1ac3a112-1640-482f-8ca3-cf5afc181fe6";
                         // top.releaseTag = "";
                         // top.variationPath = "";
                         break;

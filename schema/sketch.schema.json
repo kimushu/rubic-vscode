@@ -9,10 +9,6 @@
             "description": "Path or address of board",
             "type": "string"
         },
-        "firmwareUuid": {
-            "description": "USE BOARD CATALOG TO EDIT THIS VALUE: Firmware UUID",
-            "type": "string"
-        },
         "maxRubicVersion": {
             "description": "DO NOT EDIT: Maximum version of Rubic which saved this configuration",
             "type": "string"
@@ -23,6 +19,10 @@
         },
         "releaseTag": {
             "description": "USE BOARD CATALOG TO EDIT THIS VALUE: Release tag",
+            "type": "string"
+        },
+        "repositoryUuid": {
+            "description": "USE BOARD CATALOG TO EDIT THIS VALUE: Repository UUID",
             "type": "string"
         },
         "rubicVersion": {

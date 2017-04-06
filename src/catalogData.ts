@@ -66,11 +66,11 @@ export class CatalogData implements vscode.Disposable {
      * Lookup firmware definition from firmware's UUID
      * @param uuid UUID of firmware
      */
-    getFirmware(uuid: string): RubicCatalog.FirmwareSummary {
+    getFirmware(uuid: string): RubicCatalog.RepositorySummary {
         if (!this._root) { return null; }
         for (let index = 0; index < this._root.boards.length; ++index) {
             let board = this._root.boards[index];
-            let firmware = board.firmwares.find((firmware) => {
+            let firmware = board.repositories.find((firmware) => {
                 return (firmware.uuid === uuid);
             });
             if (firmware) { return firmware; }
