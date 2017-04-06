@@ -1,11 +1,13 @@
 {
     "messages": [
         "Rubicボードカタログ",
+        "カタログが更新されました (最終変更日時: {0})",
         "ここをクリックするとRubicボードカタログを開きます",
         "ここをクリックすると接続先を選択できます",
         "ボード未選択",
         "カタログデータ無し",
         "接続先未選択",
+        "公式",
         "プレビュー版",
         "廃止",
         "WEBサイト",
@@ -29,11 +31,13 @@
     ],
     "keys": [
         "catalog-title",
+        "catalog-updated-d",
         "click-to-show-catalog",
         "click-to-select-port",
         "no-board",
         "no-catalog",
         "no-port",
+        "official",
         "preview",
         "obsolete",
         "website",

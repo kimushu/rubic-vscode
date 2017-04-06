@@ -3,6 +3,7 @@
   "configuration.title": "Rubic",
   "configuration.catalogUrl.description": "URL of board catalog repository. If not set, Rubic official repository will be used.",
   "command.showCatalog.title": "Show Rubic board catalog",
+  "command.updateCatalog.title": "Update catalog",
   "debug.rubic.label": "Rubic Debugger",
   "debug.rubic.attribute.workspaceRoot.description": "Path of the workspace",
   "debug.rubic.launch.program.description": "Path of the program to launch on board",

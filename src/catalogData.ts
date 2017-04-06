@@ -48,6 +48,9 @@ export class CatalogData implements vscode.Disposable {
     /** Get list of boards */
     get boards() { return (this._root && this._root.boards) || []; }
 
+    /** Get last modified date */
+    get lastModified() { return this._root && new Date(this._root.lastModified); }
+
     /**
      * Lookup board definition from board class name
      * @param boardClass Class name of board

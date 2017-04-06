@@ -3,6 +3,7 @@
   "configuration.title": "Rubic",
   "configuration.catalogUrl.description": "ボードカタログのリポジトリURL。設定されていない場合、Rubic公式カタログが使用されます。",
   "command.showCatalog.title": "Rubicのボードカタログを開く",
+  "command.updateCatalog.title": "カタログを更新する",
   "debug.rubic.label": "Rubic デバッガ",
   "debug.rubic.attribute.workspaceRoot.description": "ワークスペースのパス",
   "debug.rubic.launch.program.description": "ボード上で実行するプログラムへのパス",

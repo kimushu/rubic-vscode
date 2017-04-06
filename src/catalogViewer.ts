@@ -24,6 +24,7 @@ let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
 const URI_CATALOG = Uri.parse("rubic://catalog");
 const CMD_SHOW_CATALOG = "extension.rubic.showCatalog";
+const CMD_UPDATE_CATALOG = "extension.rubic.updateCatalog";
 const CMD_SELECT_PORT  = "extension.rubic.selectPort";
 const UPDATE_PERIOD_MINUTES = 12 * 60;
 
@@ -54,14 +55,18 @@ export class CatalogViewer implements TextDocumentContentProvider {
         // Register commands
         context.subscriptions.push(
             commands.registerCommand(CMD_SHOW_CATALOG, (params) => {
+                const s = require("serialport");
+                console.log(util.format(s));
+
                 if (params) {
                     this._updateCatalogView(params);
                 } else {
                     this._showCatalogView();
                 }
-            })
-        );
-        context.subscriptions.push(
+            }),
+            commands.registerCommand(CMD_UPDATE_CATALOG, () => {
+                this._fetchCatalog();
+            }),
             commands.registerCommand(CMD_SELECT_PORT, () => {
                 this.selectPort();
             })
@@ -156,9 +161,31 @@ export class CatalogViewer implements TextDocumentContentProvider {
     }
 
     /**
+     * Fetch catalog and update viewer
+     */
+    private _fetchCatalog(): Promise<void> {
+        let {catalogData} = RubicExtension.instance;
+        return Promise.resolve(
+        ).then(() => {
+            return catalogData.update();
+        }).then(() => {
+            this._onDidChange.fire(URI_CATALOG);
+            let {lastModified} = catalogData;
+            window.showInformationMessage(
+                localize(
+                    "catalog-updated-d",
+                    "Rubic catalog has been update (Last modified: {0})",
+                    lastModified ? lastModified.toLocaleString() : "N/A"
+                )
+            );
+        });
+    }
+
+    /**
      * selectPort command receiver
      */
     public selectPort(): void {
+        window.showInformationMessage("hoge");
     }
 
     /**
@@ -262,6 +289,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 extensionPath: context.extensionPath,
                 command: CMD_SHOW_CATALOG,
                 localized: {
+                    official: localize("official", "Official"),
                     preview: localize("preview", "Preview"),
                     obsolete: localize("obsolete", "Obsolete"),
                     website: localize("website", "Website"),
@@ -314,6 +342,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
             pb.not_selected = (this._provSelect.boardClass == null);
             pb.changed = !pb.not_selected && (this._provSelect.boardClass !== sketch.boardClass);
             catalogData.boards.forEach((board) => {
+                if (board.disabled) { return board.disabled; }
                 let title = toLocalizedString(board.name);
                 let settled = !pb.not_selected && (board.class === this._provSelect.boardClass);
                 pb.items.push({
@@ -448,7 +477,6 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 this._currentPanel = defaultPanel;
             }
             variables.panels[this._currentPanel].opened = true;
-            console.log("current" + this._currentPanel);
 
             // Generate HTML
             return template(variables);

@@ -40,8 +40,21 @@
       {
         "command": "extension.rubic.showCatalog",
         "title": "%command.showCatalog.title%"
+      },
+      {
+        "command": "extension.rubic.updateCatalog",
+        "title": "%command.updateCatalog.title%"
       }
     ],
+    "menus": {
+      "editor/title/context": [
+        {
+          "when": "resourceScheme == rubic",
+          "command": "extension.rubic.updateCatalog",
+          "group": "1_modification"
+        }
+      ]
+    },
     "languages": [
       {
         "id": "ruby",
