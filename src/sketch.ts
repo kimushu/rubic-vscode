@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as semver from 'semver';
 import { RUBIC_VERSION } from './rubicVersion';
+import * as CJSON from 'comment-json';
 ///<reference path="../schema/sketch.d.ts" />
 
 // Declaration only
@@ -231,11 +232,13 @@ export class Sketch implements vscode.Disposable {
                 top.rubicVersion = RUBIC_VERSION;
                 top.minRubicVersion = v09x.rubicVersion;
 
-                // TODO: edit launch.json
                 fs.writeFileSync(this._rubicFile, JSON.stringify(top));
                 if (!keepOld) {
                     fs.unlink(oldFile);
                 }
+
+                return this._mergeLaunchConfig();
+            }).then(() => {
                 return SketchLoadResult.LOAD_MIGRATED;
             });
         }).catch((error) => {
@@ -253,14 +256,24 @@ export class Sketch implements vscode.Disposable {
         }).then(() => {
             return this._ensureSaved(this._launchFile);
         }).then(() => {
-            return fs.readFileSync(this._launchFile, LAUNCH_ENCODING);
-        }).catch((error) => {
-            // Ignore error here
-            return "{}";
+            try {
+                return fs.readFileSync(this._launchFile, LAUNCH_ENCODING);
+            } catch (error) {
+                // Ignore error here
+                return '{"version":"0.1.0","configurations":[]}';
+            }
         }).then((jsonText: string) => {
-            return JSON.parse(jsonText);
-        }).then((obj) => {
-
+            return CJSON.parse(jsonText);
+        }).then((obj: any) => {
+            let cfg = obj.configurations || (obj.configurations = []);
+            cfg.push({
+                type: "rubic",
+                request: "launch",
+                name: "Launch on target board",
+                workspaceRoot: "${workspaceRoot}",
+                program: "${workspaceRoot}/${command:GuessProgramName}"
+            });
+            fs.writeFileSync(this._launchFile, CJSON.stringify(cfg, null, 4), LAUNCH_ENCODING);
         });
     }
 
