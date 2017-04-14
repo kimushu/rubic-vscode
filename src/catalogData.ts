@@ -6,11 +6,17 @@ import { readGithubFile, GitHubRepository } from './githubFetcher';
 import * as semver from 'semver';
 import { RubicExtension } from "./extension";
 import * as nls from 'vscode-nls';
+import * as path from 'path';
+import * as pify from 'pify';
+import * as request from 'request';
+import * as decompress from 'decompress';
 
 import vscode = require("vscode");
 
 const CATALOG_JSON = "catalog.json";
 const CATALOG_ENCODING = "utf8";
+const RELEASE_JSON  = "release.json";
+
 const OFFICIAL_CATALOG: GitHubRepository = {
     owner: "kimushu",
     repo: "rubic-catalog",
@@ -58,24 +64,55 @@ export class CatalogData implements vscode.Disposable {
     getBoard(boardClass: string): RubicCatalog.Board {
         if (!this._root) { return null; }
         return this._root.boards.find((board: RubicCatalog.Board) => {
-            return (board.class === boardClass)
+            return (board.class === boardClass);
         });
     }
 
     /**
-     * Lookup firmware definition from firmware's UUID
-     * @param uuid UUID of firmware
+     * Lookup repository definition from repository's UUID
+     * @param uuid UUID of repository
      */
-    getFirmware(uuid: string): RubicCatalog.RepositorySummary {
+    getRepository(uuid: string): RubicCatalog.RepositorySummary {
         if (!this._root) { return null; }
         for (let index = 0; index < this._root.boards.length; ++index) {
             let board = this._root.boards[index];
-            let firmware = board.repositories.find((firmware) => {
-                return (firmware.uuid === uuid);
+            let repo = board.repositories.find((repo) => {
+                return (repo.uuid === uuid);
             });
-            if (firmware) { return firmware; }
+            if (repo) { return repo; }
         }
         return null;
+    }
+
+    /**
+     * Lookup release definition from repository's UUID and release tag
+     * @param repositoryUuid UUID of repository
+     * @param releaseTag Tag name of release
+     */
+    getRelease(repositoryUuid: string, releaseTag: string): RubicCatalog.ReleaseSummary {
+        let repo = this.getRepository(repositoryUuid);
+        if (!repo || !repo.cache || !repo.cache.releases) { return null; }
+        return repo.cache.releases.find((rel) => rel.tag === releaseTag);
+    }
+
+    /**
+     * Get/download cached directory (relative path in CacheStorage)
+     */
+    getCacheDir(repositoryUuid: string, releaseTag: string, download: boolean = true): Promise<string> {
+        let rel = this.getRelease(repositoryUuid, releaseTag);
+        let dirPath = path.join(repositoryUuid, releaseTag);
+        return CacheStorage.exists(path.join(dirPath, RELEASE_JSON)).then((exists) => {
+            if (exists) { return dirPath; }
+            if (!download) { return null; }
+            return Promise.resolve(
+            ).then(() => {
+                return pify(request)({url: rel.url, encoding: null});
+            }).then((resp) => {
+                return decompress(resp.body, CacheStorage.getFullPath(dirPath));
+            }).then(() => {
+                return dirPath;
+            })
+        });
     }
 
     /**

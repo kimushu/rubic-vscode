@@ -1,0 +1,155 @@
+.markdown {
+    line-height: 22px
+}
+
+.markdown img {
+    max-width: 100%;
+    max-height: 100%
+}
+
+.markdown a {
+    color: #4080d0;
+    text-decoration: none
+}
+
+.markdown a:focus,
+.markdown input:focus,
+.markdown select:focus,
+.markdown textarea:focus {
+    outline: 1px solid -webkit-focus-ring-color;
+    outline-offset: -1px
+}
+
+.markdown hr {
+    border: 0;
+    height: 2px;
+    border-bottom: 2px solid
+}
+
+.markdown h1 {
+    padding-bottom: .3em;
+    line-height: 1.2;
+    border-bottom-width: 1px;
+    border-bottom-style: solid
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+    font-weight: 400
+}
+
+.markdown a:hover {
+    color: #4080d0;
+    text-decoration: underline
+}
+
+.markdown table {
+    border-collapse: collapse
+}
+
+.markdown table>thead>tr>th {
+    text-align: left;
+    border-bottom: 1px solid
+}
+
+.markdown table>tbody>tr>td,
+.markdown table>tbody>tr>th,
+.markdown table>thead>tr>td,
+.markdown table>thead>tr>th {
+    padding: 5px 10px
+}
+
+.markdown table>tbody>tr+tr>td {
+    border-top: 1px solid
+}
+
+.markdown blockquote {
+    margin: 0 7px 0 5px;
+    padding: 0 16px 0 10px;
+    border-left: 5px solid
+}
+
+.markdown code {
+    font-family: Menlo, Monaco, Consolas, Droid Sans Mono, Courier New, monospace, Droid Sans Fallback;
+    font-size: 14px;
+    line-height: 19px
+}
+
+.markdown .mac code {
+    font-size: 12px;
+    line-height: 18px
+}
+
+.markdown code>div {
+    padding: 16px;
+    border-radius: 3px;
+    overflow: auto
+}
+
+.vscode-light .markdown {
+    color: #1e1e1e
+}
+
+.vscode-dark .markdown {
+    color: #ddd
+}
+
+.vscode-high-contrast .markdown {
+    color: #fff
+}
+
+.vscode-light .markdown code {
+    color: #a31515
+}
+
+.vscode-dark .markdown code {
+    color: #d7ba7d
+}
+
+.vscode-light .markdown code>div {
+    background-color: hsla(0, 0%, 86%, .4)
+}
+
+.vscode-dark .markdown code>div {
+    background-color: hsla(0, 0%, 4%, .4)
+}
+
+.vscode-high-contrast .markdown code>div {
+    background-color: #000
+}
+
+.vscode-high-contrast .markdown h1 {
+    border-color: #000
+}
+
+.vscode-light .markdown table>thead>tr>th {
+    border-color: rgba(0, 0, 0, .69)
+}
+
+.vscode-dark .markdown table>thead>tr>th {
+    border-color: hsla(0, 0%, 100%, .69)
+}
+
+.vscode-light .markdown h1,
+.vscode-light .markdown hr,
+.vscode-light .markdown table>tbody>tr+tr>td {
+    border-color: rgba(0, 0, 0, .18)
+}
+
+.vscode-dark .markdown h1,
+.vscode-dark .markdown hr,
+.vscode-dark .markdown table>tbody>tr+tr>td {
+    border-color: hsla(0, 0%, 100%, .18)
+}
+
+.vscode-dark .markdown blockquote,
+.vscode-light .markdown blockquote {
+    background: hsla(0, 0%, 50%, .1);
+    border-color: rgba(0, 122, 204, .5)
+}
+
+.vscode-high-contrast .markdown blockquote {
+    background: transparent;
+    border-color: #fff
+}

@@ -1,8 +1,10 @@
 {
   "name": "rubic",
   "dependencies": {
+    "comment-json": "registry:dt/comment-json#1.1.0+20170127095014",
     "fs-extra": "registry:dt/fs-extra#2.0.0+20170306033830",
     "glob": "registry:npm/glob#6.0.0+20160723033700",
+    "markdown-it": "registry:npm/markdown-it#4.0.0+20160704212804",
     "pify": "registry:npm/pify#2.3.0+20160522191845",
     "rimraf": "registry:npm/rimraf#2.5.0+20160723033700",
     "semver": "registry:npm/semver#5.0.0+20160723033700"

@@ -1,24 +1,25 @@
 'use strict';
 
-import {
-    StatusBarItem, StatusBarAlignment, EventEmitter,
-    Uri, CancellationToken,
-    ViewColumn, ProviderResult, MessageItem,
-    Disposable, TextDocumentContentProvider, QuickPickItem,
-    commands, window, workspace, ExtensionContext
-} from 'vscode';
-
-import { RubicBoard, BoardClass } from "./rubicBoard";
-import { BoardClassList } from "./boardClassList";
+import * as Handlebars from 'handlebars';
+import * as nls from 'vscode-nls';
 import * as path from 'path';
 import * as util from 'util';
-import * as Handlebars from 'handlebars';
-import { readFileSync, watch, FSWatcher } from 'fs';
-import * as nls from 'vscode-nls';
-import { RubicExtension } from "./extension";
-import { CatalogData, toLocalizedString } from "./catalogData";
-import { SketchLoadResult } from "./sketch";
+import { BoardClass, RubicBoard } from './rubicBoard';
+import { BoardClassList } from './boardClassList';
 import { CacheStorage } from './cacheStorage';
+import {
+    CancellationToken, Disposable,
+    EventEmitter, ExtensionContext,
+    MessageItem, ProviderResult, QuickPickItem,
+    StatusBarAlignment, StatusBarItem,
+    TextDocumentContentProvider, Uri, ViewColumn,
+    commands, window, workspace
+} from 'vscode';
+import { CatalogData, toLocalizedString } from './catalogData';
+import { FSWatcher, readFileSync, watch } from 'fs';
+import { RubicExtension } from './extension';
+import { SketchLoadResult } from './sketch';
+import * as MarkdownIt from 'markdown-it';
 
 let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
@@ -26,7 +27,11 @@ const URI_CATALOG = Uri.parse("rubic://catalog");
 const CMD_SHOW_CATALOG = "extension.rubic.showCatalog";
 const CMD_UPDATE_CATALOG = "extension.rubic.updateCatalog";
 const CMD_SELECT_PORT  = "extension.rubic.selectPort";
+const CMD_TEST_CONNECTION  = "extension.rubic.testConnection";
+const CMD_WRITE_FIRMWARE  = "extension.rubic.writeFirmware";
 const UPDATE_PERIOD_MINUTES = 12 * 60;
+
+const LOCALIZED_NO_PORT = localize("no-port", "No port selected");
 
 interface CatalogSelection {
     boardClass: string;
@@ -69,6 +74,12 @@ export class CatalogViewer implements TextDocumentContentProvider {
             }),
             commands.registerCommand(CMD_SELECT_PORT, () => {
                 this.selectPort();
+            }),
+            commands.registerCommand(CMD_TEST_CONNECTION, () => {
+                console.log("test connection"); // TODO
+            }),
+            commands.registerCommand(CMD_WRITE_FIRMWARE, () => {
+                console.log("write firmware"); // TODO
             })
         );
 
@@ -128,36 +139,52 @@ export class CatalogViewer implements TextDocumentContentProvider {
             case "release":
                 this._provSelect.releaseTag = id;
                 id = null;
+                // fall through
             case "variation":
                 this._provSelect.variationPath = id;
                 id = null;
+                break;
         }
 
-        // Update page
-        console.log(`_provSelect:${JSON.stringify(this._provSelect)}`);
-        this._currentPanel = null;
-        this._onDidChange.fire(URI_CATALOG);
-        if ((this._provSelect.boardClass != null) &&
-            (this._provSelect.repositoryUuid != null) &&
-            (this._provSelect.releaseTag != null) &&
-            (this._provSelect.variationPath != null)) {
-            let {sketch} = RubicExtension.instance;
-            if ((this._provSelect.boardClass !== sketch.boardClass) ||
-                (this._provSelect.repositoryUuid !== sketch.repositoryUuid) ||
-                (this._provSelect.releaseTag !== sketch.releaseTag) ||
-                (this._provSelect.variationPath !== sketch.variationPath)) {
-                /*
+        Promise.resolve(
+        ).then(() => {
+            if (this._provSelect.variationPath == null) { return; }
+
+            // Download release assets
+            let {catalogData} = RubicExtension.instance;
+            return catalogData.getCacheDir(
+                this._provSelect.repositoryUuid, this._provSelect.releaseTag
+            ).then((dir) => {
+                let {sketch} = RubicExtension.instance;
+                if ((this._provSelect.boardClass === sketch.boardClass) &&
+                    (this._provSelect.repositoryUuid === sketch.repositoryUuid) &&
+                    (this._provSelect.releaseTag === sketch.releaseTag) &&
+                    (this._provSelect.variationPath === sketch.variationPath)) {
+                    return;
+                }
                 let items: MessageItem[] = [{
-                    title: "OK"
+                    title: localize("yes", "Yes")
+                },{
+                    title: localize("no", "No"),
+                    isCloseAffordance: true
                 }];
+                // Show message (asynchronously with catalog page update)
                 window.showInformationMessage(
                     localize("board-changed", "Board configuration has been changed. Are you sure to save?"),
                     ...items
                 ).then((item) => {
-                    console.log(item);
-                });*/
-            }
-        }
+                    if (item === items[0]) {
+                        // Save
+                        console.log("save!");
+                    }
+                });
+            });
+        }).then(() => {
+            // Update page
+            console.log(`_provSelect:${JSON.stringify(this._provSelect)}`);
+            this._currentPanel = null;
+            this._onDidChange.fire(URI_CATALOG);
+        });
     }
 
     /**
@@ -226,7 +253,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 this._sbiBoard.text = "$(circuit-board) " + toLocalizedString(board.name);
                 this._sbiBoard.show();
                 this._sbiPort.text = "$(triangle-right) " + (
-                    sketch.boardPath || localize("no-port", "No port selected")
+                    sketch.boardPath || LOCALIZED_NO_PORT
                 );
                 this._sbiPort.show();
             }
@@ -321,10 +348,11 @@ export class CatalogViewer implements TextDocumentContentProvider {
                     disabled: true,
                     items: []
                 },{
-                    id: "summary",
-                    label: localize("summary", "Summary"),
+                    id: "details",
+                    label: localize("details", "Details"),
                     disabled: true,
-                    summary: {}
+                    loading: localize("dl_firmware", "Downloading firmware"),
+                    pages: []
                 }]
             };
 
@@ -332,7 +360,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 this._provSelect = <any>{};
             }
             let favoriteBoards = context.globalState.get("favoriteBoards", []);
-            let [pb, pr, pe, pv, ps] = variables.panels;
+            let [pb, pr, pe, pv, pd] = variables.panels;
             let sb: RubicCatalog.Board;
             let sr: RubicCatalog.RepositorySummary;
             let se: RubicCatalog.ReleaseSummary;
@@ -447,30 +475,41 @@ export class CatalogViewer implements TextDocumentContentProvider {
                     });
                     if (settled) {
                         pv.decision = title;
-                        ps.disabled = false;
-                        ps.opened = (this._currentPanel === 4);
-                        ps.summary.icon = sb.icon;
-                        ps.summary.groups = [{
-                            header: localize("connection", "Connection"),
-                            buttons: [{
-                                text: sketch.boardPath || localize("select-port", "Select port"),
-                                dropdown: true
-                            },{
-                                text: localize("test-connection", "Test connection")
-                            }]
-                        },{
-                            header: localize("exec-runtime", "Program execution runtime"),
-                            text: vary.runtimes.map((rt) => rt.name).join(", ")
-                        },{
-                            header: variables.panels[1].label,
-                            text: "TODO",
-                            buttons: [{
-                                text: localize("write-firmware", "Write firmware to board")
-                            }]
-                        }];
+                        sv = vary;
                         defaultPanel = 4;
                     }
                 })
+            }
+
+            // Make detail pages
+            if (sv) {
+                let md = new MarkdownIt(<any>{html: true});
+                pd.disabled = false;
+                pd.pages.push({
+                    title: localize("conn_and_firmware", "Connection & Firmware"),
+                    active: true,
+                    content: md.render(`
+## ${localize("connection", "Connection")}
+* <a href="command:${CMD_SELECT_PORT}" class="catalog-page-button catalog-page-button-dropdown">${
+    LOCALIZED_NO_PORT
+}</a><a href="command:${CMD_TEST_CONNECTION}" class="catalog-page-button">${
+    localize("test-connection", "Test connection")
+}</a>
+## ${localize("firmware", "Firmware")}
+* ${sv.path} (${"N/A"} kB)<br><a href="command:${CMD_WRITE_FIRMWARE}" class="catalog-page-button">${
+    localize("write-firmware", "Write firmware to board")
+}</a>
+## ${localize("runtimes", "Runtimes")}
+* List1
+* List2
+`)
+                });
+                if (sv.document != null) {
+                    let md = new MarkdownIt();
+                    pd.pages.push({
+                        title: localize("document", "Document")
+                    })
+                }
             }
 
             if (this._currentPanel == null) {

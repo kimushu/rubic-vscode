@@ -5,6 +5,7 @@
   <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
   <base href="{{extensionPath}}/">
   <link rel="stylesheet" type="text/css" href="catalog.css" media="all">
+  <link rel="stylesheet" type="text/css" href="markdown.css" media="all">
   <script src="spin.min.js"></script>
 </head>
 
@@ -17,37 +18,33 @@
     style="margin-top: calc(28px * {{@index}}); margin-bottom: calc(1px + 28px * ({{../panels.length}} - {{@index}} - 1));"
     data-id="{{id}}">
       <div class="catalog-header icon-triangle">
-        <span class="catalog-header-label">{{label}} :
+        <span class="catalog-header-label">{{label}}{{#if items}} :
           <span class="catalog-header-decision">{{decision}}</span>
           <span class="catalog-header-loading">{{@root.localized.loading}}</span>
           <span class="catalog-header-disabled">{{@root.localized.unselectable}}</span>
           <span class="catalog-header-not-selected">{{@root.localized.not_selected}}</span>
           <span class="catalog-header-changed catalog-badge catalog-badge-green">{{@root.localized.changed}}</span>
-        </span>
+        {{/if}}{{!--items--}}</span>
       </div>
       <div class="catalog-content-loading">
-        <div class="catalog-spinner-text">{{@root.localized.loading}}</div>
+        <div class="catalog-spinner-text">{{#if loading}}{{loading}}{{else}}{{@root.localized.loading}}{{/if}}</div>
       </div>
-      {{#with summary}}
-      <div class="catalog-summary">
-        <div class="catalog-summary-image">
-          <img class="catalog-image-64" src="{{icon}}" width="64" height="64" />
+      {{#if pages}}
+      <div class="catalog-pages">
+        <div class="catalog-pages-nav">
+          <ul>
+            {{#each pages}}
+            <li role="presentation"><a href="#" data-pidx="{{@index}}" class="catalog-page-link{{#if active}} disabled{{/if}}">{{title}}</a></li>
+            {{/each}}{{!--pages--}}
+          </ul>
         </div>
-        {{#each groups}}
-        <div class="catalog-summary-line catalog-summary-header">{{header}}</div>
-        {{#if text}}
-        <div class="catalog-summary-line catalog-summary-data">{{text}}</div>
-        {{/if}}
-        {{#if buttons}}
-        <div class="catalog-summary-line catalog-summary-data">
-          {{#each buttons}}
-          <span class="catalog-summary-button{{#if dropdown}} catalog-summary-button-dropdown{{/if}}">{{text}}</span>
-          {{/each}}
+        {{#each pages}}
+        <div data-pidx="{{@index}}" class="catalog-page-container{{#if active}} active{{/if}}">
+          <div class="markdown">{{{content}}}</div>
         </div>
-        {{/if}}
-        {{/each}}{{!--groups--}}
+        {{/each}}{{!--pages--}}
       </div>
-      {{else}}{{!--with summary--}}
+      {{else}}{{!--if pages--}}
       <div class="catalog-list">
         {{#each items}}
         <div class="catalog-item{{#if settled}} catalog-item-settled{{/if}}{{#if ../withIcons}} catalog-item-with-icon{{/if}}" data-id="{{id}}">
@@ -58,6 +55,9 @@
           {{/if}}
           <div class="catalog-item-line">
             <span class="catalog-item-title">{{title}}</span>
+            {{#if official}}
+            <span class="catalog-badge catalog-badge-pill catalog-badge-green">{{@root.localized.official}}</span>
+            {{/if}}
             {{#if preview}}
             <span class="catalog-badge catalog-badge-pill catalog-badge-lightblue">{{@root.localized.preview}}</span>
             {{/if}}
@@ -80,7 +80,7 @@
         <div class="catalog-item-none">{{@root.localized.no_item}}</div>
         {{/each}}
       </div>
-      {{/with}}{{!--summary--}}
+      {{/if}}{{!--pages--}}
     </div>
     {{/each}}
   </div>

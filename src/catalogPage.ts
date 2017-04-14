@@ -122,3 +122,24 @@ const sendCommand = (() => {
         });
     })(i); }
 })();
+
+// Register event handler for page navs
+(() => {
+    let links = document.getElementsByClassName("catalog-page-link");
+    for (let i = 0; i < links.length; ++i) {
+        ((link) => {
+            link.addEventListener("click", () => {
+                let pages = document.getElementsByClassName("catalog-page-container");
+                for (let j = 0; j < pages.length; ++j) {
+                    let page = <HTMLDivElement>pages[j];
+                    if (link.dataset.pidx === page.dataset.pidx) {
+                        page.classList.add("active");
+                    } else {
+                        page.classList.remove("active");
+                    }
+                }
+                link.blur();
+            });
+        })(<HTMLAnchorElement>links[i]);
+    }    
+})();
