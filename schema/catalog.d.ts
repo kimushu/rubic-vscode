@@ -133,7 +133,7 @@ declare namespace RubicCatalog {
         /** ブランチ名(省略時=master) */
         branch?: string;
 
-        /** 詳細情報(firmware.jsonの中身) */
+        /** 詳細情報(rubic-repository.jsonの中身) */
         cache?: RepositoryDetail;
     }
 
@@ -221,6 +221,9 @@ declare namespace RubicCatalog {
 
         /** ランタイムの一覧 */
         runtimes: Runtime.Common[];
+
+        /** ドキュメントのアーカイブ内パス */
+        document?: string;
     }
 
     /**
@@ -241,6 +244,8 @@ declare namespace RubicCatalog {
 
         /** JavaScript(ES5)ランタイム(name=duktape) */
         interface Duktape extends Common{
+            /** バージョン(x.x.x) */
+            version: string;
         }
     }
 }

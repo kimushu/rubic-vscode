@@ -186,7 +186,7 @@
                 },
                 "cache": {
                     "$ref": "#/definitions/RubicCatalog.RepositoryDetail",
-                    "description": "詳細情報(firmware.jsonの中身)"
+                    "description": "詳細情報(rubic-repository.jsonの中身)"
                 },
                 "disabled": {
                     "description": "無効化されているか否か(省略時=false)",
@@ -256,6 +256,10 @@
                 "description": {
                     "$ref": "#/definitions/RubicCatalog.LocalizedString",
                     "description": "バリエーションの説明文"
+                },
+                "document": {
+                    "description": "ドキュメントのアーカイブ内パス",
+                    "type": "string"
                 },
                 "name": {
                     "$ref": "#/definitions/RubicCatalog.LocalizedString",
