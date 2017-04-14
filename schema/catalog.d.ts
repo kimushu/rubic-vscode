@@ -223,7 +223,7 @@ declare namespace RubicCatalog {
         runtimes: Runtime.Common[];
 
         /** ドキュメントのアーカイブ内パス */
-        document?: string;
+        document?: LocalizedString;
     }
 
     /**

@@ -258,8 +258,8 @@
                     "description": "バリエーションの説明文"
                 },
                 "document": {
-                    "description": "ドキュメントのアーカイブ内パス",
-                    "type": "string"
+                    "$ref": "#/definitions/RubicCatalog.LocalizedString",
+                    "description": "ドキュメントのアーカイブ内パス"
                 },
                 "name": {
                     "$ref": "#/definitions/RubicCatalog.LocalizedString",
