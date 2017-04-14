@@ -76,16 +76,16 @@ export class DebugHelper {
         });
     }
 
-    private _compileSources(rubicConfig: Sketch): Promise<void> {
+    private _compileSources(sketch: Sketch): Promise<void> {
         return Promise.resolve(
         ).then(() => {
             let files: string[] = [];
-            let opt = {cwd: rubicConfig.workspaceRoot};
-            rubicConfig.compile_include.forEach((pattern) => {
+            let opt = {cwd: sketch.workspaceRoot};
+            sketch.compile_include.forEach((pattern) => {
                 let includedFiles: string[] = glob.sync(pattern, opt);
                 files.push(...includedFiles);
             });
-            rubicConfig.compile_exclude.forEach((pattern) => {
+            sketch.compile_exclude.forEach((pattern) => {
                 let excludedFiles: string[] = glob.sync(pattern, opt);
                 if (excludedFiles.length === 0) { return; }
                 files = files.filter((file) => { return excludedFiles.indexOf(file) === -1; });
@@ -95,7 +95,7 @@ export class DebugHelper {
                     return promise.then(() => {
                         switch (path.extname(file)) {
                         case ".rb":
-                            return this._compileMruby(rubicConfig, file);
+                            return this._compileMruby(sketch, file);
                         case ".ts":
                             return Promise.reject(Error("TypeScript is not supported yet"));
                         }
