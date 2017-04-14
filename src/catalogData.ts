@@ -98,7 +98,7 @@ export class CatalogData implements vscode.Disposable {
     /**
      * Get/download cached directory (relative path in CacheStorage)
      */
-    getCacheDir(repositoryUuid: string, releaseTag: string, download: boolean = true): Promise<string> {
+    prepareCacheDir(repositoryUuid: string, releaseTag: string, download: boolean = true): Promise<string> {
         let rel = this.getRelease(repositoryUuid, releaseTag);
         let dirPath = path.join(repositoryUuid, releaseTag);
         return CacheStorage.exists(path.join(dirPath, RELEASE_JSON)).then((exists) => {

@@ -127,6 +127,34 @@ export class Sketch implements vscode.Disposable {
         return this._get("compile.exclude", []);
     }
 
+    update(obj): Promise<void> {
+        return Promise.resolve({
+        }).then(() => {
+            return this._ensureSaved(this._rubicFile);
+        }).then(() => {
+            return this.load();
+        }).then(() => {
+            if (this._data == null) {
+                this._data = <any>{};
+            }
+            if (!semver.valid(this._data.rubicVersion)) {
+                this._data.rubicVersion = RUBIC_VERSION;
+            } else if (semver.lt(this._data.rubicVersion, RUBIC_VERSION)) {
+                if (this._data.minRubicVersion == null) {
+                    this._data.minRubicVersion = this._data.rubicVersion;
+                }
+            } else if (semver.gt(this._data.rubicVersion, RUBIC_VERSION)) {
+                if (this._data.maxRubicVersion == null) {
+                    this._data.maxRubicVersion = this._data.rubicVersion;
+                }
+            }
+            for (let key in obj) {
+                this._data[key] = obj[key];
+            }
+            fs.writeFileSync(this._rubicFile, JSON.stringify(this._data, null, 4), SKETCH_ENCODING);
+        });
+    }
+
     private _get(key: string, def?: any): any {
         if (this._data.hasOwnProperty(key)) {
             return this._data[key];            

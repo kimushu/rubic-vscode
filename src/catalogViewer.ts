@@ -152,36 +152,42 @@ export class CatalogViewer implements TextDocumentContentProvider {
 
             // Download release assets
             let {catalogData} = RubicExtension.instance;
-            return catalogData.getCacheDir(
+            let {sketch} = RubicExtension.instance;
+            let prepare = catalogData.prepareCacheDir(
                 this._provSelect.repositoryUuid, this._provSelect.releaseTag
-            ).then((dir) => {
-                let {sketch} = RubicExtension.instance;
-                if ((this._provSelect.boardClass === sketch.boardClass) &&
-                    (this._provSelect.repositoryUuid === sketch.repositoryUuid) &&
-                    (this._provSelect.releaseTag === sketch.releaseTag) &&
-                    (this._provSelect.variationPath === sketch.variationPath)) {
-                    return;
+            ).then(() => {});
+            let confirm: Promise<void>;
+            if ((this._provSelect.boardClass === sketch.boardClass) &&
+                (this._provSelect.repositoryUuid === sketch.repositoryUuid) &&
+                (this._provSelect.releaseTag === sketch.releaseTag) &&
+                (this._provSelect.variationPath === sketch.variationPath)) {
+                return prepare;
+            }
+            let items: MessageItem[] = [{
+                title: localize("yes", "Yes")
+            },{
+                title: localize("no", "No"),
+                isCloseAffordance: true
+            }];
+            // Show message (asynchronously with catalog page update)
+            return Promise.resolve(window.showInformationMessage(
+                localize("board-changed", "Board configuration has been changed. Are you sure to save?"),
+                ...items
+            )).then((item) => {
+                if (item === items[0]) {
+                    // Save
+                    return sketch.update(this._provSelect).then(() => {
+                        this.updateStatusBar();
+                    });
+                } else {
+                    // Return to variation select
+                    this._provSelect.variationPath = null;
                 }
-                let items: MessageItem[] = [{
-                    title: localize("yes", "Yes")
-                },{
-                    title: localize("no", "No"),
-                    isCloseAffordance: true
-                }];
-                // Show message (asynchronously with catalog page update)
-                window.showInformationMessage(
-                    localize("board-changed", "Board configuration has been changed. Are you sure to save?"),
-                    ...items
-                ).then((item) => {
-                    if (item === items[0]) {
-                        // Save
-                        console.log("save!");
-                    }
-                });
+            }).then(() => {
+                return prepare;
             });
         }).then(() => {
             // Update page
-            console.log(`_provSelect:${JSON.stringify(this._provSelect)}`);
             this._currentPanel = null;
             this._onDidChange.fire(URI_CATALOG);
         });
