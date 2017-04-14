@@ -16,7 +16,7 @@ import { Writable } from "stream";
 import { readFileSync, writeFileSync } from 'fs';
 import { Sketch } from "./sketch";
 import * as nls from 'vscode-nls';
-let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
 const SEPARATOR_RUN  = "----------------------------------------------------------------";
 const SEPARATOR_STOP = "----------------------------------------------------------------";

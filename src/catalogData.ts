@@ -23,7 +23,7 @@ const OFFICIAL_CATALOG: GitHubRepository = {
     branch: "vscode-master"
 };
 
-let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+const localize = nls.loadMessageBundle(__filename);
 
 const LOCALE: string = JSON.parse(process.env.VSCODE_NLS_CONFIG).locale;
 

@@ -4,7 +4,7 @@ import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from './rubi
 import * as stream from 'stream';
 import * as SerialPort from 'serialport';
 import * as nls from 'vscode-nls';
-let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+const localize = nls.loadMessageBundle(__filename);
 
 const DEBUG = false;
 

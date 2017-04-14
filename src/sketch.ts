@@ -13,7 +13,7 @@ import vscode = require("vscode");
 
 const SKETCH_ENCODING = "utf8";
 const LAUNCH_ENCODING = "utf8";
-let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+const localize = nls.loadMessageBundle(__filename);
 
 export enum SketchLoadResult {
     LOAD_SUCCESS,

@@ -5,7 +5,7 @@ import { BoardCandidate, BoardStdio } from './rubicBoard';
 import * as stream from 'stream';
 import * as Canarium from 'canarium';
 import * as nls from 'vscode-nls';
-let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+const localize = nls.loadMessageBundle(__filename);
 
 export class GrCitrusBoard extends WakayamaRbBoard {
     protected static _VID_PID_LIST = [

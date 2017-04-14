@@ -21,7 +21,7 @@ import { RubicExtension } from './extension';
 import { SketchLoadResult } from './sketch';
 import * as MarkdownIt from 'markdown-it';
 
-let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+const localize = nls.loadMessageBundle(__filename);
 
 const URI_CATALOG = Uri.parse("rubic://catalog");
 const CMD_SHOW_CATALOG = "extension.rubic.showCatalog";

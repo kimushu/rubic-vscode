@@ -6,6 +6,8 @@ import { CatalogViewer } from './catalogViewer';
 import { DebugHelper } from './debugHelper';
 import * as path from 'path';
 import { CatalogData } from "./catalogData";
+import * as nls from 'vscode-nls';
+const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
 export class RubicExtension {
     /**

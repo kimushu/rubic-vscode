@@ -5,7 +5,7 @@ import * as stream from 'stream';
 import { Canarium } from 'canarium';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+const localize = nls.loadMessageBundle(__filename);
 
 //*
 Canarium.verbosity = 3;

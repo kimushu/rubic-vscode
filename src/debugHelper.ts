@@ -7,7 +7,7 @@ import * as path from 'path';
 import * as mrbc from 'mruby-native';
 
 import * as nls from 'vscode-nls';
-let localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+const localize = nls.loadMessageBundle(__filename);
 
 const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
 const CMD_PROVIDE_INIT_CFG = "extension.rubic.provideInitialConfigurations";
