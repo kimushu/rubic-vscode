@@ -31,9 +31,27 @@ export module CacheStorage {
         return pify(fse.readFile)(getFullPath(filename), encoding);
     }
 
+    /** readFileSync */
+    export function readFileSync(filename: string, encoding: string = null): string|Buffer {
+        return fse.readFileSync(getFullPath(filename), encoding);
+    }
+
+    /** stat */
+    export function stat(filename: string): Promise<fse.Stats> {
+        return pify(fse.stat)(getFullPath(filename));
+    }
+
+    /** statSync */
+    export function statSync(filename: string): fse.Stats {
+        return fse.statSync(getFullPath(filename));
+    }
+
     /** Check file existence */
     export function exists(filename: string): Promise<boolean> {
-        return pify(fse.exists)(getFullPath(filename));
+        return pify(fse.access)(getFullPath(filename)).then(
+            () => { return true; },
+            () => { return false; }
+        );
     }
 
     /** Remove file */
