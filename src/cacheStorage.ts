@@ -1,5 +1,6 @@
 'use strict';
 
+import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import * as path from 'path';
 import * as pify from 'pify';
@@ -37,12 +38,12 @@ export module CacheStorage {
     }
 
     /** stat */
-    export function stat(filename: string): Promise<fse.Stats> {
+    export function stat(filename: string): Promise<fs.Stats> {
         return pify(fse.stat)(getFullPath(filename));
     }
 
     /** statSync */
-    export function statSync(filename: string): fse.Stats {
+    export function statSync(filename: string): fs.Stats {
         return fse.statSync(getFullPath(filename));
     }
 
