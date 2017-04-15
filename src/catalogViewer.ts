@@ -218,7 +218,23 @@ export class CatalogViewer implements TextDocumentContentProvider {
      * selectPort command receiver
      */
     public selectPort(): void {
-        window.showInformationMessage("hoge");
+        let hoge: QuickPickItem = {
+            label: "label $(alert)",
+            description: "description $(alert)",
+            detail: "detail $(alert)"
+        };
+        window.showQuickPick([hoge]);
+        if (1) { return; }
+        let {sketch} = RubicExtension.instance;
+        let boardClass = BoardClassList.getClass(sketch.boardClass);
+        boardClass.list().then((ports) => {
+            let choose = (filter: boolean) => {
+/*                let items: QuickPickItem[] = [];
+                items.push({
+                })*/
+            };
+            return choose(true);
+        });
     }
 
     /**

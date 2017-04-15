@@ -15,6 +15,8 @@ export interface BoardCandidate {
     vendorId?: number;
     /** Product ID */
     productId?: number;
+    /** Unsupported */
+    unsupported?: boolean;
 }
 
 export interface BoardInformation {
