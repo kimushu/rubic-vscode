@@ -26,13 +26,34 @@
     "configuration": {
       "title": "%configuration.title%",
       "properties": {
-        "rubic.catalogUrl": {
+        "rubic.catalog.showPreview": {
+          "type": "boolean",
+          "default": false,
+          "description": "%configuration.catalog.showPreview.description%"
+        },
+        "rubic.catalog.owner": {
           "type": [
             "string",
             "null"
           ],
           "default": null,
-          "description": "%configuration.catalogUrl.description%"
+          "description": "%configuration.catalog.owner.description%"
+        },
+        "rubic.catalog.repo": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "%configuration.catalog.repo.description%"
+        },
+        "rubic.catalog.branch": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "%configuration.catalog.branch.description%"
         }
       }
     },
@@ -156,7 +177,6 @@
   },
   "activationEvents": [
     "onCommand:extension.rubic.showCatalog",
-    "onCommand:extension.rubic.selectPort",
     "onCommand:extension.rubic.startDebugSession",
     "onCommand:extension.rubic.provideInitialConfigurations",
     "onCommand:extension.rubic.guessProgramName",

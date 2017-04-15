@@ -66,6 +66,10 @@ body {
     margin-right: 4px;
     transition: opacity 0.5s ease;
 }
+.catalog-unofficial .catalog-official {
+    text-decoration: line-through;
+    opacity: .3;
+}
 .catalog-header-loading,
 .catalog-header-disabled,
 .catalog-header-not-selected,
@@ -120,6 +124,9 @@ body {
     margin-top: 4px;
     border-left: 4px rgba(0,0,0,.0) solid;
     cursor: pointer;
+}
+.catalog-hide-previews .catalog-item-preview:not(.catalog-item-settled) {
+    display: none;
 }
 .vscode-dark .catalog-item-settled,
 .vscode-high-contrast .catalog-item-settled {
