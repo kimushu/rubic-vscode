@@ -4,7 +4,7 @@ import * as Handlebars from 'handlebars';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 import * as util from 'util';
-import { BoardClass, RubicBoard } from './rubicBoard';
+import { BoardClass, RubicBoard, BoardCandidate } from './rubicBoard';
 import { BoardClassList } from './boardClassList';
 import { CacheStorage } from './cacheStorage';
 import {
@@ -243,13 +243,17 @@ export class CatalogViewer implements TextDocumentContentProvider {
     public selectPort(): void {
         let {sketch} = RubicExtension.instance;
         let boardClass = BoardClassList.getClass(sketch.boardClass);
-        boardClass.list().then((ports) => {
-            let choose = (filter: boolean) => {
-                interface PortQuickPickItem extends QuickPickItem {
-                    path: string
-                }
-                let items: PortQuickPickItem[] = [];
-                let hidden = 0;
+        let choose = (filter: boolean) => {
+            interface PortQuickPickItem extends QuickPickItem {
+                path?: string;
+                rescan?: boolean;
+            }
+            let items: PortQuickPickItem[] = [];
+            let hidden = 0;
+            return Promise.resolve(
+            ).then(() => {
+                return boardClass.list();
+            }).then((ports) => {
                 ports.forEach((port) => {
                     if (filter && port.unsupported) {
                         ++hidden;
@@ -274,8 +278,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 if (hidden > 0) {
                     let item: PortQuickPickItem = {
                         label: localize("show-hidden-ports", "Show hidden ports"),
-                        description: "", // filled after
-                        path: null
+                        description: "" // filled after
                     };
                     if (hidden > 1) {
                         item.description = localize("ports-hidden-n", "{0} ports hidden", hidden);
@@ -284,6 +287,11 @@ export class CatalogViewer implements TextDocumentContentProvider {
                     }
                     items.push(item);
                 }
+                items.push({
+                    label: localize("refresh", "Refresh"),
+                    description: localize("rescan-ports", "Rescan ports"),
+                    rescan: true
+                });
                 let boardName = boardClass.name;
                 let board = RubicExtension.instance.catalogData.getBoard(boardClass.name);
                 if (board != null) {
@@ -293,14 +301,13 @@ export class CatalogViewer implements TextDocumentContentProvider {
                     placeHolder: localize("select-port-msg", "Which {0} do you use?", boardName)
                 }).then((item) => {
                     if (item == null) { return null; }
-                    if (item.path != null) {
-                        return item.path;
-                    }
-                    return choose(false);
+                    if (item.rescan) { return choose(filter); }
+                    if (item.path == null) { return choose(false); }
+                    return item.path;
                 })
-            };
-            return choose(true);
-        }).then((boardPath: string) => {
+            }); // return Promise.resolve().then()
+        };
+        return choose(true).then((boardPath: string) => {
             if (boardPath != null) {
                 return sketch.update({boardPath}).then(() => {
                     this.updateStatusBar();
@@ -528,17 +535,20 @@ export class CatalogViewer implements TextDocumentContentProvider {
             pe.disabled = false;
             pe.not_selected = (this._provSelect.releaseTag == null);
             pe.changed = !pe.not_selected && (this._provSelect.releaseTag !== sketch.releaseTag);
-            sr.cache.releases.forEach((rel) => {
+            for (let i = 0; i < sr.cache.releases.length; ++i) {
+                let rel = sr.cache.releases[i];
                 if (!rel.cache) { return; }
                 let title = toLocalizedString(rel.cache.name || {en: rel.name});
                 let settled = !pe.not_selected && (rel.tag === this._provSelect.releaseTag);
+                let cacheDir = await catalogData.prepareCacheDir(this._provSelect.repositoryUuid, rel.tag, false);
                 pe.items.push({
                     id: rel.tag,
                     title: title,
                     description: toLocalizedString(rel.cache.description || {en: rel.description}),
                     author: `${localize("tag", "Tag")} : ${rel.tag} / ${
                         localize("release-date", "Release date")
-                        } : ${new Date(rel.published_at).toLocaleDateString()}`,
+                        } : ${new Date(rel.published_at).toLocaleDateString()}${
+                        cacheDir ? " (" + localize("downloaded", "Downloaded") + ")" : ""}`,
                     preview: !!rel.preview,
                     settled: settled,
                     _index: pe.items.length
@@ -548,7 +558,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                     se = rel;
                     defaultPanel = 3;
                 }
-            });
+            }
         }
 
         // List variations (If release is selected)
