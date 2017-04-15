@@ -1,13 +1,15 @@
 'use strict';
 
+// Import this first to configure vscode-nls
+import * as nls from 'vscode-nls';
+const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+
 import { ExtensionContext, Disposable, window, workspace } from 'vscode';
 import { Sketch, SketchLoadResult } from './sketch';
 import { CatalogViewer } from './catalogViewer';
 import { DebugHelper } from './debugHelper';
 import * as path from 'path';
-import { CatalogData } from "./catalogData";
-import * as nls from 'vscode-nls';
-const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+import { CatalogData } from './catalogData';
 
 export class RubicExtension {
     /**
@@ -67,7 +69,7 @@ export class RubicExtension {
             // Load sketch (without migration)
             return this._sketch.load().then((result) => {
                 if (result !== SketchLoadResult.LOAD_SUCCESS) {
-                    return Promise.reject(Error("No sketch"));
+                    return Promise.reject(Error(localize("no-sketch", "No sketch")));
                 }
             });
         }).then(() => {
