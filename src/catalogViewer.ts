@@ -60,9 +60,6 @@ export class CatalogViewer implements TextDocumentContentProvider {
         // Register commands
         context.subscriptions.push(
             commands.registerCommand(CMD_SHOW_CATALOG, (params) => {
-                const s = require("serialport");
-                console.log(util.format(s));
-
                 if (params) {
                     this._updateCatalogView(params);
                 } else {
@@ -169,7 +166,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 title: localize("no", "No"),
                 isCloseAffordance: true
             }];
-            // Show message (asynchronously with catalog page update)
+
             return Promise.resolve(window.showInformationMessage(
                 localize("board-changed", "Board configuration has been changed. Are you sure to save?"),
                 ...items
@@ -189,8 +186,15 @@ export class CatalogViewer implements TextDocumentContentProvider {
         }).then(() => {
             // Update page
             this._currentPanel = null;
-            this._onDidChange.fire(URI_CATALOG);
+            this._triggerUpdate();
         });
+    }
+
+    /**
+     * Trigger page update
+     */
+    private _triggerUpdate(): void {
+        this._onDidChange.fire(URI_CATALOG);
     }
 
     /**
@@ -202,7 +206,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
         ).then(() => {
             return catalogData.update();
         }).then(() => {
-            this._onDidChange.fire(URI_CATALOG);
+            this._triggerUpdate();
             let {lastModified} = catalogData;
             window.showInformationMessage(
                 localize(
@@ -218,22 +222,72 @@ export class CatalogViewer implements TextDocumentContentProvider {
      * selectPort command receiver
      */
     public selectPort(): void {
-        let hoge: QuickPickItem = {
-            label: "label $(alert)",
-            description: "description $(alert)",
-            detail: "detail $(alert)"
-        };
-        window.showQuickPick([hoge]);
-        if (1) { return; }
         let {sketch} = RubicExtension.instance;
         let boardClass = BoardClassList.getClass(sketch.boardClass);
         boardClass.list().then((ports) => {
             let choose = (filter: boolean) => {
-/*                let items: QuickPickItem[] = [];
-                items.push({
-                })*/
+                interface PortQuickPickItem extends QuickPickItem {
+                    path: string
+                }
+                let items: PortQuickPickItem[] = [];
+                let hidden = 0;
+                ports.forEach((port) => {
+                    if (filter && port.unsupported) {
+                        ++hidden;
+                        return;
+                    }
+                    let item: PortQuickPickItem = {
+                        label: port.path,
+                        description: port.name,
+                        path: port.path
+                    }
+                    if (port.vendorId != null && port.productId != null) {
+                        let vid = ("0000" + port.vendorId.toString(16)).substr(-4);
+                        let pid = ("0000" + port.productId.toString(16)).substr(-4);
+                        item.description += ` (VID:0x${vid}, PID:0x${pid})`;
+                    }
+                    if (port.unsupported) {
+                        item.description += " $(alert)";
+                        item.detail = localize("may-not-supported", "The board on this port may be not supported");
+                    }
+                    items.push(item);
+                });
+                if (hidden > 0) {
+                    let item: PortQuickPickItem = {
+                        label: localize("show-hidden-ports", "Show hidden ports"),
+                        description: "", // filled after
+                        path: null
+                    };
+                    if (hidden > 1) {
+                        item.description = localize("ports-hidden-n", "{0} ports hidden", hidden);
+                    } else {
+                        item.description = localize("ports-hidden-1", "{0} port hidden", 1);
+                    }
+                    items.push(item);
+                }
+                let boardName = boardClass.name;
+                let board = RubicExtension.instance.catalogData.getBoard(boardClass.name);
+                if (board != null) {
+                    boardName = toLocalizedString(board.name);
+                }
+                return window.showQuickPick(items, {
+                    placeHolder: localize("select-port-msg", "Which {0} do you use?", boardName)
+                }).then((item) => {
+                    if (item == null) { return null; }
+                    if (item.path != null) {
+                        return item.path;
+                    }
+                    return choose(false);
+                })
             };
             return choose(true);
+        }).then((boardPath: string) => {
+            if (boardPath != null) {
+                return sketch.update({boardPath}).then(() => {
+                    this.updateStatusBar();
+                    this._triggerUpdate();
+                });
+            }
         });
     }
 
@@ -268,7 +322,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
         } else {
             let board = catalogData.getBoard(sketch.boardClass);
             if (!board) {
-                this._sbiBoard.text = "$(circuit-board) $(alert)" + localize("no-catalog", "No catalog");
+                this._sbiBoard.text = "$(circuit-board) $(alert) " + localize("no-catalog", "No catalog");
                 this._sbiBoard.show();
                 this._sbiPort.hide();
             } else {
@@ -513,7 +567,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                     content: md.render(`
 ## ${localize("connection", "Connection")}
 * <a href="command:${CMD_SELECT_PORT}" class="catalog-page-button catalog-page-button-dropdown">${
-    LOCALIZED_NO_PORT
+    sketch.boardPath || LOCALIZED_NO_PORT
 }</a><a href="command:${CMD_TEST_CONNECTION}" class="catalog-page-button">${
     localize("test-connection", "Test connection")
 }</a>

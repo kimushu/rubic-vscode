@@ -52,9 +52,16 @@ export class PeridotClassicBoard extends RubicBoard {
                 };
                 if (board.vendorId) { candidate.vendorId = parseInt(board.vendorId, 16); }
                 if (board.productId) { candidate.productId = parseInt(board.productId, 16); }
+                this.judgeSupportedOrNot(candidate);
                 return candidate;
             });
         })
+    }
+
+    protected static judgeSupportedOrNot(candidate: BoardCandidate): void {
+        if (candidate.vendorId !== 0x0403 || candidate.productId !== 0x6015) {
+            candidate.unsupported = true;
+        }
     }
 
     connect(): Promise<void> {
