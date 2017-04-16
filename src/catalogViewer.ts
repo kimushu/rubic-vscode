@@ -230,7 +230,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
             window.showInformationMessage(
                 localize(
                     "catalog-updated-d",
-                    "Rubic catalog has been update (Last modified: {0})",
+                    "Rubic catalog has been updated (Last modified: {0})",
                     lastModified ? lastModified.toLocaleString() : "N/A"
                 )
             );
