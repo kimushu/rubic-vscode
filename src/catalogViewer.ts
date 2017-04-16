@@ -254,6 +254,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
             ).then(() => {
                 return boardClass.list();
             }).then((ports) => {
+                ports.sort((a, b) => (a.name < b.name) ? -1 : 1);
                 ports.forEach((port) => {
                     if (filter && port.unsupported) {
                         ++hidden;
@@ -277,7 +278,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 });
                 if (hidden > 0) {
                     let item: PortQuickPickItem = {
-                        label: localize("show-hidden-ports", "Show hidden ports"),
+                        label: `$(issue-opened)\t${localize("show-hidden-ports", "Show hidden ports")}`,
                         description: "" // filled after
                     };
                     if (hidden > 1) {
@@ -288,7 +289,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                     items.push(item);
                 }
                 items.push({
-                    label: localize("refresh", "Refresh"),
+                    label: `$(sync)\t${localize("refresh", "Refresh")}`,
                     description: localize("rescan-ports", "Rescan ports"),
                     rescan: true
                 });
