@@ -132,10 +132,7 @@ export class CatalogData implements vscode.Disposable {
     /**
      * Update catalog data
      */
-    update(repo: GitHubRepository): Promise<void> {
-        if (repo == null) {
-            repo = OFFICIAL_CATALOG;
-        }
+    update(repo: GitHubRepository = OFFICIAL_CATALOG): Promise<void> {
         return Promise.resolve(
         ).then(() => {
             return readGithubFile(repo, CATALOG_JSON, CATALOG_ENCODING);

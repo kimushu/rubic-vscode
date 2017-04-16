@@ -104,7 +104,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
         if (owner != null && repo != null) {
             this._customRepository = {owner, repo, branch};
         } else {
-            this._customRepository = null;
+            this._customRepository = undefined;
         }
     }
 
