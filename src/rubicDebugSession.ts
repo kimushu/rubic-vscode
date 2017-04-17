@@ -4,7 +4,8 @@ import {
     InitializedEvent,
     OutputEvent,
     TerminatedEvent,
-    Thread
+    Thread,
+    DebugSession
 } from 'vscode-debugadapter';
 import { CustomDebugSession } from './customDebugAdapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
@@ -40,7 +41,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 export interface AttachRequestArguments extends DebugProtocol.AttachRequestArguments, RubicRequestArguments {
 }
 
-class RubicDebugSession extends CustomDebugSession {
+class RubicDebugSession extends DebugSession {
     private static THREAD_ID: number = 1;
     private static THREAD_NAME: string = "Main thread";
     private _board: RubicBoard;
