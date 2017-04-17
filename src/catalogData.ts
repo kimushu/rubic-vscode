@@ -1,5 +1,3 @@
-'use strict';
-
 ///<reference path="../schema/catalog.d.ts" />
 import { CacheStorage } from './cacheStorage';
 import { readGithubFile, GitHubRepository } from './githubFetcher';

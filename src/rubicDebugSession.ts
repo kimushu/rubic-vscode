@@ -1,5 +1,3 @@
-'use strict';
-
 import {
     InitializedEvent,
     OutputEvent,

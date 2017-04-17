@@ -1,5 +1,3 @@
-'use strict';
-
 import * as Handlebars from 'handlebars';
 import * as nls from 'vscode-nls';
 import * as path from 'path';

@@ -1,5 +1,3 @@
-'use strict';
-
 // Import this first to configure vscode-nls
 import * as nls from 'vscode-nls';
 const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);

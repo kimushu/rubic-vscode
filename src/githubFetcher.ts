@@ -1,5 +1,3 @@
-'use strict';
-
 import * as pify from 'pify';
 import * as request from 'request';
 import * as GitHub from 'github';

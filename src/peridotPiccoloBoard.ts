@@ -1,5 +1,3 @@
-'use strict';
-
 import { PeridotClassicBoard } from './peridotClassicBoard';
 import { BoardCandidate } from './rubicBoard';
 

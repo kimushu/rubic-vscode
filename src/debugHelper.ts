@@ -1,5 +1,3 @@
-'use strict';
-
 import { Disposable, commands, OutputChannel, window, workspace, ExtensionContext } from 'vscode';
 import { Sketch } from "./sketch";
 import * as glob from 'glob';

@@ -1,5 +1,3 @@
-'use strict';
-
 import { WakayamaRbBoard } from "./wakayamaRbBoard";
 import { BoardCandidate, BoardStdio } from './rubicBoard';
 import * as stream from 'stream';

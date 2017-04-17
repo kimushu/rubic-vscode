@@ -1,5 +1,3 @@
-'use strict';
-
 import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from './rubicBoard';
 import * as stream from 'stream';
 import * as SerialPort from 'serialport';
