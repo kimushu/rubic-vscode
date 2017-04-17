@@ -3,7 +3,7 @@
   "version": "0.99.1",
   "publisher": "kimushu",
   "engines": {
-    "vscode": "^1.10.0"
+    "vscode": "^1.11.0"
   },
   "license": "MIT",
   "displayName": "Rubic",
