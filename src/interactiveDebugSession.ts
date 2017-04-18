@@ -29,7 +29,7 @@ export class InteractiveDebugSession extends DebugSession {
                 this.sendResponse(resp);
             }, (reason) => {
                 let resp = this._pendingResponses.shift();
-                resp.body = {command_id, reason: [reason]};
+                resp.body = {command_id, reason: [`${reason}`]};
                 this.sendResponse(resp);
             });
         } else {
@@ -42,7 +42,7 @@ export class InteractiveDebugSession extends DebugSession {
         }
     }
 
-    protected interactiveRequest(command: string, args: any): Promise<any> {
+    protected interactiveRequest(command: string, args: any): Thenable<any> {
         return Promise.reject(Error("Not supported"));
     }
 
@@ -51,7 +51,7 @@ export class InteractiveDebugSession extends DebugSession {
     public showErrorMessage<T extends vscode.MessageItem>(message: string, ...items: T[]): Thenable<T|undefined>;
     public showErrorMessage<T extends vscode.MessageItem>(message: string, options: vscode.MessageOptions, ...items: T[]): Thenable<T|undefined>;
     public showErrorMessage(message: string, ...items: any[]): Thenable<any> {
-        return this._showMessage("error", message, items);
+        return this._showMessage("showErrorMessage", message, items);
     }
 
     public showInformationMessage(message: string, ...items: string[]): Thenable<string|undefined>;
@@ -59,21 +59,21 @@ export class InteractiveDebugSession extends DebugSession {
     public showInformationMessage<T extends vscode.MessageItem>(message: string, ...items: T[]): Thenable<T|undefined>;
     public showInformationMessage<T extends vscode.MessageItem>(message: string, options: vscode.MessageOptions, ...items: T[]): Thenable<T|undefined>;
     public showInformationMessage(message: string, ...items: any[]): Thenable<any> {
-        return this._showMessage("info", message, items);
+        return this._showMessage("showInformationMessage", message, items);
     }
 
     public showInputBox(options?: vscode.InputBoxOptions): Thenable<string|undefined> {
-        return this._question({question: "input", options});
+        return this._question({question: "showInputBox", options});
     }
 
     public showQuickPick(items: string[]|Thenable<string[]>, options?: vscode.QuickPickOptions): Thenable<string|undefined>;
     public showQuickPick<T extends vscode.QuickPickItem>(items: T[]|Thenable<T[]>, options?: vscode.QuickPickOptions): Thenable<T|undefined>;
-    public showQuickPick(items: any, options?: vscode.QuickPickOptions): Thenable<any> {
-        return Promise.resolve(items).then((rawItems) => {
-            return this._question({
-                question: "pick",
-                items: rawItems
-            }).then((choiceIndex: number) => {
+    public showQuickPick(origItems: any, options?: vscode.QuickPickOptions): Thenable<any> {
+        return Promise.resolve(origItems).then((rawItems) => {
+            let items = rawItems.map((value) => {
+                return (value && value.label != null) ? value : {label: value};
+            });
+            return this._question({question: "showQuickPick", items}).then((choiceIndex: number) => {
                 return (choiceIndex != null) ? rawItems[choiceIndex] : undefined;
             });
         });
@@ -95,7 +95,7 @@ export class InteractiveDebugSession extends DebugSession {
         let items = rawItems.map((value) => {
             return (value && value.title != null) ? value : {title: value};
         });
-        return this._question({question, message, items}).then((choiceIndex: number) => {
+        return this._question({question, message, options, items}).then((choiceIndex: number) => {
             return (choiceIndex != null) ? rawItems[choiceIndex] : undefined;
         });
     }
