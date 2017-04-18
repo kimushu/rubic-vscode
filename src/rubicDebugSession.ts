@@ -5,7 +5,6 @@ import {
     Thread,
     DebugSession
 } from 'vscode-debugadapter';
-import { CustomDebugSession } from './customDebugAdapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { RubicBoard, BoardStdio } from "./rubicBoard";
 import { BoardClassList } from "./boardClassList";
@@ -256,4 +255,6 @@ class RubicDebugSession extends DebugSession {
     }
 }
 
-CustomDebugSession.run(RubicDebugSession);
+import * as vscode from 'vscode';
+vscode.window.showInformationMessage("test");
+//CustomDebugSession.run(RubicDebugSession);

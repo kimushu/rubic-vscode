@@ -5,38 +5,40 @@ import vscode = require("vscode"); // Import declaration only
 
 export class InteractiveDebugSession extends DebugSession {
     private _pendingResponses: DebugProtocol.Response[] = [];
-    private _waitingRequests = {};
+    private _pendingQuestions = {};
 
     protected constructor () {
         super();
     }
 
     protected customRequest(command: string, response: DebugProtocol.Response, args: any): void {
+        if (command !== "interactiveRequest") {
+            this.sendErrorResponse(response, 1001, "unknown custom request");
+            return;
+        }
         this._pendingResponses.push(response);
-        if (command === "interactive.userResponse") {
-            let seq = args && args.request_seq;
-            let resolve = this._waitingRequests[seq];
-            delete this._waitingRequests[seq];
-            resolve && resolve(args.result);
-        } else if (command === "interactive.codeRequest") {
-            let creq_id = args && args.id;
-            let creq_cmd = args && args.command;
-            let creq_args = args && args.args;
+        if (args.command != null) {
+            // New command issued
+            let {command_id} = args;
             Promise.resolve(
             ).then(() => {
-                if (creq_id == null || creq_cmd == null) {
-                    return Promise.reject(Error("Invalid interactive.codeRequest"));
-                }
-                return this.interactiveRequest(creq_cmd, creq_args);
+                return this.interactiveRequest(args.command, args.args);
             }).then((result) => {
                 let resp = this._pendingResponses.shift();
-                resp.body = {id: creq_id, response: "interactive.codeSuccess", result};
+                resp.body = {command_id, result: [result]};
                 this.sendResponse(resp);
             }, (reason) => {
                 let resp = this._pendingResponses.shift();
-                resp.body = {id: creq_id, response: "interactive.codeFailure", reason};
+                resp.body = {command_id, reason: [reason]};
                 this.sendResponse(resp);
             });
+        } else {
+            // Answer received
+            let resolve = this._pendingQuestions[args.question_id];
+            delete this._pendingQuestions[args.question_id];
+            if (resolve != null) {
+                resolve(args.result);
+            }
         }
     }
 
@@ -48,30 +50,67 @@ export class InteractiveDebugSession extends DebugSession {
     public showErrorMessage(message: string, options: vscode.MessageOptions, ...items: string[]): Thenable<string|undefined>;
     public showErrorMessage<T extends vscode.MessageItem>(message: string, ...items: T[]): Thenable<T|undefined>;
     public showErrorMessage<T extends vscode.MessageItem>(message: string, options: vscode.MessageOptions, ...items: T[]): Thenable<T|undefined>;
-    public showErrorMessage(message: string, options: vscode.MessageOptions, ...items: any[]): Thenable<any> {
-        let resp = this._pendingResponses.shift();
-        resp.body = {}
-        return Promise.resolve(undefined);
+    public showErrorMessage(message: string, ...items: any[]): Thenable<any> {
+        return this._showMessage("error", message, items);
     }
 
     public showInformationMessage(message: string, ...items: string[]): Thenable<string|undefined>;
     public showInformationMessage(message: string, options: vscode.MessageOptions, ...items: string[]): Thenable<string|undefined>;
     public showInformationMessage<T extends vscode.MessageItem>(message: string, ...items: T[]): Thenable<T|undefined>;
     public showInformationMessage<T extends vscode.MessageItem>(message: string, options: vscode.MessageOptions, ...items: T[]): Thenable<T|undefined>;
-    public showInformationMessage(message: string, options: vscode.MessageOptions, ...items: any[]): Thenable<any> {
-        return Promise.resolve(undefined);
+    public showInformationMessage(message: string, ...items: any[]): Thenable<any> {
+        return this._showMessage("info", message, items);
     }
 
-    public showInputBox(options?: vscode.InputBoxOptions, token?: vscode.CancellationToken): Thenable<string|undefined> {
-        return Promise.resolve(undefined);
+    public showInputBox(options?: vscode.InputBoxOptions): Thenable<string|undefined> {
+        return this._question({question: "input", options});
+    }
+
+    public showQuickPick(items: string[]|Thenable<string[]>, options?: vscode.QuickPickOptions): Thenable<string|undefined>;
+    public showQuickPick<T extends vscode.QuickPickItem>(items: T[]|Thenable<T[]>, options?: vscode.QuickPickOptions): Thenable<T|undefined>;
+    public showQuickPick(items: any, options?: vscode.QuickPickOptions): Thenable<any> {
+        return Promise.resolve(items).then((rawItems) => {
+            return this._question({
+                question: "pick",
+                items: rawItems
+            }).then((choiceIndex: number) => {
+                return (choiceIndex != null) ? rawItems[choiceIndex] : undefined;
+            });
+        });
     }
 
     public showWarningMessage(message: string, ...items: string[]): Thenable<string|undefined>;
     public showWarningMessage(message: string, options: vscode.MessageOptions, ...items: string[]): Thenable<string|undefined>;
     public showWarningMessage<T extends vscode.MessageItem>(message: string, ...items: T[]): Thenable<T|undefined>;
     public showWarningMessage<T extends vscode.MessageItem>(message: string, options: vscode.MessageOptions, ...items: T[]): Thenable<T|undefined>;
-    public showWarningMessage(message: string, options: vscode.MessageOptions, ...items: any[]): Thenable<any> {
-        return Promise.resolve(undefined);
+    public showWarningMessage(message: string, ...items: any[]): Thenable<any> {
+        return this._showMessage("warn", message, items);
     }
 
+    private _showMessage(question: string, message: string, rawItems: any[]): Thenable<any> {
+        let options: vscode.MessageOptions;
+        if (typeof(rawItems[0]) === "object" && rawItems[0].title == null) {
+            options = rawItems.shift();
+        }
+        let items = rawItems.map((value) => {
+            return (value && value.title != null) ? value : {title: value};
+        });
+        return this._question({question, message, items}).then((choiceIndex: number) => {
+            return (choiceIndex != null) ? rawItems[choiceIndex] : undefined;
+        });
+    }
+
+    private _question(params: any): Thenable<any> {
+        return new Promise((resolve, reject) => {
+            let resp = this._pendingResponses.shift();
+            if (resp == null) {
+                reject(Error("No interactive request chain"));
+                return;
+            }
+            let question_id = Math.random().toString(36).substr(2);
+            resp.body = Object.assign({question_id}, params);
+            this._pendingQuestions[question_id] = resolve;
+            this.sendResponse(resp);
+        });
+    }
 }
