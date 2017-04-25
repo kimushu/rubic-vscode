@@ -1,6 +1,7 @@
 import { spawn } from "child_process";
 import { EventEmitter } from "events";
 import * as stream from "stream";
+import { InteractiveDebugSession } from "./interactiveDebugSession";
 
 export interface BoardCandidate {
     /** Board class name */
@@ -22,10 +23,16 @@ export interface BoardInformation {
     boardId: string;
     /** Path of the board */
     path: string;
-    /** ID of the firmware */
-    firmwareId: string;
     /** Serial number */
     serialNumber?: string;
+    /** UUID of the repository */
+    repositoryUuid?: string;
+    /** Name of release */
+    release?: string;
+    /** Path of variation */
+    variation?: string;
+    /** ID of the firmware */
+    firmwareId?: string;
 }
 
 export interface BoardStdio {
@@ -90,7 +97,7 @@ export class RubicBoard extends EventEmitter {
     }
 
     /** Program firmware */
-    programFirmware(): Promise<void> {
+    programFirmware(debugSession: InteractiveDebugSession): Promise<void> {
         return Promise.reject(Error("Not supported"));
     }
 

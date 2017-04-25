@@ -3,6 +3,8 @@ import * as stream from 'stream';
 import { Canarium } from 'canarium';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import * as path from 'path';
+import { InteractiveDebugSession } from "./interactiveDebugSession";
 const localize = nls.loadMessageBundle(__filename);
 
 //*
@@ -15,6 +17,8 @@ Canarium.RemoteFile.verbosity = 3;
 const J7ID_TO_RUBICID: any = {
     "J72A": "peridot_classic",
 };
+
+const PERIDOT_CLASSIC_WRITER = path.join("lib", "peridot_classic_writer.rbf");
 
 function buf2ab(buf: Buffer): ArrayBuffer {
     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
@@ -125,6 +129,16 @@ export class PeridotClassicBoard extends RubicBoard {
                 (reason) => fd.close().catch(() => null).then(() => Promise.reject(reason))
             );
         });
+    }
+
+    async programFirmware(debugSession: InteractiveDebugSession): Promise<void> {
+        if (await debugSession.showInformationMessage(
+            localize("switch_to_ps", "Change switch to PS mode")
+        ) != null) {
+        }
+        return Promise.reject(
+            Error(localize("canceled", "Operation canceled"))
+        );
     }
 
     formatStorage(): Promise<void> {

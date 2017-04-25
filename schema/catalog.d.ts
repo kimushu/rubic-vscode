@@ -219,6 +219,9 @@ declare namespace RubicCatalog {
         /** バリエーションの説明文 */
         description: LocalizedString;
 
+        /** ファームウェアの識別ID */
+        firmwareId?: string;
+
         /** ランタイムの一覧 */
         runtimes: Runtime.Common[];
 
