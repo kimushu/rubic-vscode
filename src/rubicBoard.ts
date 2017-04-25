@@ -97,7 +97,7 @@ export class RubicBoard extends EventEmitter {
     }
 
     /** Program firmware */
-    programFirmware(debugSession: InteractiveDebugSession): Promise<void> {
+    programFirmware(debugSession: InteractiveDebugSession, filename: string): Promise<void> {
         return Promise.reject(Error("Not supported"));
     }
 

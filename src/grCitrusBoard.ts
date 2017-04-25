@@ -3,6 +3,7 @@ import { BoardCandidate, BoardStdio } from './rubicBoard';
 import * as stream from 'stream';
 import * as Canarium from 'canarium';
 import * as nls from 'vscode-nls';
+import { InteractiveDebugSession } from "./interactiveDebugSession";
 const localize = nls.loadMessageBundle(__filename);
 
 export class GrCitrusBoard extends WakayamaRbBoard {
@@ -12,6 +13,16 @@ export class GrCitrusBoard extends WakayamaRbBoard {
 
     static getName(boardId: string): string {
         return localize("grcitrus.name", "GR-CITRUS");
+    }
+
+    async programFirmware(debugSession: InteractiveDebugSession): Promise<void> {
+        if (await debugSession.showErrorMessage(
+            localize("", "This board does not support firmware programming from Rubic.")
+        ) != null) {
+        }
+        return Promise.reject(
+            Error(localize("canceled", "Operation canceled"))
+        );
     }
 
     public constructor(id: string, path: string) {
