@@ -14,6 +14,8 @@ import { Writable } from "stream";
 import { readFileSync, writeFileSync } from 'fs';
 import { Sketch } from "./sketch";
 import * as nls from 'vscode-nls';
+import { InteractiveDebugSession } from "./interactiveDebugSession";
+
 const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
 const SEPARATOR_RUN  = "----------------------------------------------------------------";
@@ -35,28 +37,29 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
     program: string;
 }
 
-export interface AttachRequestArguments extends DebugProtocol.AttachRequestArguments, RubicRequestArguments {
-}
-
-class RubicDebugSession extends DebugSession {
+class RubicDebugSession extends InteractiveDebugSession {
     private static THREAD_ID: number = 1;
     private static THREAD_NAME: string = "Main thread";
+    private _attachMode: boolean;
     private _board: RubicBoard;
     private _config: Sketch;
     private _stdin: Writable;
 
     public constructor() {
         super();
+        this._attachMode = false;
         this.setDebuggerLinesStartAt1(false);
         this.setDebuggerColumnsStartAt1(false);
     }
 
     protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
+        this.log("initializeRequest()", args);
         this.sendEvent(new InitializedEvent());
         this.sendResponse(response);
     }
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
+        this.log("launchRequest()", args);
         Promise.resolve(
         ).then(() => {
             //return Sketch.load(args.workspaceRoot);
@@ -78,11 +81,14 @@ class RubicDebugSession extends DebugSession {
         });
     }
 
-    protected attachRequest(response: DebugProtocol.AttachResponse, args: AttachRequestArguments): void {
-        // TODO
+    protected attachRequest(response: DebugProtocol.AttachResponse, args: DebugProtocol.AttachRequestArguments): void {
+        this.log("attachRequest()", args);
+        this._attachMode = true;
+        this.sendResponse(response);
     }
 
     protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
+        this.log("threadsRequest()");
         response.body = {
             threads: [
                 new Thread(RubicDebugSession.THREAD_ID, RubicDebugSession.THREAD_NAME)
@@ -92,6 +98,7 @@ class RubicDebugSession extends DebugSession {
     }
 
 	protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
+        this.log("stackTraceRequest()", args);
         response.body = {
             stackFrames: [],
             totalFrames: 0
@@ -100,6 +107,7 @@ class RubicDebugSession extends DebugSession {
     }
 
 	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
+        this.log("scopesRequest()", args);
         response.body = {
             scopes: []
         };
@@ -107,6 +115,7 @@ class RubicDebugSession extends DebugSession {
     }
 
 	protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
+        this.log("variablesRequest()", args);
         response.body = {
             variables: []
         };
@@ -115,12 +124,22 @@ class RubicDebugSession extends DebugSession {
 
 /*
 	protected evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): void {
+        this.log("evaluateRequest()", args);
 		response.body = {
 			result: `evaluate(context: '${args.context}', '${args.expression}')`,
 			variablesReference: 0
 		};
 		this.sendResponse(response);
 	}*/
+
+    protected interactiveRequest(command: string, args: any): Thenable<any> {
+        switch (command) {
+            case "writeFirmware":
+                return this._writeFirmware(args.boardClass, args.boardPath, args.filename);
+            default:
+                return Promise.reject(Error("Unknown interactive request"));
+        }
+    }
 
     protected connectBoard(args: RubicRequestArguments): Promise<void> {
         return Promise.resolve(
@@ -146,6 +165,22 @@ class RubicDebugSession extends DebugSession {
             // Connect
             return this._board.connect();
         }); // Promise.resolve().then()
+    }
+
+    /**
+     * Write firmware to the board
+     * @param boardClassName Class name of the board
+     * @param boardPath Path of the board
+     * @param filename Filename of firmware
+     */
+    private async _writeFirmware(boardClassName: string, boardPath: string, filename: string): Promise<void> {
+        let boardClass = BoardClassList.getClass(boardClassName);
+        let board = new boardClass(boardPath);
+        try {
+            await board.writeFirmware(this, filename);
+        } finally {
+            this.sendEvent(new TerminatedEvent());
+        }
     }
 
     protected transferFiles(): Promise<number> {
@@ -255,6 +290,4 @@ class RubicDebugSession extends DebugSession {
     }
 }
 
-import * as vscode from 'vscode';
-vscode.window.showInformationMessage("test");
-//CustomDebugSession.run(RubicDebugSession);
+DebugSession.run(RubicDebugSession);

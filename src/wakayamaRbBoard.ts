@@ -2,8 +2,8 @@ import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from './rubi
 import * as stream from 'stream';
 import * as SerialPort from 'serialport';
 import * as nls from 'vscode-nls';
-const localize = nls.loadMessageBundle(__filename);
 
+const localize = nls.loadMessageBundle(__filename);
 const DEBUG = false;
 
 export class WakayamaRbBoard extends RubicBoard {
@@ -24,7 +24,7 @@ export class WakayamaRbBoard extends RubicBoard {
         {name: "WAKAYAMA.RB board", boardId: "wakayamarb", vendorId: 0x045b, productId: 0x0234}, // Renesas
     ];
 
-    public constructor(private _boardId: string, private _path: string) {
+    public constructor(private _path: string) {
         super();
         this._port = new SerialPort(_path, {
             autoOpen: false,
@@ -101,11 +101,10 @@ export class WakayamaRbBoard extends RubicBoard {
             });
             if (!firmwareId) {
                 return <Promise<any>>Promise.reject(
-                    Error("Failed to detect firmware")
+                    Error(localize("failed-detect", "Failed to detect firmware"))
                 );
             }
             this._info = {
-                boardId: this._boardId,
                 path: this._path,
                 firmwareId: firmwareId,
             };

@@ -18,9 +18,8 @@ export interface DiskInfo {
  * @param maximumSize Maximum size in bytes
  */
 export function enumerateRemovableDisks(minimumSize: number = 0, maximumSize: number = 0): Promise<DiskInfo[]> {
-    return ((process.platform == "win32") ? enumerateDisksWin32() : enumerateDisksUnix()).then((disks) => {
-        let result: string[] = [];
-        return disks.filter((disk) => {
+    return ((process.platform === "win32") ? enumerateDisksWin32() : enumerateDisksUnix()).then((disks) => {
+        let result = disks.filter((disk) => {
             if (disk.size >= minimumSize) {
                 if (maximumSize === 0 || disk.size <= maximumSize) {
                     return true;
@@ -28,6 +27,7 @@ export function enumerateRemovableDisks(minimumSize: number = 0, maximumSize: nu
             }
             return false;
         });
+        return result;
     });
 }
 
@@ -35,7 +35,7 @@ export function enumerateRemovableDisks(minimumSize: number = 0, maximumSize: nu
  * Disk enumerator for win32 environment
  */
 function enumerateDisksWin32(): Promise<DiskInfo[]> {
-    return pify(exec)("wmic logicaldisks get Caption,DriveType,FreeSpace,Size").then((stdout: string) => {
+    return pify(exec)("wmic logicaldisk get Caption,DriveType,FreeSpace,Size").then((stdout: string) => {
         let result: DiskInfo[] = [];
         stdout.split("\r\r\n").forEach((line) => {
             let col = line.split(/\s+/);

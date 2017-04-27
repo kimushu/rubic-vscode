@@ -1,6 +1,42 @@
-import { commands, window } from 'vscode';
+import { commands, window, workspace } from 'vscode';
 
+const DEBUG_SESSION_DELAY_MS    = 1000;
+const DEBUG_SESSION_MAX_TRIES = 5;
 let pendingRequests = {};
+
+export class NoDebugSessionError extends Error {
+    constructor(message?: string) {
+        super(message);
+        Object.setPrototypeOf(this, NoDebugSessionError.prototype);
+    }
+}
+
+export function soloInteractiveDebugRequest(command: string, args: any): Thenable<any> {
+    return commands.executeCommand(
+        "vscode.startDebug",
+        {
+            type: "rubic",
+            request: "attach",
+            workspaceRoot: workspace.rootPath,
+            debugServer: 4711
+        }
+    ).then(() => {
+        let retry = DEBUG_SESSION_MAX_TRIES;
+        let issue = () => {
+            return new Promise((resolve) => {
+                global.setTimeout(resolve, DEBUG_SESSION_DELAY_MS);
+            }).then(() => {
+                return interactiveDebugRequest(command, args);
+            }).catch((reason) => {
+                if (reason instanceof NoDebugSessionError && --retry > 0) {
+                    return issue();
+                }
+                return Promise.reject(reason);
+            });
+        };
+        return issue();
+    });
+}
 
 export function interactiveDebugRequest(command: string, args: any): Thenable<any> {
     let command_id = Math.random().toString(36).substr(2);
@@ -15,9 +51,8 @@ export function interactiveDebugRequest(command: string, args: any): Thenable<an
         ).then(reply);
     };
     let reply = (response) => {
-        console.log("reply: " + JSON.stringify(response));
         if (response == null) {
-            throw Error("no debug session");
+            throw new NoDebugSessionError("no debug session");
         }
 
         let {body} = response;
@@ -58,12 +93,16 @@ export function interactiveDebugRequest(command: string, args: any): Thenable<an
                         return (item != null) ? body.items.indexOf(item) : null;
                     });
                 default:
-                    console.log(`unknown question: ${question}`);
+                    console.warn(`unknown question: ${question}`);
             }
         }).then((result) => {
             return issue({question_id, result});
         });
     };
-    issue({command_id, command, args}).then(reply);
+    issue({command_id, command, args}).then(reply, (reason) => {
+        let request = pendingRequests[command_id];
+        delete pendingRequests[command_id];
+        request.reject(reason);
+    });
     return promise;
 }

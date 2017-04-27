@@ -131,7 +131,7 @@ export class PeridotClassicBoard extends RubicBoard {
         });
     }
 
-    async programFirmware(debugSession: InteractiveDebugSession): Promise<void> {
+    async writeFirmware(debugSession: InteractiveDebugSession): Promise<void> {
         if (await debugSession.showInformationMessage(
             localize("switch_to_ps", "Change switch to PS mode")
         ) != null) {

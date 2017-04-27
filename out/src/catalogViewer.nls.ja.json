@@ -41,7 +41,10 @@
         "ファームウェア",
         "ファームウェアをボードに書き込む",
         "ランタイム",
-        "ドキュメント"
+        "ドキュメント",
+        "ボードにファームウェアを書き込んでよろしいですか？",
+        "続行",
+        "ファームウェアは正常に更新されました"
     ],
     "keys": [
         "no-port",
@@ -85,6 +88,9 @@
         "firmware",
         "write-firmware",
         "runtimes",
-        "document"
+        "document",
+        "confirm-write-firmware",
+        "continue",
+        "finished-write-firmware"
     ]
 }

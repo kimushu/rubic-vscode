@@ -1,17 +1,30 @@
-import { DebugSession } from 'vscode-debugadapter';
+import { DebugSession, OutputEvent } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
+
+import * as fs from 'fs';
+import * as path from 'path';
 
 import vscode = require("vscode"); // Import declaration only
 
 export class InteractiveDebugSession extends DebugSession {
     private _pendingResponses: DebugProtocol.Response[] = [];
     private _pendingQuestions = {};
+    private _logStream;
 
     protected constructor () {
         super();
+        this.log("new InteractiveDebugSession");
+    }
+
+    protected log(message: string, ...objects: any[]): void {
+        if (!this._logStream) {
+            this._logStream = fs.createWriteStream("d:/debugSession.log");
+        }
+        this._logStream.write([message].concat(...objects).map((v) => v.toString()).join(" ") + "\n");
     }
 
     protected customRequest(command: string, response: DebugProtocol.Response, args: any): void {
+        this.log(`customRequest("${command}", *, ${JSON.stringify(args)})`);
         if (command !== "interactiveRequest") {
             this.sendErrorResponse(response, 1001, "unknown custom request");
             return;
@@ -29,7 +42,7 @@ export class InteractiveDebugSession extends DebugSession {
                 this.sendResponse(resp);
             }, (reason) => {
                 let resp = this._pendingResponses.shift();
-                resp.body = {command_id, reason: [`${reason}`]};
+                resp.body = {command_id, reason: [`${reason}:${reason.stack}`]};
                 this.sendResponse(resp);
             });
         } else {
@@ -84,7 +97,7 @@ export class InteractiveDebugSession extends DebugSession {
     public showWarningMessage<T extends vscode.MessageItem>(message: string, ...items: T[]): Thenable<T|undefined>;
     public showWarningMessage<T extends vscode.MessageItem>(message: string, options: vscode.MessageOptions, ...items: T[]): Thenable<T|undefined>;
     public showWarningMessage(message: string, ...items: any[]): Thenable<any> {
-        return this._showMessage("warn", message, items);
+        return this._showMessage("showWarningMessage", message, items);
     }
 
     private _showMessage(question: string, message: string, rawItems: any[]): Thenable<any> {

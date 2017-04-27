@@ -19,6 +19,7 @@ import { RubicExtension } from './extension';
 import { SketchLoadResult } from './sketch';
 import * as MarkdownIt from 'markdown-it';
 import { GitHubRepository } from './githubFetcher';
+import { interactiveDebugRequest, soloInteractiveDebugRequest } from './interactiveRequester';
 
 const localize = nls.loadMessageBundle(__filename);
 const LOCALIZED_NO_PORT = localize("no-port", "No port selected");
@@ -82,7 +83,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 console.log("test connection"); // TODO
             }),
             commands.registerCommand(CMD_WRITE_FIRMWARE, () => {
-                console.log("write firmware"); // TODO
+                this._writeFirmware();
             })
         );
 
@@ -137,8 +138,6 @@ export class CatalogViewer implements TextDocumentContentProvider {
      * showCatalog command receiver (With parameters)
      */
     private _updateCatalogView(params: any) {
-        console.log("_updateCatalogView: " + JSON.stringify(params));
-
         // Update provisional selections
         let id = params.item;
         switch (params.panel) {
@@ -402,7 +401,6 @@ export class CatalogViewer implements TextDocumentContentProvider {
 
     async provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
         let {context, catalogData} = RubicExtension.instance;
-        console.log(`provideTextDocumentContent: ${uri}`);
         if (uri.scheme !== "rubic" || uri.authority !== "catalog") {
             throw Error("invalid URI for rubic catalog");
         }
@@ -633,5 +631,37 @@ export class CatalogViewer implements TextDocumentContentProvider {
 
         // Generate HTML
         return template(variables);
+    }
+
+    /**
+     * Write firmware to the board
+     */
+    private async _writeFirmware(silent: boolean = false): Promise<void> {
+        let {catalogData, sketch} = RubicExtension.instance;
+
+        // Get firmware data
+        let cacheDir = await catalogData.prepareCacheDir(sketch.repositoryUuid, sketch.releaseTag);
+
+        // Confirm to user
+        if (!silent && await window.showInformationMessage(
+            localize("confirm-write-firmware", "Are you sure to write firmware to the board?"),
+            { title: localize("continue", "Continue") }
+        ) == null) {
+            return;
+        }
+
+        // Request firmware write
+        await soloInteractiveDebugRequest("writeFirmware", {
+            boardClass: sketch.boardClass,
+            boardPath: sketch.boardPath,
+            filename: CacheStorage.getFullPath(path.join(cacheDir, sketch.variationPath))
+        });
+
+        // Inform to user
+        if (!silent) {
+            await window.showInformationMessage(
+                localize("finished-write-firmware", "Firmware has been successfully updated.")
+            );
+        }
     }
 }

@@ -19,8 +19,6 @@ export interface BoardCandidate {
 }
 
 export interface BoardInformation {
-    /** ID of the board */
-    boardId: string;
     /** Path of the board */
     path: string;
     /** Serial number */
@@ -97,7 +95,7 @@ export class RubicBoard extends EventEmitter {
     }
 
     /** Program firmware */
-    programFirmware(debugSession: InteractiveDebugSession, filename: string): Promise<void> {
+    writeFirmware(debugSession: InteractiveDebugSession, filename: string): Promise<void> {
         return Promise.reject(Error("Not supported"));
     }
 
