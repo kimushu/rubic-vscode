@@ -592,7 +592,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
             let {size} = await CacheStorage.stat(path.join(cacheDir, sv.path));
             let sizeText: string;
             if (size >= 1024) {
-                sizeText = `${(size / 1024)} kB`;
+                sizeText = `${Math.round(size / 1024)} kB`;
             } else {
                 sizeText = `${size} bytes`;
             }
