@@ -1,8 +1,14 @@
 {
     "messages": [
-        "GR-CITRUS"
+        "GR-CITRUSボードのリセットスイッチを押して下さい",
+        "続行",
+        "操作がキャンセルされました",
+        "GR-CITRUSが見つかりません"
     ],
     "keys": [
-        "grcitrus.name"
+        "push-reset-button",
+        "continue",
+        "canceled",
+        "grcitrus-not-found"
     ]
 }
