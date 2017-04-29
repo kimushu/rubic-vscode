@@ -118,13 +118,6 @@ export class Sketch implements vscode.Disposable {
         return this._get("transfer.exclude", []);
     }
 
-    public get compile_include(): string[] {
-        return this._get("compile.include", ["*.rb", "*.ts"]);
-    }
-    public get compile_exclude(): string[] {
-        return this._get("compile.exclude", []);
-    }
-
     update(obj): Promise<void> {
         return Promise.resolve({
         }).then(() => {
