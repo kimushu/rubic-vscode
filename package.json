@@ -216,13 +216,14 @@
   },
   "extensionDependencies": [],
   "scripts": {
-    "vscode:prepublish": "tsc -p ./ && npm run localize",
+    "vscode:prepublish": "npm run clean && tsc -p ./ && npm run localize",
     "compile": "rimraf node_modules/serialport/build && tsc -watch -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "node ./node_modules/vscode/bin/test",
     "localize": "vscl out/src/*.js",
     "rebuild-serialport": "electron-rebuild-vsce -c 1.10.2 -w serialport",
     "clean": "rimraf out/src/*.js out/src/*.js.map out/src/*.nls.json",
+    "package": "vsce package",
     "schema": "npm run schema:catalog && npm run schema:sketch",
     "schema:catalog": "typescript-json-schema ./schema/catalog.d.ts RubicCatalog.Root -o ./schema/catalog.schema.json",
     "schema:sketch": "typescript-json-schema ./schema/sketch.d.ts V1_0_x.Top -o ./schema/sketch.schema.json"
