@@ -1,4 +1,3 @@
-import * as Handlebars from 'handlebars';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 import * as util from 'util';
@@ -20,6 +19,9 @@ import { SketchLoadResult } from './sketch';
 import * as MarkdownIt from 'markdown-it';
 import { GitHubRepository } from './githubFetcher';
 import { interactiveDebugRequest, soloInteractiveDebugRequest } from './interactiveRequester';
+
+const Handlebars = require("./handlebars");
+require("./templates");
 
 const localize = nls.loadMessageBundle(__filename);
 const LOCALIZED_NO_PORT = localize("no-port", "No port selected");
@@ -407,9 +409,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
 
         let cfg = workspace.getConfiguration(CFG_PATH);
         let {sketch} = RubicExtension.instance;
-        let template: Function = Handlebars.compile(
-            readFileSync(path.join(context.extensionPath, "catalog.hbs"), "utf8")
-        );
+        let template: Function = Handlebars.templates["catalog.hbs"];
         let defaultPanel = 0;
         let variables: any = {
             extensionPath: context.extensionPath,
@@ -611,9 +611,9 @@ export class CatalogViewer implements TextDocumentContentProvider {
 * ${sv.path} (${sizeText})<br><a href="command:${CMD_WRITE_FIRMWARE}" class="catalog-page-button">${
     localize("write-firmware", "Write firmware to board")
 }</a>
-## ${localize("runtimes", "Runtimes")}
+<!--## ${localize("runtimes", "Runtimes")}
 * List1
-* List2
+* List2-->
 `)
             });
             if (sv.document != null) {
