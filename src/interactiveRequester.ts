@@ -1,6 +1,6 @@
 import { commands, window, workspace, StatusBarItem, StatusBarAlignment } from 'vscode';
 
-const DEBUG_SESSION_DELAY_MS    = 1000;
+const DEBUG_SESSION_DELAY_MS = 1000;
 const DEBUG_SESSION_MAX_TRIES = 5;
 let pendingRequests = {};
 
@@ -18,7 +18,7 @@ export function soloInteractiveDebugRequest(command: string, args: any): Thenabl
             type: "rubic",
             request: "attach",
             workspaceRoot: workspace.rootPath,
-            debugServer: 4711
+            //debugServer: 4711
         }
     ).then(() => {
         let retry = DEBUG_SESSION_MAX_TRIES;
