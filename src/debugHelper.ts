@@ -5,6 +5,8 @@ import * as path from 'path';
 import * as mrbc from 'mruby-native';
 
 import * as nls from 'vscode-nls';
+import { compileMrubySources } from "./mrubyCompiler";
+import { RubicExtension } from "./extension";
 const localize = nls.loadMessageBundle(__filename);
 
 const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
@@ -22,7 +24,7 @@ export class DebugHelper {
         this._disposable.dispose();
     }
 
-    private _mrubyChannel: OutputChannel;
+    private _rubicOutputChannel: OutputChannel;
 
     public constructor(private _context: ExtensionContext) {
         if (DebugHelper._instance) {
@@ -52,75 +54,32 @@ export class DebugHelper {
         );
 
         subscriptions.push(
-            this._mrubyChannel = window.createOutputChannel(
-                localize("mruby-compiler", "mruby Compiler")
+            this._rubicOutputChannel = window.createOutputChannel(
+                localize("rubic-output", "Rubic Output")
             )
         );
 
         this._disposable = Disposable.from(...subscriptions);
     }
 
-    private _startDebugSession(config: any): Thenable<any> {
+    private async _startDebugSession(config: any): Promise<any> {
         let mergedConfig = Object.assign({}, config);
-        return Promise.resolve(
-        ).then(() => {
-            //return Sketch.load(workspace.rootPath);
-            return <any>{};
-        }).then((rubicConfig) => {
-            return this._compileSources(rubicConfig);
-        }).then(() => {
-            commands.executeCommand("vscode.startDebug", config);
-            return {status: "ok"};
-        });
+        let {sketch} = RubicExtension.instance;
+        await this._compileSources(sketch);
+        commands.executeCommand("vscode.startDebug", config);
+        return {status: "ok"};
     }
 
-    private _compileSources(sketch: Sketch): Promise<void> {
-        return Promise.resolve(
-        ).then(() => {
-            let files: string[] = [];
-            let opt = {cwd: sketch.workspaceRoot};
-            sketch.compile_include.forEach((pattern) => {
-                let includedFiles: string[] = glob.sync(pattern, opt);
-                files.push(...includedFiles);
-            });
-            sketch.compile_exclude.forEach((pattern) => {
-                let excludedFiles: string[] = glob.sync(pattern, opt);
-                if (excludedFiles.length === 0) { return; }
-                files = files.filter((file) => { return excludedFiles.indexOf(file) === -1; });
-            });
-            return files.reduce(
-                (promise, file) => {
-                    return promise.then(() => {
-                        switch (path.extname(file)) {
-                        case ".rb":
-                            return this._compileMruby(sketch, file);
-                        case ".ts":
-                            return Promise.reject(Error("TypeScript is not supported yet"));
-                        }
-                    });
-                }, Promise.resolve()
-            );
-        }); // Promise.resolve().then()
-    }
-
-    private _compileMruby(rubicConfig: Sketch, file: string): Promise<void> {
-        return new Promise<any>((resolve, reject) => {
-            mrbc.compile(
-                file,
-                {cwd: rubicConfig.workspaceRoot},
-                (err, stdout, stderr) => {
-                    stdout && this._mrubyChannel.append(stdout);
-                    stderr && this._mrubyChannel.append(stderr);
-                    if (stdout || stderr) { this._mrubyChannel.show(); }
-                    if (err) {
-                        return reject(Error(
-                            localize("mruby-compile-failed", "mruby compile failed")
-                        ));
-                    }
-                    return resolve();
-                }
-            );
-        });
+    private async _compileSources(sketch: Sketch): Promise<void> {
+        this._rubicOutputChannel.appendLine(localize(
+            "start-compile-d",
+            "Start compile before launch ({0})",
+            new Date().toLocaleString()
+        ));
+        await compileMrubySources(
+            sketch.workspaceRoot,
+            (value) => this._rubicOutputChannel.append(value)
+        );
     }
 
     private _provideInitConfig(): any {

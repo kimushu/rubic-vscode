@@ -1,10 +1,10 @@
 {
     "messages": [
-        "mrubyコンパイラ",
-        "mrubyのコンパイルに失敗しました"
+        "Rubic出力",
+        "実行前のコンパイルを開始します ({0})"
     ],
     "keys": [
-        "mruby-compiler",
-        "mruby-compile-failed"
+        "rubic-output",
+        "start-compile-d"
     ]
 }

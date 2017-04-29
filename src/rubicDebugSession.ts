@@ -10,16 +10,17 @@ import { RubicBoard, BoardStdio } from "./rubicBoard";
 import { BoardClassList } from "./boardClassList";
 import * as path from 'path';
 import * as glob from 'glob';
+import * as pify from 'pify';
 import { Writable } from "stream";
-import { readFileSync, writeFileSync } from 'fs';
+import { readFile, writeFile } from 'fs';
 import { Sketch } from "./sketch";
 import * as nls from 'vscode-nls';
 import { InteractiveDebugSession } from "./interactiveDebugSession";
 
 const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
-const SEPARATOR_RUN  = "----------------------------------------------------------------";
-const SEPARATOR_STOP = "----------------------------------------------------------------";
+const SEPARATOR_RUN  = "----------------------------------------------------------------\n";
+const SEPARATOR_STOP = "----------------------------------------------------------------\n";
 
 interface RubicRequestArguments {
     /** An absolute path to the workspace folder */
@@ -42,7 +43,7 @@ class RubicDebugSession extends InteractiveDebugSession {
     private static THREAD_NAME: string = "Main thread";
     private _attachMode: boolean;
     private _board: RubicBoard;
-    private _config: Sketch;
+    private _sketch: Sketch;
     private _stdin: Writable;
 
     public constructor() {
@@ -62,10 +63,9 @@ class RubicDebugSession extends InteractiveDebugSession {
         this.log("launchRequest()", args);
         Promise.resolve(
         ).then(() => {
-            //return Sketch.load(args.workspaceRoot);
-            return <any>{};
-        }).then((config) => {
-            this._config = config;
+            this._sketch = new Sketch(args.workspaceRoot);
+            return this._sketch.load(false);
+        }).then((sketch) => {
             return this.connectBoard(args);
         }).then(() => {
             return this.transferFiles();
@@ -144,8 +144,8 @@ class RubicDebugSession extends InteractiveDebugSession {
     protected connectBoard(args: RubicRequestArguments): Promise<void> {
         return Promise.resolve(
         ).then(() => {
-            let boardId = args.boardId || this._config.boardClass;
-            let boardPath = args.boardPath || this._config.boardPath;
+            let boardId = args.boardId || this._sketch.boardClass;
+            let boardPath = args.boardPath || this._sketch.boardPath;
 
             // Get board class constructor
             let boardClass = BoardClassList.getClass(boardId);
@@ -183,89 +183,86 @@ class RubicDebugSession extends InteractiveDebugSession {
         }
     }
 
-    protected transferFiles(): Promise<number> {
-        return Promise.resolve(
-        ).then(() => {
-            let includeGlob: string[] = this._config.transfer_include;
-            let excludeGlob: string[] = this._config.transfer_exclude;
+    protected async transferFiles(): Promise<number> {
+        let includeGlob: string[] = this._sketch.transfer_include || [];
+        let excludeGlob: string[] = this._sketch.transfer_exclude || [];
+        let globOptions = {cwd: this._sketch.workspaceRoot};
+        let files: string[] = [];
 
-            let files: string[] = [];
+        // Add files which match 'include' glob pattern
+        includeGlob.forEach((pattern) => {
+            let toBeIncluded: string[] = glob.sync(pattern, globOptions);
+            files.push(...toBeIncluded);
+        });
 
-            // Add files which match 'include' glob pattern
-            includeGlob.forEach((pattern) => {
-                let toBeIncluded: string[] = glob.sync(pattern, {cwd: this._config.workspaceRoot});
-                files.push(...toBeIncluded);
+        // Then, remove files which match 'exclude' glob pattern
+        excludeGlob.forEach((pattern) => {
+            let toBeExcluded: string[] = glob.sync(pattern, globOptions);
+            files = files.filter((file) => {
+                return (toBeExcluded.indexOf(file) == -1);
             });
+        });
 
-            // Then, remove files which match 'exclude' glob pattern
-            excludeGlob.forEach((pattern) => {
-                let toBeExcluded: string[] = glob.sync(pattern, {cwd: this._config.workspaceRoot});
-                files = files.filter((file) => {
-                    return (toBeExcluded.indexOf(file) == -1);
-                });
-            });
+        // Now, 'files' are array of file names (relative path from workspaceRoot)
+        if (files.length == 0) {
+            this.sendEvent(new OutputEvent(
+                localize("no-file-to-transfer", "No file to transfer")
+            ));
+            return 0;
+        }
 
-            // Now, 'files' are array of file names (relative path from workspaceRoot)
+        this.sendEvent(
+            new OutputEvent(
+                ((files.length == 1) ?
+                    localize("start-transfer-1", "Start transfer {0} file", 1)
+                :   localize("start-transfer-n", "Start transfer {0} files", files.length)) + "\n"
+        ));
 
-            if (files.length == 0) {
-                this.sendEvent(new OutputEvent(
-                    localize("no-file-to-transfer", "No file to transfer")
-                ));
-                return 0;
-            }
+        let skipped = 0;
 
-            this.sendEvent(
-                new OutputEvent(
-                    (files.length == 1) ?
-                        localize("start-transfer-1", "Start transfer {0} file", 1)
-                    :   localize("start-transfer-n", "Start transfer {0} files", files.length)
+        // Start file transfer
+        for (let index = 0; index < files.length; ++index) {
+            let file = files[index];
+
+            this.sendEvent(new OutputEvent(
+                localize("writing-file-x", "Writing file: {0}", file) + "\n"
             ));
 
-            let skipped = 0;
+            // Read new file content
+            let newContent: Buffer = await pify(readFile)(path.join(this._sketch.workspaceRoot, file));
+            let oldContent: Buffer;
 
-            // Start file transfer
-            return files.reduce(
-                (promise, file) => {
-                    let newContent: Buffer;
-                    return promise.then(() => {
-                        this.sendEvent(new OutputEvent(
-                            localize("writing-file-x", "Writing file: {0}", file)
-                        ));
+            // Start read back from board
+            try {
+                oldContent = await this._board.readFile(file);
+            } catch (error) {
+                // Ignore all errors during read back
+                oldContent = null;
+            }
 
-                        // Read new file content
-                        newContent = readFileSync(path.join(this._config.workspaceRoot, file));
+            if (oldContent && oldContent.equals(newContent)) {
+                ++skipped;
+                break; // File is already identical (Skip writing)
+            }
 
-                        // Start read back from board
-                        return this._board.readFile(file).catch(() => {
-                            // Ignore all errors during read back
-                            return Promise.resolve(<Buffer>null);
-                        });
-                    }).then((oldContent?: Buffer) => {
-                        if (oldContent && oldContent.equals(newContent)) {
-                            ++skipped;
-                            return; // File is already identical (Skip writing)
-                        }
-                        // Start write new content to board
-                        return this._board.writeFile(file, newContent);
-                    });
-                }, Promise.resolve()
-            ).then(() => {
-                let msg = localize("transfer-complete", "Transfer complete");
-                if (skipped == 1) {
-                    msg += " (" + localize("skipped-file-1", "Skipped {0} unchanged file", 1) + ")";
-                } else if (skipped > 1) {
-                    msg += " (" + localize("skipped-file-n", "Skipped {0} unchanged files", skipped) + ")";
-                }
-                this.sendEvent(new OutputEvent(msg));
-                return files.length;
-            }); // return files.reduce().then()
-        }); // Promise.resolve().then()
+            // Start write new content to board
+            await this._board.writeFile(file, newContent);
+        }
+
+        let msg = localize("transfer-complete", "Transfer complete");
+        if (skipped == 1) {
+            msg += " (" + localize("skipped-file-1", "Skipped {0} unchanged file", 1) + ")\n";
+        } else if (skipped > 1) {
+            msg += " (" + localize("skipped-file-n", "Skipped {0} unchanged files", skipped) + ")\n";
+        }
+        this.sendEvent(new OutputEvent(msg));
+        return files.length;
     }
 
     protected startProgram(args: LaunchRequestArguments): Promise<void> {
-        let file = path.relative(this._config.workspaceRoot, args.program);
+        let file = path.relative(this._sketch.workspaceRoot, args.program);
         this.sendEvent(new OutputEvent(
-            localize("run-program-x", "Run program: {0}", file)
+            localize("run-program-x", "Run program: {0}", file) + "\n"
         ));
         this.sendEvent(new OutputEvent(SEPARATOR_RUN));
         return this._board.runSketch(file).then(() => {
