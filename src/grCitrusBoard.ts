@@ -16,6 +16,7 @@ const CITRUS_RESET_DELAY_MS = 2000;
 const CITRUS_RESET_MAX_RETRIES = 5;
 const CITRUS_MSD_MAX_CAPACITY = 4 * 1024 * 1024;
 const CITRUS_MSD_FILE = "Gadget Renesas Project Home.html";
+const CITRUS_PROG_DELAY_MS = 2000;
 
 function delay(ms: number): Promise<void> {
     return <any>new Promise((resolve) => {
@@ -33,10 +34,18 @@ export class GrCitrusBoard extends WakayamaRbBoard {
             localize("push-reset-button", "Push reset button on GR-CITRUS board."),
             {title: localize("continue", "Continue")}
         ) != null) {
+            await debugSession.showStatusMessage(
+                `$(watch) ${localize("searching-grcitrus", "Searching GR-CITRUS...")}`
+            );
             let basePath = await this._searchUsbMassStorage();
+
+            await debugSession.showStatusMessage(
+                `$(watch) ${localize("writing-firmware", "Writing firmware ... (Please wait! Do not disconnect GR-CITRUS)")}`
+            );
             let destPath = path.join(basePath, path.basename(filename));
             let copy_cmd = (process.platform === "win32") ? "copy" : "cp";
             await pify(exec)(`${copy_cmd} "${filename}" "${destPath}"`);
+            await delay(CITRUS_PROG_DELAY_MS);
             return;
         }
         return Promise.reject(

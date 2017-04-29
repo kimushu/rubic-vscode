@@ -1,4 +1,4 @@
-import { commands, window, workspace } from 'vscode';
+import { commands, window, workspace, StatusBarItem, StatusBarAlignment } from 'vscode';
 
 const DEBUG_SESSION_DELAY_MS    = 1000;
 const DEBUG_SESSION_MAX_TRIES = 5;
@@ -43,6 +43,14 @@ export function interactiveDebugRequest(command: string, args: any): Thenable<an
     let promise = new Promise((resolve, reject) => {
         pendingRequests[command_id] = {resolve, reject};
     });
+    let statusBarItem: StatusBarItem;
+    let removeStatus = () => {
+        if (statusBarItem) {
+            statusBarItem.hide();
+            statusBarItem.dispose();
+            statusBarItem = null;
+        }
+    };
     let issue = (args) => {
         return commands.executeCommand(
             "workbench.customDebugRequest",
@@ -92,6 +100,17 @@ export function interactiveDebugRequest(command: string, args: any): Thenable<an
                     return window.showQuickPick(body.items, body.options).then((item) => {
                         return (item != null) ? body.items.indexOf(item) : null;
                     });
+                case "showStatusMessage":
+                    if (!statusBarItem) {
+                        statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
+                    }
+                    statusBarItem.text = body.text;
+                    statusBarItem.tooltip = body.tooltip;
+                    statusBarItem.show();
+                    return;
+                case "hideStatusMessage":
+                    removeStatus();
+                    return;
                 default:
                     console.warn(`unknown question: ${question}`);
             }
@@ -104,5 +123,11 @@ export function interactiveDebugRequest(command: string, args: any): Thenable<an
         delete pendingRequests[command_id];
         request.reject(reason);
     });
-    return promise;
+    return promise.then((result) => {
+        removeStatus();
+        return result;
+    }, (reason) => {
+        removeStatus();
+        return Promise.reject(reason);
+    });
 }

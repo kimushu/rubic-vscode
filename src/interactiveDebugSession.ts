@@ -100,6 +100,14 @@ export class InteractiveDebugSession extends DebugSession {
         return this._showMessage("showWarningMessage", message, items);
     }
 
+    public showStatusMessage(text: string, tooltip?: string): Thenable<void> {
+        return this._question({question: "showStatusMessage", text, tooltip});
+    }
+
+    public hideStatusMessage(): Thenable<void> {
+        return this._question({question: "hideStatusMessage"});
+    }
+
     private _showMessage(question: string, message: string, rawItems: any[]): Thenable<any> {
         let options: vscode.MessageOptions;
         if (typeof(rawItems[0]) === "object" && rawItems[0].title == null) {
