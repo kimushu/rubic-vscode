@@ -114,6 +114,17 @@ export class CatalogData implements vscode.Disposable {
     }
 
     /**
+     * Lookup variation definition
+     */
+    getVariation(repositoryUuid: string, releaseTag: string, variationPath: string): RubicCatalog.Variation {
+        let rel = this.getRelease(repositoryUuid, releaseTag);
+        if (rel && rel.cache) {
+            return rel.cache.variations.find((v) => v.path === variationPath);
+        }
+        return null;
+    }
+
+    /**
      * Load catalog data from cache
      */
     load(): Promise<void> {

@@ -1,7 +1,8 @@
 import { Disposable, commands, OutputChannel, window, workspace, ExtensionContext } from 'vscode';
-import { Sketch } from "./sketch";
+import { Sketch, generateDebugConfiguration } from "./sketch";
 import * as glob from 'glob';
 import * as path from 'path';
+import * as pify from 'pify';
 import * as mrbc from 'mruby-native';
 
 import * as nls from 'vscode-nls';
@@ -63,6 +64,13 @@ export class DebugHelper {
     }
 
     private async _startDebugSession(config: any): Promise<any> {
+        if (Object.keys(config).length === 0) {
+            let result = {
+                status: "saveConfiguration",
+                content: await this._provideInitConfig()
+            };
+            return result;
+        }
         let mergedConfig = Object.assign({}, config);
         let {sketch} = RubicExtension.instance;
         await this._compileSources(sketch);
@@ -82,12 +90,14 @@ export class DebugHelper {
         );
     }
 
-    private _provideInitConfig(): any {
-        console.warn("TODO");
+    private async _provideInitConfig(): Promise<string> {
+        return JSON.stringify({
+            version: "0.2.0",
+            configurations: [await generateDebugConfiguration(workspace.rootPath)]
+        }, null, 4);
     }
 
-    private _guessProgramName(): any {
-        console.warn("TODO");
-        return "main.mrb";
+    private async _guessProgramName(): Promise<string> {
+        return "main.mrb"; // FIXME
     }
 }

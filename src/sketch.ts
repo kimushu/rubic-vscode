@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import * as semver from 'semver';
 import { RUBIC_VERSION } from './rubicVersion';
 import * as CJSON from 'comment-json';
+import * as pify from 'pify';
+import * as glob from 'glob';
 ///<reference path="../schema/sketch.d.ts" />
 
 // Declaration only
@@ -19,6 +21,35 @@ export enum SketchLoadResult {
     LOAD_CANCELED,
     NO_SKETCH,
 };
+
+export async function generateDebugConfiguration(workspaceRoot: string): Promise<any> {
+    let mainPath = "${command:GuessProgramName}";
+    if (workspaceRoot) {
+        let matches: string[] = await pify(glob)("main.*", {cwd: workspaceRoot});
+        matches.some((file) => {
+            if (file.match(/\.rb$/)) {
+                mainPath = file.replace(/\.rb$/, ".mrb");
+                return true;
+            }
+            if (file.match(/\.ts$/)) {
+                mainPath = file.replace(/\.ts$/, ".js");
+                return true;
+            }
+            if (file.match(/\.js$/)) {
+                mainPath = file;
+                return true;
+            }
+            return false;
+        });
+    }
+    return {
+        type: "rubic",
+        request: "launch",
+        name: "Launch on target board",
+        workspaceRoot: "${workspaceRoot}",
+        program: "${workspaceRoot}/" + mainPath
+    };
+}
 
 /**
  * Rubic configuration for each workspace
@@ -279,19 +310,13 @@ export class Sketch implements vscode.Disposable {
                 return fs.readFileSync(this._launchFile, LAUNCH_ENCODING);
             } catch (error) {
                 // Ignore error here
-                return '{"version":"0.1.0","configurations":[]}';
+                return '{"version":"0.2.0","configurations":[]}';
             }
         }).then((jsonText: string) => {
             return CJSON.parse(jsonText);
         }).then((obj: any) => {
             let cfg = obj.configurations || (obj.configurations = []);
-            cfg.push({
-                type: "rubic",
-                request: "launch",
-                name: "Launch on target board",
-                workspaceRoot: "${workspaceRoot}",
-                program: "${workspaceRoot}/${command:GuessProgramName}"
-            });
+            cfg.push(generateDebugConfiguration(this._workspaceRoot));
             fs.writeFileSync(this._launchFile, CJSON.stringify(cfg, null, 4), LAUNCH_ENCODING);
         });
     }
