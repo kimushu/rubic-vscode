@@ -26,6 +26,7 @@ export class DebugHelper {
     }
 
     private _rubicOutputChannel: OutputChannel;
+    public get rubicOutputChannel() { return this._rubicOutputChannel; }
 
     public constructor(private _context: ExtensionContext) {
         if (DebugHelper._instance) {

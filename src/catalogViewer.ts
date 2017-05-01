@@ -1,7 +1,7 @@
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 import * as util from 'util';
-import { BoardClass, RubicBoard, BoardCandidate } from './rubicBoard';
+import { BoardClass, RubicBoard, BoardCandidate, BoardInformation } from './rubicBoard';
 import { BoardClassList } from './boardClassList';
 import { CacheStorage } from './cacheStorage';
 import {
@@ -82,7 +82,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 this.selectPort();
             }),
             commands.registerCommand(CMD_TEST_CONNECTION, () => {
-                console.log("test connection"); // TODO
+                this._testConnection();
             }),
             commands.registerCommand(CMD_WRITE_FIRMWARE, () => {
                 this._writeFirmware();
@@ -631,6 +631,31 @@ export class CatalogViewer implements TextDocumentContentProvider {
 
         // Generate HTML
         return template(variables);
+    }
+
+    /**
+     * Test connection
+     */
+    private async _testConnection(): Promise<void> {
+        let {sketch, debugHelper} = RubicExtension.instance;
+        let channel = debugHelper.rubicOutputChannel;
+
+        try {
+            let result: BoardInformation = await soloInteractiveDebugRequest("getInfo", {
+                boardClass: sketch.boardClass,
+                boardPath: sketch.boardPath,
+                printOutput: true
+            });
+            window.showInformationMessage(localize(
+                "conn-test-success",
+                "Connection test succeeded"
+            ));
+        } catch (error) {
+            window.showErrorMessage(localize(
+                "conn-test-failed",
+                "Connection test failed"
+            ));
+        }
     }
 
     /**

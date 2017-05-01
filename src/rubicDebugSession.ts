@@ -6,7 +6,7 @@ import {
     DebugSession
 } from 'vscode-debugadapter';
 import { DebugProtocol } from 'vscode-debugprotocol';
-import { RubicBoard, BoardStdio } from "./rubicBoard";
+import { RubicBoard, BoardStdio, BoardInformation } from "./rubicBoard";
 import { BoardClassList } from "./boardClassList";
 import * as path from 'path';
 import * as glob from 'glob';
@@ -136,7 +136,10 @@ class RubicDebugSession extends InteractiveDebugSession {
         switch (command) {
             case "writeFirmware":
                 return this._writeFirmware(args.boardClass, args.boardPath, args.filename);
+            case "getInfo":
+                return this._getBoardInfo(args.boardClass, args.boardPath, args.printOutput);
             default:
+                this.sendEvent(new TerminatedEvent());
                 return Promise.reject(Error("Unknown interactive request"));
         }
     }
@@ -165,6 +168,49 @@ class RubicDebugSession extends InteractiveDebugSession {
             // Connect
             return this._board.connect();
         }); // Promise.resolve().then()
+    }
+
+    /**
+     * Get information of the board
+     * @param boardClassName Class name of the board
+     * @param boardPath Path of the board
+     * @param printOutput If true, print output to Debug console
+     */
+    private async _getBoardInfo(boardClassName: string, boardPath: string, printOutput: boolean): Promise<BoardInformation> {
+        let boardClass = BoardClassList.getClass(boardClassName);
+        let board = new boardClass(boardPath);
+        try {
+            await board.connect();
+            let info = await board.getInfo();
+
+            if (printOutput) {
+                let msg = "";
+                msg += `${localize("path-of-board", "Path of board")} : ${info.path}\n`
+                if (info.serialNumber != null) {
+                    msg += `${localize("serialnumber", "Serial number")} : ${info.serialNumber}\n`;
+                }
+                if (info.repositoryUuid != null) {
+                    msg += `${localize("repo-uuid", "UUID of repository")} : ${info.repositoryUuid}\n`;
+                }
+                if (info.release != null) {
+                    msg += `${localize("tag-rel", "Tag name of release")} : ${info.release}\n`;
+                }
+                if (info.variation != null) {
+                    msg += `${localize("name-variation", "Name of variation")} : ${info.variation}\n`;
+                }
+                if (info.firmwareId != null) {
+                    msg += `${localize("firm-id", "ID of firmware")} : ${info.firmwareId}\n`;
+                }
+                this.sendEvent(new OutputEvent(msg));
+            }
+            return info;
+        } catch (error) {
+            this.sendEvent(new OutputEvent(`${error.stack || error.toString()}\n`));
+            throw error;
+        } finally {
+            await board.disconnect().catch(() => {});
+            this.sendEvent(new TerminatedEvent());
+        }
     }
 
     /**

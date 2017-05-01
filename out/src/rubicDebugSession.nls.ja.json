@@ -1,5 +1,11 @@
 {
     "messages": [
+        "ボードのパス",
+        "シリアル番号",
+        "リポジトリのUUID",
+        "リリースタグ名",
+        "バリエーション名",
+        "ファームウェア識別子",
         "転送するファイルがありません",
         "{0}個のファイル転送を開始します",
         "{0}個のファイル転送を開始します",
@@ -11,6 +17,12 @@
         "プログラムが終了しました"
     ],
     "keys": [
+        "path-of-board",
+        "serialnumber",
+        "repo-uuid",
+        "tag-rel",
+        "name-variation",
+        "firm-id",
         "no-file-to-transfer",
         "start-transfer-1",
         "start-transfer-n",

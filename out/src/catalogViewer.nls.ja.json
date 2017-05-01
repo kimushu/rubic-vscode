@@ -42,6 +42,8 @@
         "ファームウェアをボードに書き込む",
         "ランタイム",
         "ドキュメント",
+        "接続テストに成功しました",
+        "接続テストに失敗しました",
         "ボードにファームウェアを書き込んでよろしいですか？",
         "続行",
         "ファームウェアは正常に更新されました"
@@ -89,6 +91,8 @@
         "write-firmware",
         "runtimes",
         "document",
+        "conn-test-success",
+        "conn-test-failed",
         "confirm-write-firmware",
         "continue",
         "finished-write-firmware"
