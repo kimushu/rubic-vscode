@@ -4,6 +4,7 @@
         "続行",
         "GR-CITRUSを検索中...",
         "ファームウェアを書き込み中... (GR-CITRUSを切断せず、そのまま待機してください)",
+        "LEDの点滅が止まるまで待機して下さい",
         "操作がキャンセルされました",
         "GR-CITRUSが見つかりません"
     ],
@@ -12,6 +13,7 @@
         "continue",
         "searching-grcitrus",
         "writing-firmware",
+        "wait-led-nonblink",
         "canceled",
         "grcitrus-not-found"
     ]

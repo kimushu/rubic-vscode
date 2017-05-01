@@ -46,6 +46,10 @@ export class GrCitrusBoard extends WakayamaRbBoard {
             let copy_cmd = (process.platform === "win32") ? "copy" : "cp";
             await pify(exec)(`${copy_cmd} "${filename}" "${destPath}"`);
             await delay(CITRUS_PROG_DELAY_MS);
+            await debugSession.showInformationMessage(localize(
+                "wait-led-nonblink",
+                "Wait until LED stops blinking"
+            ));
             return;
         }
         return Promise.reject(
