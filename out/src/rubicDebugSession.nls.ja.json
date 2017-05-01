@@ -1,5 +1,6 @@
 {
     "messages": [
+        "接続テストを開始します",
         "ボードのパス",
         "シリアル番号",
         "リポジトリのUUID",
@@ -17,6 +18,7 @@
         "プログラムが終了しました"
     ],
     "keys": [
+        "conn-test-start",
         "path-of-board",
         "serialnumber",
         "repo-uuid",

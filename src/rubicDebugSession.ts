@@ -180,6 +180,13 @@ class RubicDebugSession extends InteractiveDebugSession {
         let boardClass = BoardClassList.getClass(boardClassName);
         let board = new boardClass(boardPath);
         try {
+            if (printOutput) {
+                this.sendEvent(new OutputEvent(localize(
+                    "conn-test-start",
+                    "Starting connection test"
+                ) + ` (${new Date().toLocaleString()})\n`));
+                this.sendEvent(new OutputEvent(SEPARATOR_RUN));
+            }
             await board.connect();
             let info = await board.getInfo();
 
@@ -205,10 +212,13 @@ class RubicDebugSession extends InteractiveDebugSession {
             }
             return info;
         } catch (error) {
-            this.sendEvent(new OutputEvent(`${error.stack || error.toString()}\n`));
+            if (printOutput) {
+                this.sendEvent(new OutputEvent(`${error.stack || error.toString()}\n`));
+            }
             throw error;
         } finally {
-            await board.disconnect().catch(() => {});
+            board.disconnect().catch(() => null);
+            this.sendEvent(new OutputEvent(SEPARATOR_STOP));
             this.sendEvent(new TerminatedEvent());
         }
     }

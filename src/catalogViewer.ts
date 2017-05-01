@@ -648,12 +648,12 @@ export class CatalogViewer implements TextDocumentContentProvider {
             });
             window.showInformationMessage(localize(
                 "conn-test-success",
-                "Connection test succeeded"
+                "Connection test succeeded (See 'Debug console' for details)"
             ));
         } catch (error) {
             window.showErrorMessage(localize(
                 "conn-test-failed",
-                "Connection test failed"
+                "Connection test failed (See 'Debug console' for details)"
             ));
         }
     }
