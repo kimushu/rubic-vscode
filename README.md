@@ -1,7 +1,7 @@
 <a name="en"></a>
 # Rubic
 
-* [Japanese explanation is here / 日本語の説明はこちら](#ja)
+* [Japanese explanation is here / 日本語の説明はこちら](https://github.com/kimushu/rubic-vscode#ja)
 
 Provides embedded-board development support for following boards:
 * [PERIDOT board](http://osafune.github.io/peridot.html)
@@ -65,7 +65,7 @@ MIT
 <a name="ja"></a>
 # Rubic (日本語説明)
 
-* [English explanation is here / 英語の説明はこちら](#en)
+* [English explanation is here / 英語の説明はこちら](https://github.com/kimushu/rubic-vscode#en)
 
 この拡張機能は、下記の組み込みボードをVSCode上で開発するためのものです。
 * [PERIDOT board](http://osafune.github.io/peridot.html)
