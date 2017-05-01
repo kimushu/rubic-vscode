@@ -260,16 +260,18 @@ export class WakayamaRbBoard extends RubicBoard {
 
     private _recv(trig: string|Buffer|number): Promise<string|Buffer> {
         if (this._waiter) {
-            global.clearTimeout(this._waiter.timerId);
             let reject = this._waiter.reject;
             this._waiter = null;
             reject(Error("Operation cancelled"));
         }
         return this._portCall("drain").then(() => {
             return new Promise((resolve, reject) => {
-                let waiter: any = {resolve, reject};
+                let waiter: any = {resolve, reject: (reason) => {
+                    global.clearTimeout(waiter.timerId);
+                    reject(reason);
+                }};
                 waiter.timerId = global.setInterval(
-                    () => { this._portCall("drain"); },
+                    () => { this._portCall("drain").catch(waiter.reject); },
                     this._DRAIN_INTERVAL_MS
                 );
                 if (typeof(trig) == "number") {
