@@ -14,6 +14,20 @@
             "preLaunchTask": "npm"
         },
         {
+            "name": "Launch Extension (w/server)",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": ["--extensionDevelopmentPath=${workspaceRoot}" ],
+            "env": {
+                "DEBUG_SERVER_PORT": "4711"
+            }
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [ "${workspaceRoot}/out/src/**/*.js" ],
+            "preLaunchTask": "npm"
+        },
+        {
             "name": "Launch Tests",
             "type": "extensionHost",
             "request": "launch",
@@ -42,7 +56,7 @@
     "compounds": [
         {
             "name": "Extension & Server",
-            "configurations": ["Launch Extension", "Launch Server"]
+            "configurations": ["Launch Extension (w/server)", "Launch Server"]
         }
     ]
 }

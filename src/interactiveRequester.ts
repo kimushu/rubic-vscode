@@ -18,7 +18,7 @@ export function soloInteractiveDebugRequest(command: string, args: any): Thenabl
             type: "rubic",
             request: "attach",
             workspaceRoot: workspace.rootPath,
-            //debugServer: 4711
+            debugServer: process.env["DEBUG_SERVER_PORT"]
         }
     ).then(() => {
         let retry = DEBUG_SESSION_MAX_TRIES;
