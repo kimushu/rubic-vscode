@@ -65,8 +65,19 @@ export class CatalogViewer implements TextDocumentContentProvider {
     /**
      * Constructor of CatalogViewer
      */
-    public constructor(context: ExtensionContext) {
+    public constructor(context: ExtensionContext, noWorkspace: boolean = false) {
         // Register commands
+        if (noWorkspace) {
+            context.subscriptions.push(
+                commands.registerCommand(CMD_SHOW_CATALOG, () => {
+                    return window.showInformationMessage(localize(
+                        "open-folder-before",
+                        "Open a folder to place your files before opening Rubic board catalog"
+                    ));
+                })
+            );
+            return;
+        }
         context.subscriptions.push(
             commands.registerCommand(CMD_SHOW_CATALOG, (params) => {
                 if (params) {

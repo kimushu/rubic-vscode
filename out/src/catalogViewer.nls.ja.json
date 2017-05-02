@@ -1,6 +1,7 @@
 {
     "messages": [
         "接続先未選択",
+        "Rubicボードカタログを開く前に、まず作業するフォルダを開いて下さい",
         "Rubicボードカタログ",
         "はい",
         "いいえ",
@@ -50,6 +51,7 @@
     ],
     "keys": [
         "no-port",
+        "open-folder-before",
         "catalog-title",
         "yes",
         "no",
