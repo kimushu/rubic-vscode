@@ -14,6 +14,7 @@ Supported programming language:
 
 ## Quick Start
 
+1. Open a folder to place files in VSCode
 1. Press F1 and type "Rubic"
 1. Select "Show Rubic board catalog"
 1. Select the board which you want to use
@@ -78,6 +79,7 @@ MIT
 
 ## クイックスタート
 
+1. VSCodeで、作業するフォルダを開きます。
 1. F1を押し、「Rubic」と入力します。
 1. 「Rubicボードカタログを表示」を選びます。
 1. 使用したいボードをカタログ内のリストから選択してください。
