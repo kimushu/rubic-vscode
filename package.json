@@ -237,6 +237,6 @@
   "icon": "images/rubic_cube2x2.svg",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kimushu/vsce-rubic.git"
+    "url": "https://github.com/kimushu/rubic-vscode.git"
   }
 }
