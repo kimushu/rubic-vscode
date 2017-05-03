@@ -46,7 +46,7 @@ Because this extension includes executable binary of mruby compiler (*mrbc.exe* 
 
 ## Feedback
 
-* File a bug in [GitHub issues](https://github.com/kimushu/vsce-rubic/issues)
+* File a bug in [GitHub issues](https://github.com/kimushu/rubic-vscode/issues)
 * [Tweet me](https://twitter.com/kimu_shu) with other feedback
 
 ## Release Notes
@@ -111,7 +111,7 @@ MIT
 
 ## フィードバック
 
-* 不具合報告は[GitHub issues](https://github.com/kimushu/vsce-rubic/issues)までお願いします。
+* 不具合報告は[GitHub issues](https://github.com/kimushu/rubic-vscode/issues)までお願いします。
 * その他の報告は[作者のTwitter](https://twitter.com/kimu_shu)までどうぞ。
 
 ## Release Notes
