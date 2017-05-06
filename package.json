@@ -1,9 +1,9 @@
 {
   "name": "rubic",
-  "version": "0.99.2",
+  "version": "0.99.3",
   "publisher": "kimushu",
   "engines": {
-    "vscode": "^1.11.0"
+    "vscode": "^1.12.0"
   },
   "license": "MIT",
   "displayName": "Rubic",
@@ -197,7 +197,7 @@
     "pify": "^2.3.0",
     "request": "^2.81.0",
     "rimraf": "^2.6.1",
-    "serialport": "github:kimushu/node-serialport#4.0.7-electron-1.4.6",
+    "serialport": "github:kimushu/node-serialport#4.0.7-electron-1.6.6",
     "vscode-debugadapter": "^1.17.0",
     "vscode-debugprotocol": "^1.17.0",
     "vscode-nls": "^2.0.2"

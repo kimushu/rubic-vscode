@@ -51,13 +51,19 @@ Because this extension includes executable binary of mruby compiler (*mrbc.exe* 
 
 ## Release Notes
 
+### 0.99.3
+
+* Replace serialport module for VSCode 1.12
+* Improve catalog behavior when the work folder is not opened
+* Implement connection test
+
 ### 0.99.2
 
-Release for firmware developers
+* Release for firmware developers
 
 ### 0.99.1
 
-Initial release (alpha version) for [NT Kyoto 2017](http://j.nicotech.jp/ntkyoto2017)
+* Initial release (alpha version) for [NT Kyoto 2017](http://j.nicotech.jp/ntkyoto2017)
 
 ## License
 
@@ -116,13 +122,19 @@ MIT
 
 ## Release Notes
 
+### 0.99.3
+
+* serialportモジュールをVSCode 1.12向けに差し替え
+* フォルダ未オープン字のカタログ挙動を改善
+* 接続テスト機能を実装
+
 ### 0.99.2
 
-ファームウェア開発者向けリリース
+* ファームウェア開発者向けリリース
 
 ### 0.99.1
 
-[NT京都2017](http://j.nicotech.jp/ntkyoto2017)向けのアルファ版リリース
+* [NT京都2017](http://j.nicotech.jp/ntkyoto2017)向けのアルファ版リリース
 
 ## ライセンス
 
