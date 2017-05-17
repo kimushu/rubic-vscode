@@ -39,6 +39,21 @@ Supported programming language:
   * If true, preview versions will be listed in Rubic board catalog.
   * This is for Rubic maintainers and firmware developers.
   * Preview version firmwares may not be well-tested.
+* rubic.catalog.customRepositores (Default value: null)
+  * List of custom repositories should be added to Rubic catalog.
+  * This is for firmware developers.
+  * Syntax:
+    ```json
+    "rubic.catalog.customRepositores": [
+      {
+        "board": One of "PeridotClassicBoard"|"PeridotPiccoloBoard"|"GrCitrusBoard",
+        "owner": "Name of owner (== GitHub user name)",
+        "repo": "Name of repository",
+        "branch": "Name of branch (Optional. If not specified, \"master\" will be used)"
+      },
+      :
+    }
+    ```
 
 ## Known Issues
 
@@ -110,6 +125,21 @@ MIT
   * プレビュー版を表示するか否か。trueにすると、一般向け公開していないファームウェアがカタログに列挙されます。
   * Rubic自体の開発者ならびにファームウェア開発者向けの機能です。
   * プレビュー版のファームウェアは十分なテストがされてない場合があります。
+* rubic.catalog.customRepositores (デフォルト値: null)
+  * カタログに追加する独自リポジトリの配列。
+  * ファームウェア開発者向けの機能です。
+  * 以下の構造で記述します。
+    ```json
+    "rubic.catalog.customRepositores": [
+      {
+        "board": "PeridotClassicBoard"|"PeridotPiccoloBoard"|"GrCitrusBoard"のいずれか,
+        "owner": "リポジトリ所有者(==GitHubのユーザ名)",
+        "repo": "レポジトリの名前",
+        "branch": "ブランチの名前 (省略可能。省略時は\"master\"が使われます)"
+      },
+      :
+    }
+    ```
 
 ## 既知の問題
 

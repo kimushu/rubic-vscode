@@ -31,6 +31,44 @@
           "default": false,
           "description": "%configuration.catalog.showPreview.description%"
         },
+        "rubic.catalog.customRepositories": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object",
+            "properties": {
+              "board": {
+                "type": "string",
+                "enum": [
+                  "PeridotClassicBoard",
+                  "PeridotPiccoloBoard",
+                  "GrCitrusBoard"
+                ]
+              },
+              "owner": {
+                "type": "string",
+                "pattern": "^[0-9A-Za-z]+(?:-[0-9A-Za-z]+)*$"
+              },
+              "repo": {
+                "type": "string",
+                "pattern": "^[0-9A-Za-z._-]+$"
+              },
+              "branch": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "board",
+              "owner",
+              "repo"
+            ],
+            "additionalProperties": false
+          },
+          "default": null,
+          "description": "%configuration.catalog.customRepositories.description%"
+        },
         "rubic.catalog.owner": {
           "type": [
             "string",

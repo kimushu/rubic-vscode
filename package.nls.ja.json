@@ -2,6 +2,7 @@
   "extension.description": "組み込みボード開発用 VS Code 拡張機能",
   "configuration.title": "Rubic",
   "configuration.catalog.showPreview.description": "プレビュー版の項目をRubicカタログ上に表示するかどうか。設定されていない場合、プレビュー版の項目は表示されません。",
+  "configuration.catalog.customRepositories.description": "カタログに追加する独自リポジトリの配列。記述方法はRubicのドキュメントを参照してください。",
   "configuration.catalog.owner.description": "ボードカタログのリポジトリ所有者名。設定されていない場合、Rubic公式カタログが使用されます。",
   "configuration.catalog.repo.description": "ボードカタログのリポジトリ名。設定されていない場合、Rubic公式カタログが使用されます。",
   "configuration.catalog.branch.description": "ボードカタログのブランチ名。設定されていない場合、masterが使用されます。",

@@ -2,6 +2,7 @@
   "extension.description": "VSCode extension for Embedded-boards Development",
   "configuration.title": "Rubic",
   "configuration.catalog.showPreview.description": "Show preview version in Rubic board catalog. If not set, preview items will be hidden.",
+  "configuration.catalog.customRepositories.description": "List of custom repositories. See Rubic document for details.",
   "configuration.catalog.owner.description": "Owner of board catalog repository. If not set, Rubic official repository will be used.",
   "configuration.catalog.repo.description": "Name of board catalog repository. If not set, Rubic official repository will be used.",
   "configuration.catalog.branch.description": "Branch of board catalog repository. If not set, \"master\" will be used.",
