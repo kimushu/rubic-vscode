@@ -121,6 +121,9 @@ declare namespace RubicCatalog {
         /** ボードベンダーの公式ファームか否か(省略時=false) */
         official?: boolean;
 
+        /** カスタムリポジトリか否か(省略時=false) */
+        custom?: boolean;
+
         /** ホスティングサイト */
         host: "github";
 

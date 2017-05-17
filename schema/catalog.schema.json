@@ -188,6 +188,10 @@
                     "$ref": "#/definitions/RubicCatalog.RepositoryDetail",
                     "description": "詳細情報(rubic-repository.jsonの中身)"
                 },
+                "custom": {
+                    "description": "カスタムリポジトリか否か(省略時=false)",
+                    "type": "boolean"
+                },
                 "disabled": {
                     "description": "無効化されているか否か(省略時=false)",
                     "type": "boolean"
@@ -260,6 +264,10 @@
                 "document": {
                     "$ref": "#/definitions/RubicCatalog.LocalizedString",
                     "description": "ドキュメントのアーカイブ内パス"
+                },
+                "firmwareId": {
+                    "description": "ファームウェアの識別ID",
+                    "type": "string"
                 },
                 "name": {
                     "$ref": "#/definitions/RubicCatalog.LocalizedString",
