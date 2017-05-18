@@ -4,6 +4,8 @@ import { Canarium } from 'canarium';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as pify from 'pify';
 import { InteractiveDebugSession } from "./interactiveDebugSession";
 const localize = nls.loadMessageBundle(__filename);
 
@@ -14,11 +16,9 @@ Canarium.RpcClient.verbosity = 3;
 Canarium.RemoteFile.verbosity = 3;
 //-*/
 
-const J7ID_TO_RUBICID: any = {
-    "J72A": "peridot_classic",
-};
-
-const PERIDOT_CLASSIC_WRITER = path.join("lib", "peridot_classic_writer.rbf");
+const WRITER_RBF_PATH = path.join(__dirname, "..", "..", "lib", "peridot_classic_writer.rbf");
+const WRITER_SPI_PATH = "/sys/flash/spi";
+const WRITER_BOOT_TIMEOUT_MS = 5 * 1000;
 
 function buf2ab(buf: Buffer): ArrayBuffer {
     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
@@ -81,7 +81,6 @@ export class PeridotClassicBoard extends RubicBoard {
     getInfo(): Promise<BoardInformation> {
         return this._canarium.getinfo().then((info: {id: string, serialcode: string}) => {
             return {
-                boardId: J7ID_TO_RUBICID[info.id] || "peridot",
                 firmwareId: null,
                 path: this._path,
                 serialNumber: info.serialcode,
@@ -131,14 +130,38 @@ export class PeridotClassicBoard extends RubicBoard {
         });
     }
 
-    async writeFirmware(debugSession: InteractiveDebugSession): Promise<void> {
+    async writeFirmware(debugSession: InteractiveDebugSession, filename: string): Promise<void> {
+        let writerRbf: Buffer = await pify(fs.readFile)(WRITER_RBF_PATH);
+        let firmRbf: Buffer = await pify(fs.readFile)(filename);
+        let canarium = this._canarium;
+
         if (await debugSession.showInformationMessage(
             localize("switch_to_ps", "Change switch to PS mode")
         ) != null) {
+            // Connect to board
+            await canarium.open(this._path);
+
+            // Write RBF
+            await canarium.config(null, writerRbf.buffer);
+
+            let tsLimit = Date.now() + WRITER_BOOT_TIMEOUT_MS;
+            let file;
+
+            while (Date.now() < tsLimit) {
+                try {
+                    // Wait for RPC server starts
+                    let file = await canarium.openRemoteFile(WRITER_SPI_PATH, {O_RDWR: true})
+                    file.write(firmRbf.buffer)
+                } catch (error) {
+                    // Ignore error
+                }
+            }
+
+            if (file) {
+                file.write()
+            }
         }
-        return Promise.reject(
-            Error(localize("canceled", "Operation canceled"))
-        );
+        throw new Error(localize("canceled", "Operation canceled"));
     }
 
     formatStorage(): Promise<void> {
