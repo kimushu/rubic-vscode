@@ -9,13 +9,6 @@ import * as pify from 'pify';
 import { InteractiveDebugSession } from "./interactiveDebugSession";
 const localize = nls.loadMessageBundle(__filename);
 
-//*
-Canarium.verbosity = 3;
-//Canarium.BaseComm.verbosity = 3;
-Canarium.RpcClient.verbosity = 3;
-Canarium.RemoteFile.verbosity = 3;
-//-*/
-
 const WRITER_RBF_PATH = path.join(__dirname, "..", "..", "lib", "peridot_classic_writer.rbf");
 const WRITER_SPI_PATH = "/sys/flash/spi";
 const WRITER_BOOT_TIMEOUT_MS = 5 * 1000;
@@ -52,8 +45,8 @@ export class PeridotClassicBoard extends RubicBoard {
                     name: board.name,
                     path: board.path,
                 };
-                if (board.vendorId) { candidate.vendorId = parseInt(board.vendorId, 16); }
-                if (board.productId) { candidate.productId = parseInt(board.productId, 16); }
+                if (board.vendorId) { candidate.vendorId = board.vendorId; }
+                if (board.productId) { candidate.productId = board.productId; }
                 this.judgeSupportedOrNot(candidate);
                 return candidate;
             });
@@ -79,7 +72,7 @@ export class PeridotClassicBoard extends RubicBoard {
     }
 
     getInfo(): Promise<BoardInformation> {
-        return this._canarium.getinfo().then((info: {id: string, serialcode: string}) => {
+        return this._canarium.getinfo().then((info) => {
             return {
                 firmwareId: null,
                 path: this._path,
@@ -96,7 +89,7 @@ export class PeridotClassicBoard extends RubicBoard {
                 {O_WRONLY: true, O_CREAT: true, O_TRUNC: true}
             );
         }).then((fd) => {
-            return fd.write(buf2ab(data), true).then(
+            return fd.write(Buffer.from(buf2ab(data)), true).then(
                 (result) => fd.close().then(() => result),
                 (reason) => fd.close().catch(() => null).then(() => Promise.reject(reason))
             );
@@ -120,9 +113,7 @@ export class PeridotClassicBoard extends RubicBoard {
                 return fd.lseek(0, {SEEK_SET: true});
             }).then((offset) => {
                 if (fileLength == 0) { return Buffer.alloc(0); }
-                return fd.read(fileLength, true).then((ab: ArrayBuffer) => {
-                    return Buffer.from(ab);
-                });
+                return fd.read(fileLength, true);
             }).then(
                 (result) => fd.close().then(() => result),
                 (reason) => fd.close().catch(() => null).then(() => Promise.reject(reason))
@@ -142,7 +133,7 @@ export class PeridotClassicBoard extends RubicBoard {
             await canarium.open(this._path);
 
             // Write RBF
-            await canarium.config(null, writerRbf.buffer);
+            await canarium.config(null, writerRbf);
 
             let tsLimit = Date.now() + WRITER_BOOT_TIMEOUT_MS;
             let file;
@@ -151,7 +142,7 @@ export class PeridotClassicBoard extends RubicBoard {
                 try {
                     // Wait for RPC server starts
                     let file = await canarium.openRemoteFile(WRITER_SPI_PATH, {O_RDWR: true})
-                    file.write(firmRbf.buffer)
+                    file.write(firmRbf)
                 } catch (error) {
                     // Ignore error
                 }
@@ -186,9 +177,7 @@ export class PeridotClassicBoard extends RubicBoard {
                 {O_WRONLY: true, O_TRUNC: true}
             );
         }).then((fd) => {
-            return fd.write(buf2ab(
-                Buffer.from(this._getStoragePath(filename))
-            ), true).then(
+            return fd.write(Buffer.from(this._getStoragePath(filename)), true).then(
                 (result) => fd.close().then(() => result),
                 (reason) => fd.close().catch(() => null).then(() => Promise.reject(reason))
             );

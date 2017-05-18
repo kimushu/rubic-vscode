@@ -13,9 +13,8 @@ export class BoardClassList {
     static get classes(): BoardClass[] {
         if (!constructors) {
             constructors = CLASS_NAMES.map((name) => {
-                return require(
-                    `./${name.replace(/^[A-Z]/, s => s.toLowerCase())}`
-                )[name];
+                let file = `./${name.replace(/^[A-Z]/, s => s.toLowerCase())}`;
+                return require(file)[name];
             });
         }
         return constructors;
