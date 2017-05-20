@@ -6,8 +6,9 @@ body {
 .catalog-wrapper {
     position: absolute;
     min-height: 240px;
-    width: 100%;
     height: 100%;
+    left: 4px;
+    right: 2px;
 }
 .catalog-panel {
     display: block;
