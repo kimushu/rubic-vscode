@@ -54,13 +54,11 @@ class RubicDebugSession extends InteractiveDebugSession {
     }
 
     protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
-        this.log("initializeRequest()", args);
         this.sendEvent(new InitializedEvent());
         this.sendResponse(response);
     }
 
 	protected launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): void {
-        this.log("launchRequest()", args);
         Promise.resolve(
         ).then(() => {
             this._sketch = new Sketch(args.workspaceRoot);
@@ -82,13 +80,11 @@ class RubicDebugSession extends InteractiveDebugSession {
     }
 
     protected attachRequest(response: DebugProtocol.AttachResponse, args: DebugProtocol.AttachRequestArguments): void {
-        this.log("attachRequest()", args);
         this._attachMode = true;
         this.sendResponse(response);
     }
 
     protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
-        this.log("threadsRequest()");
         response.body = {
             threads: [
                 new Thread(RubicDebugSession.THREAD_ID, RubicDebugSession.THREAD_NAME)
@@ -98,7 +94,6 @@ class RubicDebugSession extends InteractiveDebugSession {
     }
 
 	protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
-        this.log("stackTraceRequest()", args);
         response.body = {
             stackFrames: [],
             totalFrames: 0
@@ -107,7 +102,6 @@ class RubicDebugSession extends InteractiveDebugSession {
     }
 
 	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
-        this.log("scopesRequest()", args);
         response.body = {
             scopes: []
         };
@@ -115,7 +109,6 @@ class RubicDebugSession extends InteractiveDebugSession {
     }
 
 	protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
-        this.log("variablesRequest()", args);
         response.body = {
             variables: []
         };

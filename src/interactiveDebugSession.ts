@@ -9,22 +9,12 @@ import vscode = require("vscode"); // Import declaration only
 export class InteractiveDebugSession extends DebugSession {
     private _pendingResponses: DebugProtocol.Response[] = [];
     private _pendingQuestions = {};
-    private _logStream;
 
     protected constructor () {
         super();
-        this.log("new InteractiveDebugSession");
-    }
-
-    protected log(message: string, ...objects: any[]): void {
-        if (!this._logStream) {
-            this._logStream = fs.createWriteStream("d:/debugSession.log");
-        }
-        this._logStream.write([message].concat(...objects).map((v) => v.toString()).join(" ") + "\n");
     }
 
     protected customRequest(command: string, response: DebugProtocol.Response, args: any): void {
-        this.log(`customRequest("${command}", *, ${JSON.stringify(args)})`);
         if (command !== "interactiveRequest") {
             this.sendErrorResponse(response, 1001, "unknown custom request");
             return;
