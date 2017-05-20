@@ -121,10 +121,29 @@ export class CatalogViewer implements TextDocumentContentProvider {
     }
 
     /**
+     * Start watcher to update statusbar and catalog page
+     */
+    public startWatcher(): void {
+        let sketch = RubicExtension.instance.sketch;
+        sketch.on('load', () => {
+            this.updateStatusBar();
+        });
+        this.updateStatusBar();
+    }
+
+    /**
      * showCatalog command receiver (No parameters)
      */
     private _showCatalogView(): void {
         let sketch = RubicExtension.instance.sketch;
+        if (sketch.invalid) {
+            commands.executeCommand('vscode.open', Uri.file(sketch.filename)).then(() => {
+                return window.showWarningMessage(
+                    localize("syntax-error-f", "Syntax error detected in {0}. Please correct manually", path.basename(sketch.filename))
+                );
+            });
+            return;
+        }
         Promise.resolve({
         }).then(() => {
             if (sketch.loaded) { return SketchLoadResult.LOAD_SUCCESS; }
@@ -202,9 +221,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
             )).then((item) => {
                 if (item === items[0]) {
                     // Save
-                    return sketch.update(this._provSelect).then(() => {
-                        this.updateStatusBar();
-                    });
+                    return sketch.update(this._provSelect);
                 } else {
                     // Return to variation select
                     this._provSelect.variationPath = null;
@@ -321,7 +338,6 @@ export class CatalogViewer implements TextDocumentContentProvider {
         return choose(true).then((boardPath: string) => {
             if (boardPath != null) {
                 return sketch.update({boardPath}).then(() => {
-                    this.updateStatusBar();
                     this._triggerUpdate();
                 });
             }
@@ -347,7 +363,12 @@ export class CatalogViewer implements TextDocumentContentProvider {
      */
     public updateStatusBar() {
         let {sketch, catalogData} = RubicExtension.instance;
-        if (!sketch.loaded) {
+        if (sketch.invalid) {
+            // Invalid sketch
+            this._sbiBoard.text = "$(circuit-board) $(alert) " + localize("invalid-sketch", "Invalid Rubic Setting");
+            this._sbiBoard.show();
+            this._sbiPort.hide();
+        } else if (!sketch.loaded) {
             // No sketch (Rubic is disabled)
             this._sbiBoard.hide();
             this._sbiPort.hide();
@@ -633,6 +654,24 @@ export class CatalogViewer implements TextDocumentContentProvider {
                     title: localize("document", "Document")
                 })
             }
+        }
+
+        if (!sb && this._provSelect.boardClass != null) {
+            window.showWarningMessage(localize('board-x-not-found',
+                "No board named '{0}'", this._provSelect.boardClass
+            ));
+        } else if (!sr && this._provSelect.repositoryUuid != null) {
+            window.showWarningMessage(localize('repo-x-not-found',
+                "No repository named '{0}'", this._provSelect.repositoryUuid
+            ));
+        } else if (!se && this._provSelect.releaseTag != null) {
+            window.showWarningMessage(localize('release-x-not-found',
+                "No release named '{0}'", this._provSelect.releaseTag
+            ));
+        } else if (!sv && this._provSelect.variationPath != null) {
+            window.showWarningMessage(localize('variation-x-not-found',
+                "No variation named '{0}'", this._provSelect.variationPath
+            ));
         }
 
         if (this._currentPanel == null) {

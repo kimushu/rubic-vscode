@@ -69,7 +69,7 @@ export class RubicExtension {
         Promise.resolve(
         ).then(() => {
             // Load sketch (without migration)
-            return this._sketch.load().then((result) => {
+            return this._sketch.load(false, true).then((result) => {
                 if (result !== SketchLoadResult.LOAD_SUCCESS) {
                     return Promise.reject(Error(localize("no-sketch", "No sketch")));
                 }
@@ -78,8 +78,8 @@ export class RubicExtension {
             // Load catalog (with auto update)
             return this._catalogViewer.loadCache();
         }).then(() => {
-            // Update status bar
-            return this._catalogViewer.updateStatusBar();
+            // Start automatic update
+            return this._catalogViewer.startWatcher();
         }).catch((error) => {
             // Ignore errors
             console.log("Rubic ignored background error", error);
@@ -92,6 +92,7 @@ export class RubicExtension {
 }
 
 export function activate(context: ExtensionContext) {
+    console.log(`Rubic extension at: ${context.extensionPath}`);
     RubicExtension.start(context);
 }
 

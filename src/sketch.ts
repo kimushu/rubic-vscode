@@ -6,12 +6,15 @@ import { RUBIC_VERSION } from './rubicVersion';
 import * as CJSON from 'comment-json';
 import * as pify from 'pify';
 import * as glob from 'glob';
+import { EventEmitter } from "events";
 ///<reference path="../schema/sketch.d.ts" />
 
 // Declaration only
 import vscode = require("vscode");
 
+const RUBIC_JSON  = "rubic.json";
 const SKETCH_ENCODING = "utf8";
+const LAUNCH_JSON = "launch.json";
 const LAUNCH_ENCODING = "utf8";
 const localize = nls.loadMessageBundle(__filename);
 
@@ -55,11 +58,12 @@ export async function generateDebugConfiguration(workspaceRoot: string): Promise
  * Rubic configuration for each workspace
  * (.vscode/rubic.json)
  */
-export class Sketch implements vscode.Disposable {
+export class Sketch extends EventEmitter implements vscode.Disposable {
     private _rubicFile: string;
     private _launchFile: string;
     private _watcher: fse.FSWatcher;
     private _data: V1_0_x.Top;
+    private _invalid: boolean;
 
     /**
      * Construct sketch instance
@@ -67,14 +71,15 @@ export class Sketch implements vscode.Disposable {
      * @param _window vscode window module (for extension host process)
      */
     constructor(private _workspaceRoot: string, private _window?: typeof vscode.window) {
-        this._rubicFile = path.join(_workspaceRoot, ".vscode", "rubic.json");
-        this._launchFile = path.join(_workspaceRoot, ".vscode", "launch.json");
+        super();
+        this._rubicFile = path.join(_workspaceRoot, ".vscode", RUBIC_JSON);
+        this._launchFile = path.join(_workspaceRoot, ".vscode", LAUNCH_JSON);
     }
 
     /**
      * Load configuration (with migration when window argument passed)
      */
-    async load(convert: boolean = false): Promise<SketchLoadResult> {
+    async load(convert: boolean = false, autoReload: boolean = false): Promise<SketchLoadResult> {
         let result = SketchLoadResult.LOAD_SUCCESS;
         this.close();
         let jsonText;
@@ -93,8 +98,25 @@ export class Sketch implements vscode.Disposable {
             }
         }
         if (jsonText) {
-            this._data = JSON.parse(jsonText);
-            this._watcher = fse.watch(this._rubicFile);
+            try {
+                this._data = JSON.parse(jsonText);
+                this._invalid = false;
+            } catch (error) {
+                this._data = null;
+                this._invalid = true;
+            }
+            this.emit('load');
+            if (autoReload) {
+                this._watcher = fse.watch(this._rubicFile, {persistent: false}, (eventType) => {
+                    if (eventType === 'change') {
+                        // Reload file
+                        this.emit('reload');
+                        this.load(false, true);
+                    }
+                });
+            } else {
+                this._watcher = null;
+            }
         }
         return result;
     }
@@ -104,6 +126,7 @@ export class Sketch implements vscode.Disposable {
         this._watcher && this._watcher.close();
         this._watcher = null;
         this._data = null;
+        this.emit('close');
     }
 
     /** Dispose this instance */
@@ -117,11 +140,11 @@ export class Sketch implements vscode.Disposable {
     /** Filename of sketch data */
     get filename() { return this._rubicFile; }
 
-    /** Check if sketch is loaded */
+    /** Check if sketch is successfully loaded */
     get loaded() { return (this._data != null); }
 
-    /** Get watcher */
-    get watcher() { return this._watcher; }
+    /** Check if current sketch is invalid */
+    get invalid() { return this._invalid; }
 
     /** Get board class */
     get boardClass() { return this._data && this._data.boardClass; }
