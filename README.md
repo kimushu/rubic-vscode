@@ -12,6 +12,12 @@ Supported programming language:
 * Ruby (mruby engine)
 * JavaScript (Duktape engine)
 
+## Requirements
+
+* For Windows users
+  * Install [Visual C++ 2015 Redistributable (x86)](https://www.microsoft.com/en-us/download/details.aspx?id=53840)
+    * Even if you are using 64-bit machine, select *vc\_redist.x86.exe* because VSCode for Windows is distributed as 32-bit build.
+
 ## Quick Start
 
 1. Open a folder to place files in VSCode
@@ -66,6 +72,11 @@ Because this extension includes executable binary of mruby compiler (*mrbc.exe* 
 
 ## Release Notes
 
+### 0.99.4
+
+* Update Canarium
+* Remove debug code
+
 ### 0.99.3
 
 * Replace serialport module for VSCode 1.12
@@ -97,6 +108,12 @@ MIT
 以下のプログラミング言語に対応しています。
 * Ruby (mruby engine)
 * JavaScript (Duktape engine)
+
+## 必要要件
+
+* Windowsユーザー向け
+  * [Visual C++ 2015 再頒布可能パッケージ (x86)](https://www.microsoft.com/ja-JP/download/details.aspx?id=53840) をインストールしてください。
+    * お使いのPCが64-bitマシンであっても、*vc\_redist.x86.exe* を選んでください。(VSCodeは常に32-bit版で提供されているため)
 
 ## クイックスタート
 
@@ -151,6 +168,11 @@ MIT
 * その他の報告は[作者のTwitter](https://twitter.com/kimu_shu)までどうぞ。
 
 ## Release Notes
+
+### 0.99.4
+
+* Canariumを更新
+* テストコードを削除
 
 ### 0.99.3
 
