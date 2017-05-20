@@ -16,6 +16,7 @@ const CITRUS_RESET_DELAY_MS = 2000;
 const CITRUS_RESET_MAX_RETRIES = 5;
 const CITRUS_MSD_MAX_CAPACITY = 4 * 1024 * 1024;
 const CITRUS_MSD_FILE = "Gadget Renesas Project Home.html";
+const SAKURA_MSD_FILE = "SAKURA BOARD for Gadget Renesas Project Home.html";
 const CITRUS_PROG_DELAY_MS = 2000;
 
 function delay(ms: number): Promise<void> {
@@ -26,7 +27,7 @@ function delay(ms: number): Promise<void> {
 
 export class GrCitrusBoard extends WakayamaRbBoard {
     protected static _VID_PID_LIST = [
-        {name: "Renesas GR-CITRUS", boardId: "grcitrus", vendorId: 0x2a50, productId: 0x0277}, // Akizuki
+        {name: "Renesas GR-CITRUS", vendorId: 0x2a50, productId: 0x0277}, // Akizuki
     ];
 
     async writeFirmware(debugSession: InteractiveDebugSession, filename: string): Promise<void> {
@@ -63,7 +64,8 @@ export class GrCitrusBoard extends WakayamaRbBoard {
             let disks = await enumerateRemovableDisks(1, CITRUS_MSD_MAX_CAPACITY);
             for (let index = 0; index < disks.length; ++index) {
                 let disk = disks[index];
-                if (fse.existsSync(path.join(disk.path, CITRUS_MSD_FILE))) {
+                if (fse.existsSync(path.join(disk.path, CITRUS_MSD_FILE)) ||
+                    fse.existsSync(path.join(disk.path, SAKURA_MSD_FILE))) {
                     return disk.path;
                 }
             }

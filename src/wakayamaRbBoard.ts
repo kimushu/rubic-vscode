@@ -20,8 +20,8 @@ export class WakayamaRbBoard extends RubicBoard {
     private _DRAIN_INTERVAL_MS = 250;
 
     protected static _VID_PID_LIST = [
-        {name: "WAKAYAMA.RB board", boardId: "wakayamarb", vendorId: 0x2129, productId: 0x0531}, // TOKUDEN
-        {name: "WAKAYAMA.RB board", boardId: "wakayamarb", vendorId: 0x045b, productId: 0x0234}, // Renesas
+        {name: "WAKAYAMA.RB board", vendorId: 0x2129, productId: 0x0531}, // TOKUDEN
+        {name: "WAKAYAMA.RB board", vendorId: 0x045b, productId: 0x0234}, // Renesas
     ];
 
     public constructor(private _path: string) {
@@ -46,15 +46,19 @@ export class WakayamaRbBoard extends RubicBoard {
                     let entry = this._VID_PID_LIST.find((entry) => {
                         return (vid == entry.vendorId && pid == entry.productId);
                     });
+                    let board: BoardCandidate = {
+                        boardClass: this.name,
+                        path: port.comName,
+                        name: port.name,
+                        vendorId: vid,
+                        productId: pid
+                    };
                     if (entry) {
-                        result.push({
-                            boardClass: this.name,
-                            path: port.comName,
-                            name: entry.name,
-                            vendorId: vid,
-                            productId: pid
-                        });
+                        board.name = entry.name;
+                    } else {
+                        board.unsupported = true;
                     }
+                    result.push(board);
                 })
                 resolve(result);
             })
