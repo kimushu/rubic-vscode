@@ -250,7 +250,7 @@ class CanariumWritableStream extends stream.Writable {
         super({decodeStrings: true});
     }
 
-    protected _write(chunk: Buffer, encoding: string, callback: Function) {
+    public _write(chunk: Buffer, encoding: string, callback: Function) {
         this._file.write(buf2ab(chunk), true).then(
             () => { callback(); },
             (error) => { callback(error); }
@@ -263,7 +263,7 @@ class CanariumReadableStream extends stream.Readable {
         super({encoding: null});
     }
 
-    protected _read(size: number) {
+    public _read(size: number) {
         this._file.read(size).then((arrayBuffer: ArrayBuffer) => {
             this.push(Buffer.from(arrayBuffer))
         })

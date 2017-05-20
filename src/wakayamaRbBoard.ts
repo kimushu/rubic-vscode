@@ -168,8 +168,8 @@ export class WakayamaRbBoard extends RubicBoard {
                 }
                 if (buf) { return buf; }
             }
-            return Promise.reject(
-                Error(localize("read-error", "Failed to read file"))
+            throw (
+                new Error(localize("read-error", "Failed to read file"))
             );
         }); // return Promise.resolve().then()...
     }
