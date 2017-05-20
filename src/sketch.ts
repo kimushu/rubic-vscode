@@ -99,7 +99,7 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
         }
         if (jsonText) {
             try {
-                this._data = JSON.parse(jsonText);
+                this._data = CJSON.parse(jsonText);
                 this._invalid = false;
             } catch (error) {
                 this._data = null;
@@ -189,7 +189,7 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
             this._data[key] = obj[key];
         }
         await pify(fse.ensureDir)(path.dirname(this._rubicFile));
-        await pify(fse.writeFile)(this._rubicFile, JSON.stringify(this._data, null, 4), SKETCH_ENCODING);
+        await pify(fse.writeFile)(this._rubicFile, CJSON.stringify(this._data, null, 4), SKETCH_ENCODING);
     }
 
     private _get(key: string, def?: any): any {
@@ -297,7 +297,7 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
         top.minRubicVersion = v09x.rubicVersion;
 
         await pify(fse.ensureDir)(path.dirname(this._rubicFile));
-        await pify(fse.writeFile)(this._rubicFile, JSON.stringify(top, null, 4));
+        await pify(fse.writeFile)(this._rubicFile, CJSON.stringify(top, null, 4));
         if (!keepOld) {
             fse.unlink(oldFile);
         }
