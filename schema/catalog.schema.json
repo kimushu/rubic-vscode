@@ -265,6 +265,20 @@
             ],
             "type": "object"
         },
+        "RubicCatalog.Runtime.Common": {
+            "additionalProperties": false,
+            "description": "ランタイム共通定義",
+            "properties": {
+                "name": {
+                    "description": "ランタイムの名前",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "type": "object"
+        },
         "RubicCatalog.Runtime.Duktape": {
             "additionalProperties": false,
             "description": "JavaScript(ES5)ランタイム(name=duktape)",
@@ -358,6 +372,9 @@
                     "description": "ランタイムの一覧",
                     "items": {
                         "anyOf": [
+                            {
+                                "$ref": "#/definitions/RubicCatalog.Runtime.Common"
+                            },
                             {
                                 "$ref": "#/definitions/RubicCatalog.Runtime.Mruby"
                             },

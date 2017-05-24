@@ -226,7 +226,7 @@ declare namespace RubicCatalog {
         firmwareId?: string;
 
         /** ランタイムの一覧 */
-        runtimes: (Runtime.Mruby|Runtime.Duktape)[];
+        runtimes: (Runtime.Common|Runtime.Mruby|Runtime.Duktape)[];
 
         /** ドキュメントのアーカイブ内パス */
         document?: LocalizedString;
