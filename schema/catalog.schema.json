@@ -265,17 +265,41 @@
             ],
             "type": "object"
         },
-        "RubicCatalog.Runtime.Common": {
+        "RubicCatalog.Runtime.Duktape": {
             "additionalProperties": false,
-            "description": "ランタイム共通定義",
+            "description": "JavaScript(ES5)ランタイム(name=duktape)",
             "properties": {
                 "name": {
                     "description": "ランタイムの名前",
                     "type": "string"
+                },
+                "version": {
+                    "description": "バージョン(x.x.x)",
+                    "type": "string"
                 }
             },
             "required": [
-                "name"
+                "name",
+                "version"
+            ],
+            "type": "object"
+        },
+        "RubicCatalog.Runtime.Mruby": {
+            "additionalProperties": false,
+            "description": "Rubyランタイム(name=mruby)",
+            "properties": {
+                "name": {
+                    "description": "ランタイムの名前",
+                    "type": "string"
+                },
+                "version": {
+                    "description": "バージョン(x.x.x)",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name",
+                "version"
             ],
             "type": "object"
         },
@@ -333,7 +357,14 @@
                 "runtimes": {
                     "description": "ランタイムの一覧",
                     "items": {
-                        "$ref": "#/definitions/RubicCatalog.Runtime.Common"
+                        "anyOf": [
+                            {
+                                "$ref": "#/definitions/RubicCatalog.Runtime.Mruby"
+                            },
+                            {
+                                "$ref": "#/definitions/RubicCatalog.Runtime.Duktape"
+                            }
+                        ]
                     },
                     "type": "array"
                 }
