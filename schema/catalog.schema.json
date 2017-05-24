@@ -1,7 +1,9 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
+    "additionalProperties": false,
     "definitions": {
         "RubicCatalog.Board": {
+            "additionalProperties": false,
             "description": "ja: ボード定義 (catalog.jsonの一部)\nen: Board definition",
             "properties": {
                 "author": {
@@ -64,6 +66,7 @@
             "type": "object"
         },
         "RubicCatalog.LocalizedString": {
+            "additionalProperties": false,
             "description": "ja: 多言語対応文字列 (英語は必須)\nen: Multiligual string (English is always required. Other languages are optional)",
             "properties": {
                 "de": {
@@ -103,6 +106,7 @@
             "type": "object"
         },
         "RubicCatalog.ReleaseDetail": {
+            "additionalProperties": false,
             "description": "リリース詳細定義 (release.jsonの中身そのもの)",
             "properties": {
                 "description": {
@@ -127,6 +131,7 @@
             "type": "object"
         },
         "RubicCatalog.ReleaseSummary": {
+            "additionalProperties": false,
             "description": "リリース概要定義 (catalog.jsonの一部)",
             "properties": {
                 "author": {
@@ -179,6 +184,7 @@
             "type": "object"
         },
         "RubicCatalog.RepositoryDetail": {
+            "additionalProperties": false,
             "description": "リポジトリ詳細定義 (rubic-repository.json)",
             "properties": {
                 "description": {
@@ -208,6 +214,7 @@
             "type": "object"
         },
         "RubicCatalog.RepositorySummary": {
+            "additionalProperties": false,
             "description": "リポジトリ概要情報 (catalog.jsonの一部)",
             "properties": {
                 "branch": {
@@ -259,6 +266,7 @@
             "type": "object"
         },
         "RubicCatalog.Runtime.Common": {
+            "additionalProperties": false,
             "description": "ランタイム共通定義",
             "properties": {
                 "name": {
@@ -272,6 +280,7 @@
             "type": "object"
         },
         "RubicCatalog.Topic": {
+            "additionalProperties": false,
             "description": "ja: トピック定義\nen: Topic definition",
             "properties": {
                 "color": {
@@ -298,6 +307,7 @@
             "type": "object"
         },
         "RubicCatalog.Variation": {
+            "additionalProperties": false,
             "description": "バリエーション定義 (release.jsonの一部)",
             "properties": {
                 "description": {

@@ -269,8 +269,8 @@
     "clean": "rimraf out/src/*.js out/src/*.js.map out/src/*.nls.json node_modules/serialport/build",
     "package": "vsce package",
     "schema": "npm-run-all -p schema:*",
-    "schema:catalog": "typescript-json-schema --required ./schema/catalog.d.ts RubicCatalog.Root -o ./schema/catalog.schema.json",
-    "schema:sketch": "typescript-json-schema --required ./schema/sketch.d.ts V1_0_x.Top -o ./schema/sketch.schema.json"
+    "schema:catalog": "typescript-json-schema --noExtraProps --required ./schema/catalog.d.ts RubicCatalog.Root -o ./schema/catalog.schema.json",
+    "schema:sketch": "typescript-json-schema --noExtraProps --required ./schema/sketch.d.ts V1_0_x.Top -o ./schema/sketch.schema.json"
   },
   "icon": "images/rubic_cube2x2.svg",
   "repository": {

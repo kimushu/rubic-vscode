@@ -1,5 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
+    "additionalProperties": false,
     "properties": {
         "boardClass": {
             "description": "USE BOARD CATALOG TO EDIT THIS VALUE: Board class",
