@@ -262,15 +262,15 @@
     "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "node ./node_modules/vscode/bin/test",
     "localize": "vscl out/src/*.js",
-    "handlebars": "npm-run-all handlebars:*",
+    "handlebars": "npm-run-all -p handlebars:*",
     "handlebars:compile": "handlebars catalog.hbs -c ./handlebars -m -f out/src/templates.js",
     "handlebars:runtime": "shx cp node_modules/handlebars/dist/handlebars.runtime.min.js out/src/handlebars.js",
     "rebuild-serialport": "electron-rebuild-vsce -c 1.10.2 -w serialport",
     "clean": "rimraf out/src/*.js out/src/*.js.map out/src/*.nls.json node_modules/serialport/build",
     "package": "vsce package",
-    "schema": "npm-run-all schema:*",
-    "schema:catalog": "typescript-json-schema ./schema/catalog.d.ts RubicCatalog.Root -o ./schema/catalog.schema.json",
-    "schema:sketch": "typescript-json-schema ./schema/sketch.d.ts V1_0_x.Top -o ./schema/sketch.schema.json"
+    "schema": "npm-run-all -p schema:*",
+    "schema:catalog": "typescript-json-schema --required ./schema/catalog.d.ts RubicCatalog.Root -o ./schema/catalog.schema.json",
+    "schema:sketch": "typescript-json-schema --required ./schema/sketch.d.ts V1_0_x.Top -o ./schema/sketch.schema.json"
   },
   "icon": "images/rubic_cube2x2.svg",
   "repository": {

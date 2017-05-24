@@ -48,6 +48,15 @@
             "type": "string"
         }
     },
+    "required": [
+        "boardClass",
+        "releaseTag",
+        "repositoryUuid",
+        "rubicVersion",
+        "transfer.exclude",
+        "transfer.include",
+        "variationPath"
+    ],
     "type": "object"
 }
 
