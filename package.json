@@ -242,8 +242,18 @@
     "vscode-nls": "^2.0.2"
   },
   "devDependencies": {
+    "@types/comment-json": "^1.1.0",
+    "@types/fs-extra": "^3.0.2",
+    "@types/glob": "^5.0.30",
+    "@types/handlebars": "^4.0.32",
+    "@types/markdown-it": "0.0.2",
     "@types/mocha": "^2.2.32",
     "@types/node": "^6.0.40",
+    "@types/pify": "0.0.28",
+    "@types/request": "0.0.43",
+    "@types/rimraf": "0.0.28",
+    "@types/semver": "^5.3.31",
+    "@types/serialport": "^4.0.9",
     "electron-rebuild-vsce": "github:kimushu/electron-rebuild-vsce",
     "handlebars": "^4.0.6",
     "mocha": "^2.3.3",
