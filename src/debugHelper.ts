@@ -1,11 +1,11 @@
-import { Disposable, commands, OutputChannel, window, workspace, ExtensionContext } from 'vscode';
+import { Disposable, commands, OutputChannel, window, workspace, ExtensionContext } from "vscode";
 import { Sketch, generateDebugConfiguration } from "./sketch";
-import * as glob from 'glob';
-import * as path from 'path';
-import * as pify from 'pify';
-import * as mrbc from 'mruby-native';
+import * as glob from "glob";
+import * as path from "path";
+import * as pify from "pify";
+import * as mrbc from "mruby-native";
 
-import * as nls from 'vscode-nls';
+import * as nls from "vscode-nls";
 import { compileMrubySources } from "./mrubyCompiler";
 import { RubicExtension } from "./extension";
 const localize = nls.loadMessageBundle(__filename);

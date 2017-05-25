@@ -260,6 +260,7 @@
     "npm-run-all": "^4.0.2",
     "rimraf": "^2.6.1",
     "shx": "^0.2.2",
+    "tslint": "^5.3.2",
     "typescript": "^2.3.2",
     "typescript-json-schema": "^0.11.0",
     "vscode": "^1.0.0",
@@ -267,7 +268,8 @@
   },
   "extensionDependencies": [],
   "scripts": {
-    "vscode:prepublish": "npm-run-all clean compile localize handlebars schema",
+    "vscode:prepublish": "npm-run-all lint clean compile localize handlebars schema",
+    "lint": "tslint -p ./",
     "compile": "tsc -p ./",
     "compile:watch": "tsc -watch -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install",

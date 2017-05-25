@@ -1,5 +1,5 @@
-import { exec } from 'child_process';
-import * as pify from 'pify';
+import { exec } from "child_process";
+import * as pify from "pify";
 
 export interface DiskInfo {
     path: string;

@@ -1,4 +1,4 @@
-import { commands, window, workspace, StatusBarItem, StatusBarAlignment } from 'vscode';
+import { commands, window, workspace, StatusBarItem, StatusBarAlignment } from "vscode";
 
 const DEBUG_SESSION_DELAY_MS = 1000;
 const DEBUG_SESSION_MAX_TRIES = 5;

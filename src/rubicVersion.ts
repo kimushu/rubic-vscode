@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as path from "path";
 
 /**
  * Stores version string of Rubic itself

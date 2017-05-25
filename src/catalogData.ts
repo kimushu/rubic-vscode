@@ -1,13 +1,13 @@
 ///<reference path="../node_modules/@rubic/catalog-fetcher/lib/catalog.d.ts" />
-import { CacheStorage } from './cacheStorage';
-import { readGithubFile, GitHubRepository } from './githubFetcher';
-import * as semver from 'semver';
+import { CacheStorage } from "./cacheStorage";
+import { readGithubFile, GitHubRepository } from "./githubFetcher";
+import * as semver from "semver";
 import { RubicExtension } from "./extension";
-import * as nls from 'vscode-nls';
-import * as path from 'path';
-import * as pify from 'pify';
-import * as request from 'request';
-import * as decompress from 'decompress';
+import * as nls from "vscode-nls";
+import * as path from "path";
+import * as pify from "pify";
+import * as request from "request";
+import * as decompress from "decompress";
 
 import vscode = require("vscode");
 
@@ -109,7 +109,7 @@ export class CatalogData implements vscode.Disposable {
                 return decompress(resp.body, CacheStorage.getFullPath(dirPath));
             }).then(() => {
                 return dirPath;
-            })
+            });
         });
     }
 
@@ -134,7 +134,7 @@ export class CatalogData implements vscode.Disposable {
         }).then((jsonText: string) => {
             return JSON.parse(jsonText);
         }).then((root: RubicCatalog.Root) => {
-            return this.import(root)
+            return this.import(root);
         });
     }
 
@@ -146,7 +146,7 @@ export class CatalogData implements vscode.Disposable {
         ).then(() => {
             return readGithubFile(repo, CATALOG_JSON, CATALOG_ENCODING);
         }).then((jsonText: string) => {
-            return JSON.parse(jsonText)
+            return JSON.parse(jsonText);
         }).then((root: RubicCatalog.Root) => {
             return this.import(root);
         }).then(() => {

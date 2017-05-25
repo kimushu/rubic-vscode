@@ -1,11 +1,11 @@
-import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from './rubicBoard';
-import * as stream from 'stream';
-import { Canarium } from 'canarium';
-import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as pify from 'pify';
+import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from "./rubicBoard";
+import * as stream from "stream";
+import { Canarium } from "canarium";
+import * as vscode from "vscode";
+import * as nls from "vscode-nls";
+import * as path from "path";
+import * as fs from "fs";
+import * as pify from "pify";
 import { InteractiveDebugSession } from "./interactiveDebugSession";
 const localize = nls.loadMessageBundle(__filename);
 
@@ -50,7 +50,7 @@ export class PeridotClassicBoard extends RubicBoard {
                 this.judgeSupportedOrNot(candidate);
                 return candidate;
             });
-        })
+        });
     }
 
     protected static judgeSupportedOrNot(candidate: BoardCandidate): void {
@@ -109,10 +109,10 @@ export class PeridotClassicBoard extends RubicBoard {
             let fileLength: number;
             return fd.lseek(0, {SEEK_END: true}).then((size) => {
                 fileLength = size;
-                if (fileLength == 0) { return; }
+                if (fileLength === 0) { return; }
                 return fd.lseek(0, {SEEK_SET: true});
             }).then((offset) => {
-                if (fileLength == 0) { return Buffer.alloc(0); }
+                if (fileLength === 0) { return Buffer.alloc(0); }
                 return fd.read(fileLength, true);
             }).then(
                 (result) => fd.close().then(() => result),
@@ -141,15 +141,15 @@ export class PeridotClassicBoard extends RubicBoard {
             while (Date.now() < tsLimit) {
                 try {
                     // Wait for RPC server starts
-                    let file = await canarium.openRemoteFile(WRITER_SPI_PATH, {O_RDWR: true})
-                    file.write(firmRbf)
+                    let file = await canarium.openRemoteFile(WRITER_SPI_PATH, {O_RDWR: true});
+                    file.write(firmRbf);
                 } catch (error) {
                     // Ignore error
                 }
             }
 
             if (file) {
-                file.write()
+                file.write();
             }
         }
         throw new Error(localize("canceled", "Operation canceled"));
@@ -203,7 +203,7 @@ export class PeridotClassicBoard extends RubicBoard {
             return Promise.resolve(this._stdio);
         }
         if (!options) {
-            options = {}
+            options = {};
         }
         let stdin, stdout, stderr;
         return Promise.resolve(
@@ -214,14 +214,14 @@ export class PeridotClassicBoard extends RubicBoard {
             ).then(
                 (file) => { stdin = new CanariumWritableStream(file); },
                 (error) => { console.error(error); }
-            )
+            );
         }).then(() => {
             return this._canarium.openRemoteFile(
                 options.stdout ? options.stdout : "/dev/stdout",
                 {O_RDONLY: true}
             ).then(
                 (file) => { stdout = new CanariumReadableStream(file); }
-            )
+            );
         }).then(() => {
             return this._canarium.openRemoteFile(
                 options.stderr ? options.stderr : "/dev/stderr",
@@ -229,11 +229,11 @@ export class PeridotClassicBoard extends RubicBoard {
             ).then(
                 (file) => { stderr = new CanariumReadableStream(file); },
                 (error) => { console.error(error); }
-            )
+            );
         }).then(() => {
             this._stdio = <BoardStdio>{stdin, stdout, stderr};
             return this._stdio;
-        })  // return Promise.resolve().then()...
+        });  // return Promise.resolve().then()...
     }
 
     private onClosed() {
@@ -265,7 +265,7 @@ class CanariumReadableStream extends stream.Readable {
 
     public _read(size: number) {
         this._file.read(size).then((arrayBuffer: ArrayBuffer) => {
-            this.push(Buffer.from(arrayBuffer))
-        })
+            this.push(Buffer.from(arrayBuffer));
+        });
     }
 }

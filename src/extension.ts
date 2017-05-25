@@ -1,13 +1,13 @@
 // Import this first to configure vscode-nls
-import * as nls from 'vscode-nls';
+import * as nls from "vscode-nls";
 const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
-import { ExtensionContext, Disposable, window, workspace } from 'vscode';
-import { Sketch, SketchLoadResult } from './sketch';
-import { CatalogViewer } from './catalogViewer';
-import { DebugHelper } from './debugHelper';
-import * as path from 'path';
-import { CatalogData } from './catalogData';
+import { ExtensionContext, Disposable, window, workspace } from "vscode";
+import { Sketch, SketchLoadResult } from "./sketch";
+import { CatalogViewer } from "./catalogViewer";
+import { DebugHelper } from "./debugHelper";
+import * as path from "path";
+import { CatalogData } from "./catalogData";
 
 export class RubicExtension {
     /**
@@ -87,6 +87,7 @@ export class RubicExtension {
     }
 
     public static start(context: ExtensionContext) {
+        // tslint:disable-next-line:no-unused-expression
         new this(context);
     }
 }

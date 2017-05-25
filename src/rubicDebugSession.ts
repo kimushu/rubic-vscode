@@ -4,17 +4,17 @@ import {
     TerminatedEvent,
     Thread,
     DebugSession
-} from 'vscode-debugadapter';
-import { DebugProtocol } from 'vscode-debugprotocol';
+} from "vscode-debugadapter";
+import { DebugProtocol } from "vscode-debugprotocol";
 import { RubicBoard, BoardStdio, BoardInformation } from "./rubicBoard";
 import { BoardClassList } from "./boardClassList";
-import * as path from 'path';
-import * as glob from 'glob';
-import * as pify from 'pify';
+import * as path from "path";
+import * as glob from "glob";
+import * as pify from "pify";
 import { Writable } from "stream";
-import { readFile, writeFile } from 'fs';
+import { readFile, writeFile } from "fs";
 import { Sketch } from "./sketch";
-import * as nls from 'vscode-nls';
+import * as nls from "vscode-nls";
 import { InteractiveDebugSession } from "./interactiveDebugSession";
 
 const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
@@ -150,7 +150,9 @@ class RubicDebugSession extends InteractiveDebugSession {
             }
 
             // Disconnect board (if old instance exists)
-            this._board && this._board.dispose();
+            if (this._board) {
+                this._board.dispose();
+            }
 
             // Instantiate new board
             this._board = new boardClass(boardPath);
@@ -185,7 +187,7 @@ class RubicDebugSession extends InteractiveDebugSession {
 
             if (printOutput) {
                 let msg = "";
-                msg += `${localize("path-of-board", "Path of board")} : ${info.path}\n`
+                msg += `${localize("path-of-board", "Path of board")} : ${info.path}\n`;
                 if (info.serialNumber != null) {
                     msg += `${localize("serialnumber", "Serial number")} : ${info.serialNumber}\n`;
                 }
@@ -248,12 +250,12 @@ class RubicDebugSession extends InteractiveDebugSession {
         excludeGlob.forEach((pattern) => {
             let toBeExcluded: string[] = glob.sync(pattern, globOptions);
             files = files.filter((file) => {
-                return (toBeExcluded.indexOf(file) == -1);
+                return (toBeExcluded.indexOf(file) === -1);
             });
         });
 
         // Now, 'files' are array of file names (relative path from workspaceRoot)
-        if (files.length == 0) {
+        if (files.length === 0) {
             this.sendEvent(new OutputEvent(
                 localize("no-file-to-transfer", "No file to transfer")
             ));
@@ -262,7 +264,7 @@ class RubicDebugSession extends InteractiveDebugSession {
 
         this.sendEvent(
             new OutputEvent(
-                ((files.length == 1) ?
+                ((files.length === 1) ?
                     localize("start-transfer-1", "Start transfer {0} file", 1)
                 :   localize("start-transfer-n", "Start transfer {0} files", files.length)) + "\n"
         ));
@@ -299,7 +301,7 @@ class RubicDebugSession extends InteractiveDebugSession {
         }
 
         let msg = localize("transfer-complete", "Transfer complete");
-        if (skipped == 1) {
+        if (skipped === 1) {
             msg += " (" + localize("skipped-file-1", "Skipped {0} unchanged file", 1) + ")\n";
         } else if (skipped > 1) {
             msg += " (" + localize("skipped-file-n", "Skipped {0} unchanged files", skipped) + ")\n";
@@ -318,8 +320,12 @@ class RubicDebugSession extends InteractiveDebugSession {
             return this._board.getStdio();
         }).then(({stdin, stderr, stdout}) => {
             this._stdin = stdin;
-            stdout && stdout.on("data", this._handleOutputData.bind(this, "stdout"));
-            stderr && stderr.on("data", this._handleOutputData.bind(this, "stderr"));
+            if (stdout) {
+                stdout.on("data", this._handleOutputData.bind(this, "stdout"));
+            }
+            if (stderr) {
+                stderr.on("data", this._handleOutputData.bind(this, "stderr"));
+            }
         });
     }
 

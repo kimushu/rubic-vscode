@@ -1,8 +1,8 @@
-import { DebugSession, OutputEvent } from 'vscode-debugadapter';
-import { DebugProtocol } from 'vscode-debugprotocol';
+import { DebugSession, OutputEvent } from "vscode-debugadapter";
+import { DebugProtocol } from "vscode-debugprotocol";
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from "fs";
+import * as path from "path";
 
 import vscode = require("vscode"); // Import declaration only
 

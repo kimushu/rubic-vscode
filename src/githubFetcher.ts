@@ -1,6 +1,6 @@
-import * as pify from 'pify';
-import * as request from 'request';
-import * as GitHub from 'github';
+import * as pify from "pify";
+import * as request from "request";
+import * as GitHub from "github";
 
 const RAWGITHUB_HOST = "https://raw.githubusercontent.com";
 

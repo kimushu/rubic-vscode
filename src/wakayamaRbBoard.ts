@@ -1,7 +1,7 @@
-import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from './rubicBoard';
-import * as stream from 'stream';
-import * as SerialPort from 'serialport';
-import * as nls from 'vscode-nls';
+import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from "./rubicBoard";
+import * as stream from "stream";
+import * as SerialPort from "serialport";
+import * as nls from "vscode-nls";
 
 const localize = nls.loadMessageBundle(__filename);
 const DEBUG = false;
@@ -30,7 +30,7 @@ export class WakayamaRbBoard extends RubicBoard {
             autoOpen: false,
             baudRate: 115200,
             //parser: SerialPort.parsers.readline("\r"),
-        })
+        });
         this._port.on("data", this._dataHandler.bind(this));
         this._port.on("error", this._errorHandler.bind(this));
     }
@@ -38,13 +38,13 @@ export class WakayamaRbBoard extends RubicBoard {
     public static list(): Promise<BoardCandidate[]> {
         return new Promise((resolve, reject) => {
             SerialPort.list((err, ports: any[]) => {
-                if (err) { return reject(err) }
+                if (err) { return reject(err); }
                 let result: BoardCandidate[] = [];
                 ports.forEach((port) => {
                     let vid = parseInt(port.vendorId, 16);
                     let pid = parseInt(port.productId, 16);
                     let entry = this._VID_PID_LIST.find((entry) => {
-                        return (vid == entry.vendorId && pid == entry.productId);
+                        return (vid === entry.vendorId && pid === entry.productId);
                     });
                     let board: BoardCandidate = {
                         boardClass: this.name,
@@ -59,10 +59,10 @@ export class WakayamaRbBoard extends RubicBoard {
                         board.unsupported = true;
                     }
                     result.push(board);
-                })
+                });
                 resolve(result);
-            })
-        })  // return new Promise()
+            });
+        });  // return new Promise()
     }
 
     private _portCall(method: string, ...args): Promise<any> {
@@ -70,20 +70,22 @@ export class WakayamaRbBoard extends RubicBoard {
             this._port[method](...args, (error, result) => {
                 if (error) { return reject(error); }
                 resolve(result);
-            })
+            });
         });
     }
 
     connect(): Promise<void> {
-        return this._portCall("open")
+        return this._portCall("open");
     }
 
     disconnect(): Promise<void> {
-        return this._portCall("close")
+        return this._portCall("close");
     }
 
     dispose(): void {
-        this._port && this._port.close();
+        if (this._port) {
+            this._port.close();
+        }
     }
 
     getInfo(): Promise<BoardInformation> {
@@ -163,7 +165,7 @@ export class WakayamaRbBoard extends RubicBoard {
             let footer = lines.findIndex((line) => line.startsWith("WAKAYAMA"));
             let ascii = lines[footer - 1];
             ascii = ascii && ascii.substr(-(len * 2));
-            if (!isNaN(len) && ascii && ascii.length == (len * 2)) {
+            if (!isNaN(len) && ascii && ascii.length === (len * 2)) {
                 let buf = Buffer.allocUnsafe(len);
                 for (let byteOffset = 0; byteOffset < len; ++byteOffset) {
                     let byte = parseInt(ascii.substr(byteOffset * 2, 2), 16);
@@ -186,7 +188,7 @@ export class WakayamaRbBoard extends RubicBoard {
             return this._recv("\r\n>");
         }).then((resp: string) => {
             let files: string[] = [];
-            if (dir !== "" && !dir.endsWith('/')) {
+            if (dir !== "" && !dir.endsWith("/")) {
                 dir = dir + "/";
             }
             resp.split("\r\n").forEach((line) => {
@@ -194,7 +196,7 @@ export class WakayamaRbBoard extends RubicBoard {
                 if (m && m[1].startsWith(dir)) {
                     files.push(m[1].substring(dir.length));
                 }
-            })
+            });
             return files;
         }); // return Promise.resolve().then()...
     }
@@ -216,7 +218,7 @@ export class WakayamaRbBoard extends RubicBoard {
             return this._send(`R ${filename}\r`);
         }).then(() => {
             // Skip "R xxx" line
-            return this._recv("\n")
+            return this._recv("\n");
         }).then(() => {
             let stdout = new stream.Readable({
                 encoding: "utf8",
@@ -278,11 +280,11 @@ export class WakayamaRbBoard extends RubicBoard {
                     () => { this._portCall("drain").catch(waiter.reject); },
                     this._DRAIN_INTERVAL_MS
                 );
-                if (typeof(trig) == "number") {
+                if (typeof(trig) === "number") {
                     waiter.length = trig;
                     if (DEBUG) { console.log("_recv():", trig); }
                 } else {
-                    if (typeof(trig) == "string") {
+                    if (typeof(trig) === "string") {
                         waiter.string = true;
                     }
                     waiter.token = Buffer.from(<any>trig);
@@ -333,7 +335,7 @@ export class WakayamaRbBoard extends RubicBoard {
         }
         this._received = buffer.slice(waiter.length);
         if (DEBUG) { console.log("_dataHandler:resolve():", part); }
-        resolve(part)
+        resolve(part);
     }
 
     private _errorHandler(error): void {

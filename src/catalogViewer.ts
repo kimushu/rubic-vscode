@@ -1,9 +1,9 @@
-import * as nls from 'vscode-nls';
-import * as path from 'path';
-import * as util from 'util';
-import { BoardClass, RubicBoard, BoardCandidate, BoardInformation } from './rubicBoard';
-import { BoardClassList } from './boardClassList';
-import { CacheStorage } from './cacheStorage';
+import * as nls from "vscode-nls";
+import * as path from "path";
+import * as util from "util";
+import { BoardClass, RubicBoard, BoardCandidate, BoardInformation } from "./rubicBoard";
+import { BoardClassList } from "./boardClassList";
+import { CacheStorage } from "./cacheStorage";
 import {
     CancellationToken, Disposable,
     EventEmitter, ExtensionContext,
@@ -11,14 +11,14 @@ import {
     StatusBarAlignment, StatusBarItem,
     TextDocumentContentProvider, Uri, ViewColumn,
     commands, window, workspace
-} from 'vscode';
-import { CatalogData, toLocalizedString } from './catalogData';
-import { FSWatcher, readFileSync, watch } from 'fs';
-import { RubicExtension } from './extension';
-import { SketchLoadResult } from './sketch';
-import * as MarkdownIt from 'markdown-it';
-import { GitHubRepository } from './githubFetcher';
-import { interactiveDebugRequest, soloInteractiveDebugRequest } from './interactiveRequester';
+} from "vscode";
+import { CatalogData, toLocalizedString } from "./catalogData";
+import { FSWatcher, readFileSync, watch } from "fs";
+import { RubicExtension } from "./extension";
+import { SketchLoadResult } from "./sketch";
+import * as MarkdownIt from "markdown-it";
+import { GitHubRepository } from "./githubFetcher";
+import { interactiveDebugRequest, soloInteractiveDebugRequest } from "./interactiveRequester";
 
 const Handlebars = require("./handlebars");
 require("./templates");
@@ -50,7 +50,7 @@ interface CatalogSelection {
 
 function makeGithubURL(owner: string, repo: string, branch?: string): string {
     let suffix = branch ? `/tree/${branch}` : "";
-    return `https://github.com/${owner}/${repo}${suffix}`
+    return `https://github.com/${owner}/${repo}${suffix}`;
 }
 
 export class CatalogViewer implements TextDocumentContentProvider {
@@ -125,7 +125,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
      */
     public startWatcher(): void {
         let sketch = RubicExtension.instance.sketch;
-        sketch.on('load', () => {
+        sketch.on("load", () => {
             this.updateStatusBar();
         });
         this.updateStatusBar();
@@ -137,7 +137,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
     private _showCatalogView(): void {
         let sketch = RubicExtension.instance.sketch;
         if (sketch.invalid) {
-            commands.executeCommand('vscode.open', Uri.file(sketch.filename)).then(() => {
+            commands.executeCommand("vscode.open", Uri.file(sketch.filename)).then(() => {
                 return window.showWarningMessage(
                     localize("syntax-error-f", "Syntax error detected in {0}. Please correct manually", path.basename(sketch.filename))
                 );
@@ -291,7 +291,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                         label: port.path,
                         description: port.name,
                         path: port.path
-                    }
+                    };
                     if (port.vendorId != null && port.productId != null) {
                         let vid = ("0000" + port.vendorId.toString(16)).substr(-4);
                         let pid = ("0000" + port.productId.toString(16)).substr(-4);
@@ -332,7 +332,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                     if (item.rescan) { return choose(filter); }
                     if (item.path == null) { return choose(false); }
                     return item.path;
-                })
+                });
             }); // return Promise.resolve().then()
         };
         return choose(true).then((boardPath: string) => {
@@ -614,7 +614,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
                     sv = vary;
                     defaultPanel = 4;
                 }
-            })
+            });
         }
 
         // Make detail pages
@@ -652,24 +652,24 @@ export class CatalogViewer implements TextDocumentContentProvider {
                 let md = new MarkdownIt();
                 pd.pages.push({
                     title: localize("document", "Document")
-                })
+                });
             }
         }
 
         if (!sb && this._provSelect.boardClass != null) {
-            window.showWarningMessage(localize('board-x-not-found',
+            window.showWarningMessage(localize("board-x-not-found",
                 "No board named '{0}'", this._provSelect.boardClass
             ));
         } else if (!sr && this._provSelect.repositoryUuid != null) {
-            window.showWarningMessage(localize('repo-x-not-found',
+            window.showWarningMessage(localize("repo-x-not-found",
                 "No repository named '{0}'", this._provSelect.repositoryUuid
             ));
         } else if (!se && this._provSelect.releaseTag != null) {
-            window.showWarningMessage(localize('release-x-not-found',
+            window.showWarningMessage(localize("release-x-not-found",
                 "No release named '{0}'", this._provSelect.releaseTag
             ));
         } else if (!sv && this._provSelect.variationPath != null) {
-            window.showWarningMessage(localize('variation-x-not-found',
+            window.showWarningMessage(localize("variation-x-not-found",
                 "No variation named '{0}'", this._provSelect.variationPath
             ));
         }

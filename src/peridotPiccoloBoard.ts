@@ -1,5 +1,5 @@
-import { PeridotClassicBoard } from './peridotClassicBoard';
-import { BoardCandidate } from './rubicBoard';
+import { PeridotClassicBoard } from "./peridotClassicBoard";
+import { BoardCandidate } from "./rubicBoard";
 
 export class PeridotPiccoloBoard extends PeridotClassicBoard {
     constructor(path: string) {

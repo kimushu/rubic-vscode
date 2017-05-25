@@ -1,4 +1,4 @@
-import { RubicBoard, BoardClass } from './rubicBoard'
+import { RubicBoard, BoardClass } from "./rubicBoard";
 
 const CLASS_NAMES = [
     "PeridotClassicBoard",

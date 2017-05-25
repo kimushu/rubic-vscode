@@ -1,8 +1,8 @@
-import { compile } from 'mruby-native';
-import { readFile, writeFile } from 'fs';
-import * as pify from 'pify';
-import * as path from 'path';
-import * as glob from 'glob';
+import { compile } from "mruby-native";
+import { readFile, writeFile } from "fs";
+import * as pify from "pify";
+import * as path from "path";
+import * as glob from "glob";
 
 const CONFIG_FILE = "mrbconfig.json";
 const DUMP_EXT = ".dump";

@@ -1,11 +1,11 @@
-import * as nls from 'vscode-nls';
-import * as path from 'path';
-import * as fse from 'fs-extra';
-import * as semver from 'semver';
-import { RUBIC_VERSION } from './rubicVersion';
-import * as CJSON from 'comment-json';
-import * as pify from 'pify';
-import * as glob from 'glob';
+import * as nls from "vscode-nls";
+import * as path from "path";
+import * as fse from "fs-extra";
+import * as semver from "semver";
+import { RUBIC_VERSION } from "./rubicVersion";
+import * as CJSON from "comment-json";
+import * as pify from "pify";
+import * as glob from "glob";
 import { EventEmitter } from "events";
 ///<reference path="../schema/sketch.d.ts" />
 
@@ -23,7 +23,7 @@ export enum SketchLoadResult {
     LOAD_MIGRATED,
     LOAD_CANCELED,
     NO_SKETCH,
-};
+}
 
 export async function generateDebugConfiguration(workspaceRoot: string): Promise<any> {
     let mainPath = "${command:GuessProgramName}";
@@ -105,12 +105,12 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
                 this._data = null;
                 this._invalid = true;
             }
-            this.emit('load');
+            this.emit("load");
             if (autoReload) {
                 this._watcher = fse.watch(this._rubicFile, {persistent: false}, (eventType) => {
-                    if (eventType === 'change') {
+                    if (eventType === "change") {
                         // Reload file
-                        this.emit('reload');
+                        this.emit("reload");
                         this.load(false, true);
                     }
                 });
@@ -123,10 +123,12 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
 
     /** Close sketch */
     close() {
-        this._watcher && this._watcher.close();
+        if (this._watcher) {
+            this._watcher.close();
+        }
         this._watcher = null;
         this._data = null;
-        this.emit('close');
+        this.emit("close");
     }
 
     /** Dispose this instance */
@@ -314,7 +316,7 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
             jsonText = await pify(fse.readFile)(this._launchFile, LAUNCH_ENCODING);
         } catch (error) {
             // Ignore error here
-            jsonText = '{"version":"0.2.0","configurations":[]}';
+            jsonText = "{\"version\":\"0.2.0\",\"configurations\":[]}";
         }
         let obj = CJSON.parse(jsonText);
         let cfg = obj.configurations || (obj.configurations = []);

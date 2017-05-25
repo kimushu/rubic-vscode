@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import * as fse from 'fs-extra';
-import * as path from 'path';
-import * as pify from 'pify';
-import * as rimraf from 'rimraf';
+import * as fs from "fs";
+import * as fse from "fs-extra";
+import * as path from "path";
+import * as pify from "pify";
+import * as rimraf from "rimraf";
 
 export module CacheStorage {
     const _baseDir = path.join(__dirname, "..", "..", "cache");

@@ -1,14 +1,14 @@
 import { WakayamaRbBoard } from "./wakayamaRbBoard";
-import { BoardCandidate, BoardStdio } from './rubicBoard';
-import * as stream from 'stream';
-import * as Canarium from 'canarium';
-import * as nls from 'vscode-nls';
-import * as fse from 'fs-extra';
-import * as pify from 'pify';
-import * as path from 'path';
+import { BoardCandidate, BoardStdio } from "./rubicBoard";
+import * as stream from "stream";
+import * as Canarium from "canarium";
+import * as nls from "vscode-nls";
+import * as fse from "fs-extra";
+import * as pify from "pify";
+import * as path from "path";
 import { InteractiveDebugSession } from "./interactiveDebugSession";
 import { enumerateRemovableDisks } from "./diskEnumerator";
-import { exec } from 'child_process';
+import { exec } from "child_process";
 
 const localize = nls.loadMessageBundle(__filename);
 

@@ -31,7 +31,7 @@ const sendCommand = (() => {
                 }
                 (<any>element.classList[i === j ? "add" : "remove"])("catalog-panel-opened");
             })(j); }
-        }
+        };
     })(i); }
 })();
 
@@ -117,7 +117,9 @@ const sendCommand = (() => {
             // Open next panel
             if (nextPanel) {
                 let nextHeader = getChildElement(nextPanel, "catalog-header");
-                nextHeader && nextHeader.click();
+                if (nextHeader) {
+                    nextHeader.click();
+                }
             }
         });
     })(i); }
