@@ -1,4 +1,4 @@
-///<reference path="../schema/catalog.d.ts" />
+///<reference path="../node_modules/@rubic/catalog-fetcher/lib/catalog.d.ts" />
 import { CacheStorage } from './cacheStorage';
 import { readGithubFile, GitHubRepository } from './githubFetcher';
 import * as semver from 'semver';

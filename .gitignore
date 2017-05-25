@@ -1,6 +1,7 @@
 out/**/*.js
 out/**/*.map
 out/**/*.nls.json
+schemas/*.schema.json
 tmp
 node_modules
 typings
