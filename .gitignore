@@ -7,3 +7,5 @@ node_modules
 typings
 *.vsix
 /cache
+.DS_Store
+npm-debug.log*
