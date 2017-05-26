@@ -4,8 +4,21 @@ import * as path from "path";
 import * as pify from "pify";
 import * as rimraf from "rimraf";
 
+/**
+ * Get user profile directory
+ */
+function getUserProfileDir(): string {
+    switch (process.platform) {
+        case "win32":
+            return process.env.USERPROFILE;
+        case "linux":
+        case "darwin":
+            return process.env.HOME;
+    }
+}
+
 export module CacheStorage {
-    const _baseDir = path.join(__dirname, "..", "..", "cache");
+    const _baseDir = path.join(getUserProfileDir(), ".rubic", "cache");
 
     /** Get full path of cache file */
     export function getFullPath(filename: string): string {
