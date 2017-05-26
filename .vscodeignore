@@ -21,6 +21,7 @@ node_modules/serialport/src/**
 node_modules/ajv/dist/**
 node_modules/markdown-it/dist/**
 node_modules/bson/browser_build/**
+node_modules/unbzip2-stream/dist/**
 node_modules/*/doc/**
 node_modules/*/docs/**
 node_modules/*/test/**
