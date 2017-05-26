@@ -293,7 +293,7 @@ class RubicDebugSession extends InteractiveDebugSession {
 
             if (oldContent && oldContent.equals(newContent)) {
                 ++skipped;
-                break; // File is already identical (Skip writing)
+                continue;   // File is already identical (Skip writing)
             }
 
             // Start write new content to board

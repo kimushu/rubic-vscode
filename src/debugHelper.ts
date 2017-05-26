@@ -1,6 +1,5 @@
 import { Disposable, commands, OutputChannel, window, workspace, ExtensionContext } from "vscode";
 import { Sketch, generateDebugConfiguration } from "./sketch";
-import * as glob from "glob";
 import * as path from "path";
 import * as pify from "pify";
 import * as mrbc from "mruby-native";
@@ -72,14 +71,17 @@ export class DebugHelper {
             };
             return result;
         }
-        let mergedConfig = Object.assign({}, config);
+        let mergedConfig = Object.assign({
+            debugServer: process.env["DEBUG_SERVER_PORT"]
+        }, config);
         let {sketch} = RubicExtension.instance;
         await this._compileSources(sketch);
-        commands.executeCommand("vscode.startDebug", config);
+        commands.executeCommand("vscode.startDebug", mergedConfig);
         return {status: "ok"};
     }
 
     private async _compileSources(sketch: Sketch): Promise<void> {
+        // FIXME: support other languages
         this._rubicOutputChannel.appendLine(localize(
             "start-compile-d",
             "Start compile before launch ({0})",
@@ -99,6 +101,25 @@ export class DebugHelper {
     }
 
     private async _guessProgramName(): Promise<string> {
-        return "main.mrb"; // FIXME
+        // FIXME: support other languages
+        let files: string[] = (await workspace.findFiles("*.rb")).map(
+            (uri) => path.relative(workspace.rootPath, uri.fsPath)
+        );
+
+        if (files.length === 0) {
+            throw new Error(
+                localize("no-program-src", "No program source file found")
+            );
+        }
+
+        let index = (files.length === 1) ? 0 : files.indexOf("main.rb");
+        if (index < 0) {
+            throw new Error(localize(
+                "cannot-guess-src-x",
+                "Cannot guess file to start. Write filename to launch.json or rename filename to \"{0}\"",
+                "main.rb"
+            ));
+        }
+        return files[index].replace(/\.rb$/, ".mrb");
     }
 }
