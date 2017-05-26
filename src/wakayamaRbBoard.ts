@@ -43,6 +43,9 @@ export class WakayamaRbBoard extends RubicBoard {
                 ports.forEach((port) => {
                     let vid = parseInt(port.vendorId, 16);
                     let pid = parseInt(port.productId, 16);
+                    if (isNaN(vid) || isNaN(pid)) {
+                        return;
+                    }
                     let entry = this._VID_PID_LIST.find((entry) => {
                         return (vid === entry.vendorId && pid === entry.productId);
                     });
