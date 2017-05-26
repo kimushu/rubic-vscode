@@ -12,6 +12,12 @@ Supported programming language:
 * Ruby (mruby engine)
 * JavaScript (Duktape engine)
 
+## [!] Note for preview testers
+
+Thanks for testing Rubic!
+This is still a *preview* release. \
+If you try this, `rubic.catalog.showPreview` configuration must be set to `true`.
+
 ## Requirements
 
 * For Windows users
@@ -72,6 +78,18 @@ Because this extension includes executable binary of mruby compiler (*mrbc.exe* 
 
 ## Release Notes
 
+### 0.99.6
+
+* Add auto detection of source file for debugging
+* Changed catalog cache folder
+  * New location is `%USERPROFILE%\.rubic` for Windows, `$HOME/.rubic` for Linux/mac.
+  * Now cache data is preserved during Rubic extension update / re-install. 
+* Improve device detection on mac
+
+### 0.99.5
+
+* Special release limited to firmware developers
+
 ### 0.99.4
 
 * Update Canarium
@@ -108,6 +126,11 @@ MIT
 以下のプログラミング言語に対応しています。
 * Ruby (mruby engine)
 * JavaScript (Duktape engine)
+
+## [!] プレビュー版を使用される方へのお願い
+
+Rubicのテストにご協力いただきありがとうございます。このリリースはまだ *Preview版* です。\
+使用される場合は、設定項目の `rubic.catalog.showPreview` を `true` に変更してお使い下さい。
 
 ## 必要要件
 
@@ -167,7 +190,19 @@ MIT
 * 不具合報告は[GitHub issues](https://github.com/kimushu/rubic-vscode/issues)までお願いします。
 * その他の報告は[作者のTwitter](https://twitter.com/kimu_shu)までどうぞ。
 
-## Release Notes
+## リリースノート
+
+### 0.99.6
+
+* デバッグにおける実行対象スクリプトの自動検出機能を追加
+* カタログキャッシュの保存場所を変更
+  * Windowsならば `%USERPROFILE%\.rubic`、Linux/macならば `$HOME/.rubic` となります
+  * Rubic拡張機能のバージョン変更や再インストールをしても、キャッシュデータが引き継がれるようになりました
+* macにおけるデバイス検出を改善
+
+### 0.99.5
+
+* ファームウェア開発者向け限定リリース
 
 ### 0.99.4
 
