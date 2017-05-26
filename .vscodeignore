@@ -9,6 +9,7 @@ tmp/**
 .gitignore
 typings/**
 cache/**
+tools/**
 tsconfig.json
 vsc-extension-quickstart.md
 node_modules/serialport/bin/win32*/**
