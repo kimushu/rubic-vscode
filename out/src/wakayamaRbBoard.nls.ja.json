@@ -1,8 +1,10 @@
 {
     "messages": [
-        "WAKAYAMA.RB ボード"
+        "ファームウェアの検出に失敗しました",
+        "ファイルの読み込みに失敗しました"
     ],
     "keys": [
-        "wakayamarb.name"
+        "failed-detect",
+        "read-error"
     ]
 }
