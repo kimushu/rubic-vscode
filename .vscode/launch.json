@@ -21,7 +21,7 @@
             "args": ["--extensionDevelopmentPath=${workspaceRoot}" ],
             "env": {
                 "DEBUG_SERVER_PORT": "4711"
-            }
+            },
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/out/src/**/*.js" ],
@@ -47,7 +47,12 @@
             "args": ["--server=4711"],
             "sourceMaps": true,
             "outFiles": ["${workspaceRoot}/out/**/*.js"],
-            "runtimeExecutable": "C:\\Program Files (x86)\\Microsoft VS Code\\Code.exe",
+            "windows": {
+                "runtimeExecutable": "C:\\Program Files (x86)\\Microsoft VS Code\\Code.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "/Applications/Visual Studio Code.app/Contents/MacOS/Electron"
+            },
             "env": {
                 "ELECTRON_RUN_AS_NODE": "1"
             }
