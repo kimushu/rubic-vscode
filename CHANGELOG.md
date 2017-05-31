@@ -3,6 +3,11 @@
 
 # Change Log (en)
 
+## 0.99.7
+
+* Fix `spawn EACCES` error on max/Linux environment
+* Rebuild embedded mruby compiler for Windows: VC++ 2015 runtime no more required.
+
 ## 0.99.6
 
 * Add auto detection of source file for debugging
@@ -37,6 +42,11 @@
 ----
 
 # 変更ログ (ja)
+
+## 0.99.7
+
+* macやLinux環境において発生する `spawn EACCES` エラーを修正しました
+* Rubicに内蔵されているWindows向けmrubyコンパイラを再ビルドしました。これにより、VC++ 2015 ランタイムをインストールする必要は無くなりました。
 
 ## 0.99.6
 

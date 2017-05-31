@@ -17,12 +17,6 @@ Thanks for testing Rubic!
 This is still a *preview* release. \
 If you try this, `rubic.catalog.showPreview` configuration must be set to `true`.
 
-## Requirements
-
-* For Windows users
-  * Install [Visual C++ 2015 Redistributable (x86)](https://www.microsoft.com/en-us/download/details.aspx?id=53840)
-    * Even if you are using 64-bit machine, select *vc\_redist.x86.exe* because VSCode for Windows is distributed as 32-bit build.
-
 ## Quick Start
 
 1. Open a folder to place files in VSCode
@@ -98,12 +92,6 @@ MIT
 
 Rubicのテストにご協力いただきありがとうございます。このリリースはまだ *Preview版* です。\
 使用される場合は、設定項目の `rubic.catalog.showPreview` を `true` に変更してお使い下さい。
-
-## 必要要件
-
-* Windowsユーザー向け
-  * [Visual C++ 2015 再頒布可能パッケージ (x86)](https://www.microsoft.com/ja-JP/download/details.aspx?id=53840) をインストールしてください。
-    * お使いのPCが64-bitマシンであっても、*vc\_redist.x86.exe* を選んでください。(VSCodeは常に32-bit版で提供されているため)
 
 ## クイックスタート
 
