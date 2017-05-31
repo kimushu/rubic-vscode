@@ -2,19 +2,13 @@
 
 * [Japanese explanation is here / 日本語の説明はこちら](#rubic-%E6%97%A5%E6%9C%AC%E8%AA%9E)
 
-Provides embedded-board development support for following boards:
-* [PERIDOT board](http://osafune.github.io/peridot.html)
-* [GR-CITRUS](http://gadget.renesas.com/en/product/citrus.html)
-* [Wakayama.rb board](https://github.com/wakayamarb/wrbb-v2lib-firm)
-
-Supported programming language:
-* Ruby (mruby engine)
-* JavaScript (Duktape engine)
+This extension makes it easy to develop embedded-board such as PERIDOT and GR-CITRUS from VSCode.<br>
+To start development with Rubic, open the work folder in VSCode, press `F1` to open command palette and type "rubic". Find "Show Rubic board catalog" in command pallete and select it. See [Quick Start](#quick-start) for detail.
 
 ## [!] Note for preview testers
 
 Thanks for testing Rubic!
-This is still a *preview* release. \
+This is still a *preview* release. <br>
 If you try this, `rubic.catalog.showPreview` configuration must be set to `true`.
 
 ## Quick Start
@@ -36,7 +30,23 @@ If you try this, `rubic.catalog.showPreview` configuration must be set to `true`
 * Compiling Ruby source (\*.rb) into mruby binary (\*.mrb)
 * Communicate with boards via VCP (Serial port)
 * Reading and writing files on internal storage of the board
+* Updating firmware of the board
 * Launching program on the board
+
+## Supported boards and programming languages
+
+* Supported embedded-boards
+  * [PERIDOT board](http://osafune.github.io/peridot.html)
+  * [GR-CITRUS](http://gadget.renesas.com/en/product/citrus.html)
+  * [Wakayama.rb board](https://github.com/wakayamarb/wrbb-v2lib-firm)
+
+* Supported programming language:
+  * Ruby (mruby engine)
+  * JavaScript (Duktape engine)
+
+## Known Issues
+
+Because this extension includes executable binary of mruby compiler (*mrbc.exe* on Windows, *mrbc* on mac/Linux), some anti-virus software may detect it as a suspicious program. Please configure that binary is safe.
 
 ## Extension Settings
 
@@ -60,10 +70,6 @@ If you try this, `rubic.catalog.showPreview` configuration must be set to `true`
     }
     ```
 
-## Known Issues
-
-Because this extension includes executable binary of mruby compiler (*mrbc.exe* on Windows, *mrbc* on mac/Linux), some anti-virus software may detect it as a suspicious program. Please configure that binary is safe.
-
 ## Feedback
 
 * File a bug in [GitHub issues](https://github.com/kimushu/rubic-vscode/issues)
@@ -79,25 +85,19 @@ MIT
 
 * [English explanation is here / 英語の説明はこちら](#rubic)
 
-この拡張機能は、下記の組み込みボードをVSCode上で開発するためのものです。
-* [PERIDOT board](http://osafune.github.io/peridot.html)
-* [GR-CITRUS](http://gadget.renesas.com/ja/product/citrus.html)
-* [Wakayama.rb board](https://github.com/wakayamarb/wrbb-v2lib-firm)
-
-以下のプログラミング言語に対応しています。
-* Ruby (mruby engine)
-* JavaScript (Duktape engine)
+この拡張機能は、PERIDOTやGR-CITRUSなどの組み込みボードをVSCode上で開発するためのものです。<br>
+Rubicを使った開発を始めるには、作業用のフォルダをVSCodeで開き、`F1`でコマンドパレットを開いて「rubic」と入力します。そして「Rubicのボードカタログを開く」を選択してください。詳しい手順については[クイックスタート](#%E3%82%AF%E3%82%A4%E3%83%83%E3%82%AF%E3%82%B9%E3%82%BF%E3%83%BC%E3%83%88)をご覧下さい。
 
 ## [!] プレビュー版を使用される方へのお願い
 
-Rubicのテストにご協力いただきありがとうございます。このリリースはまだ *Preview版* です。\
+Rubicのテストにご協力いただきありがとうございます。このリリースはまだ *Preview版* です。<br>
 使用される場合は、設定項目の `rubic.catalog.showPreview` を `true` に変更してお使い下さい。
 
 ## クイックスタート
 
 1. VSCodeで、作業するフォルダを開きます。
 1. F1を押し、「Rubic」と入力します。
-1. 「Rubicボードカタログを表示」を選びます。
+1. 「Rubicのボードカタログを開く」を選びます。
 1. 使用したいボードをカタログ内のリストから選択してください。
 1. 使用したい機能を持つファームウェアをカタログ内のリストから選択してください。
 1. リリースを選択してください。通常はリストの一番上にある最新版を使うとよいでしょう。
@@ -112,7 +112,23 @@ Rubicのテストにご協力いただきありがとうございます。この
 * Rubyソースコード(\*.rb)をmrubyバイナリ(\*.mrb)に変換する機能
 * シリアルポート(VCP)経由でボードと通信する機能
 * ボード内のストレージにファイルを読み書きする機能
+* ボードのファームウェアを書き換える機能
 * ボード上でプログラムを実行する機能
+
+## 対応しているボードおよびプログラミング言語
+
+* 組み込みボード
+  * [PERIDOT board](http://osafune.github.io/peridot.html)
+  * [GR-CITRUS](http://gadget.renesas.com/ja/product/citrus.html)
+  * [Wakayama.rb board](https://github.com/wakayamarb/wrbb-v2lib-firm)
+
+* プログラミング言語 (ボードにより対応言語は異なります)
+  * Ruby (mruby engine)
+  * JavaScript (Duktape engine)
+
+## 既知の問題
+
+この拡張機能はmrubyコンパイラのバイナリファイル(Windowsの場合*mrbc.exe*、mac/Linuxの場合*mrbc*)を含んでいるため、一部のアンチウイルスソフトウェアが疑わしいプログラムとして検出する場合があります。その場合、これらのバイナリファイルは安全であると例外設定してください。
 
 ## 拡張機能の設定
 
@@ -135,10 +151,6 @@ Rubicのテストにご協力いただきありがとうございます。この
       :
     }
     ```
-
-## 既知の問題
-
-この拡張機能はmrubyコンパイラのバイナリファイル(Windowsの場合*mrbc.exe*、mac/Linuxの場合*mrbc*)を含んでいるため、一部のアンチウイルスソフトウェアが疑わしいプログラムとして検出する場合があります。その場合、これらのバイナリファイルは安全であると例外設定してください。
 
 ## フィードバック
 
