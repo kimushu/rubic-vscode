@@ -1,3 +1,4 @@
+<a name="en"></a>
 # Rubic
 
 * [Japanese explanation is here / 日本語の説明はこちら](#rubic-%E6%97%A5%E6%9C%AC%E8%AA%9E)
@@ -81,6 +82,7 @@ MIT
 
 ----
 
+<a name="ja"></a>
 # Rubic (日本語)
 
 * [English explanation is here / 英語の説明はこちら](#rubic)
