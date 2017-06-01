@@ -1,10 +1,26 @@
 {
     "messages": [
+        "Wakayama.rb ボード",
         "ファームウェアの検出に失敗しました",
-        "ファイルの読み込みに失敗しました"
+        "ファイルの読み込みに失敗しました",
+        "{0}のリセットスイッチを押して下さい",
+        "続行",
+        "{0}を検索中...",
+        "ファームウェアを書き込み中... ({0}をPCから切断せず、そのまま待機してください)",
+        "{0}上のLED点滅が止まるまで待機して下さい",
+        "操作がキャンセルされました",
+        "{0}が見つかりません"
     ],
     "keys": [
+        "board-name",
         "failed-detect",
-        "read-error"
+        "read-error",
+        "push-reset-button-x",
+        "continue",
+        "searching-x",
+        "writing-firmware-x",
+        "wait-led-nonblink-x",
+        "canceled",
+        "board-not-found-x"
     ]
 }
