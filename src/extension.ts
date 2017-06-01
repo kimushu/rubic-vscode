@@ -69,7 +69,7 @@ export class RubicExtension {
         Promise.resolve(
         ).then(() => {
             // Load sketch (without migration)
-            return this._sketch.load(false, true).then((result) => {
+            return this._sketch.load(false).then((result) => {
                 if (result !== SketchLoadResult.LOAD_SUCCESS) {
                     return Promise.reject(Error(localize("no-sketch", "No sketch")));
                 }

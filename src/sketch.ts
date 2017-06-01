@@ -7,6 +7,7 @@ import * as CJSON from "comment-json";
 import * as pify from "pify";
 import * as glob from "glob";
 import { EventEmitter } from "events";
+import * as chokidar from "chokidar";
 ///<reference path="../schema/sketch.d.ts" />
 
 // Declaration only
@@ -61,7 +62,7 @@ export async function generateDebugConfiguration(workspaceRoot: string): Promise
 export class Sketch extends EventEmitter implements vscode.Disposable {
     private _rubicFile: string;
     private _launchFile: string;
-    private _watcher: fse.FSWatcher;
+    private _watcher: chokidar.FSWatcher;
     private _data: V1_0_x.Top;
     private _invalid: boolean;
 
@@ -74,12 +75,16 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
         super();
         this._rubicFile = path.join(_workspaceRoot, ".vscode", RUBIC_JSON);
         this._launchFile = path.join(_workspaceRoot, ".vscode", LAUNCH_JSON);
+        this._watcher = chokidar.watch(this._rubicFile).on("change", () => {
+            this.emit("reload");
+            this.load();
+        });
     }
 
     /**
      * Load configuration (with migration when window argument passed)
      */
-    async load(convert: boolean = false, autoReload: boolean = false): Promise<SketchLoadResult> {
+    async load(convert: boolean = false): Promise<SketchLoadResult> {
         let result = SketchLoadResult.LOAD_SUCCESS;
         this.close();
         let jsonText;
@@ -106,27 +111,12 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
                 this._invalid = true;
             }
             this.emit("load");
-            if (autoReload) {
-                this._watcher = fse.watch(this._rubicFile, {persistent: false}, (eventType) => {
-                    if (eventType === "change") {
-                        // Reload file
-                        this.emit("reload");
-                        this.load(false, true);
-                    }
-                });
-            } else {
-                this._watcher = null;
-            }
         }
         return result;
     }
 
     /** Close sketch */
     close() {
-        if (this._watcher) {
-            this._watcher.close();
-        }
-        this._watcher = null;
         this._data = null;
         this.emit("close");
     }
@@ -134,6 +124,10 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
     /** Dispose this instance */
     dispose() {
         this.close();
+        if (this._watcher) {
+            this._watcher.close();
+        }
+        this._watcher = null;
     }
 
     /** Path of workspace */
