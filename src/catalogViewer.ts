@@ -593,10 +593,6 @@ export class CatalogViewer implements TextDocumentContentProvider {
         // List variations (If release is selected)
         if (se) {
             pv.disabled = false;
-            if (se.cache.variations.length === 1 && this._provSelect.variationPath == null) {
-                // Select variation automatically
-                this._provSelect.variationPath = se.cache.variations[0].path;
-            }
             pv.not_selected = (this._provSelect.variationPath == null);
             pv.changed = !pv.not_selected && (this._provSelect.variationPath !== sketch.variationPath);
             se.cache.variations.forEach((vary) => {
