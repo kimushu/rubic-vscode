@@ -17,9 +17,9 @@ declare namespace V1_0_x {
         /** Path or address of board */
         boardPath?: string;
         /** List of files (or wildcards) to be transfered */
-        "transfer.include": string[];
+        "transfer.include"?: string[];
         /** List of files (or wildcards) NOT to be transfered */
-        "transfer.exclude": string[];
+        "transfer.exclude"?: string[];
     }
 }
 
