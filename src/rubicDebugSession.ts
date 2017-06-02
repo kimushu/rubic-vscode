@@ -126,15 +126,23 @@ class RubicDebugSession extends InteractiveDebugSession {
 	}*/
 
     protected interactiveRequest(command: string, args: any): Thenable<any> {
-        switch (command) {
-            case "writeFirmware":
-                return this._writeFirmware(args.boardClass, args.boardPath, args.filename);
-            case "getInfo":
-                return this._getBoardInfo(args.boardClass, args.boardPath, args.printOutput);
-            default:
+        return (async () => {
+            try {
+                switch (command) {
+                    case "writeFirmware":
+                        return await this._writeFirmware(args.boardClass, args.boardPath, args.filename);
+                    case "getInfo":
+                        return await this._getBoardInfo(args.boardClass, args.boardPath, args.printOutput);
+                    default:
+                        throw new Error("Unknown interactive request");
+                }
+            } catch (error) {
+                this.sendEvent(new OutputEvent(`${error}`));
+                throw error;
+            } finally {
                 this.sendEvent(new TerminatedEvent());
-                return Promise.reject(Error("Unknown interactive request"));
-        }
+            }
+        })();
     }
 
     protected connectBoard(args: RubicRequestArguments): Promise<void> {
@@ -334,6 +342,7 @@ class RubicDebugSession extends InteractiveDebugSession {
     }
 
     private _handleBoardStop(): void {
+        this._board.disconnect().catch(() => {});
         this.sendEvent(new OutputEvent(SEPARATOR_STOP));
         this.sendEvent(new OutputEvent(
             localize("program-ended", "Program ended")
