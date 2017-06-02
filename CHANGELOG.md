@@ -3,6 +3,10 @@
 
 # Change Log (en)
 
+## 0.99.8
+
+- Update readme (No change in Rubic extension)
+
 ## 0.99.7
 
 * Fix `spawn EACCES` error on max/Linux environment
@@ -44,6 +48,10 @@
 ----
 
 # 変更ログ (ja)
+
+## 0.99.8
+
+* READMEを更新 (Rubic本体に変更はありません)
 
 ## 0.99.7
 
