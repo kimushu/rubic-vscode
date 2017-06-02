@@ -156,11 +156,17 @@ export class WakayamaRbBoard extends RubicBoard {
         ).then(() => {
             return this._send(`U ${filename} ${ascii.byteLength}\r`);
         }).then(() => {
-            return this._recv(" 60");
-        }).then(() => {
-            return this._send(ascii);
-        }).then(() => {
-            return this._recv("Saving");
+            if (data.byteLength === 0) {
+                return;
+            }
+            return Promise.resolve()
+            .then(() => {
+                return this._recv(" 60");
+            }).then(() => {
+                return this._send(ascii);
+            }).then(() => {
+                return this._recv("Saving");
+            });
         }).then(() => {
             return this._recv("\r\n>");
         }).then(() => {
