@@ -7,6 +7,8 @@
 
 * Fix `spawn EACCES` error on max/Linux environment
 * Rebuild embedded mruby compiler for Windows: VC++ 2015 runtime no more required.
+* Show port selector when starts debug session without port selection
+* Fix saving configuration on some items in the catalog
 
 ## 0.99.6
 
@@ -47,6 +49,8 @@
 
 * macやLinux環境において発生する `spawn EACCES` エラーを修正しました
 * Rubicに内蔵されているWindows向けmrubyコンパイラを再ビルドしました。これにより、VC++ 2015 ランタイムをインストールする必要は無くなりました。
+* 接続先未選択の状態でデバッグを開始した際、接続先を選択する画面を表示するようになりました
+* カタログで一部の項目に対して設定が保存できない不具合を修正しました
 
 ## 0.99.6
 
