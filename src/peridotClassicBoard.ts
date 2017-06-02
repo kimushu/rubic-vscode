@@ -1,7 +1,6 @@
 import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from "./rubicBoard";
 import * as stream from "stream";
 import { Canarium } from "canarium";
-import * as vscode from "vscode";
 import * as nls from "vscode-nls";
 import * as path from "path";
 import * as fs from "fs";
@@ -15,14 +14,6 @@ const WRITER_BOOT_TIMEOUT_MS = 5 * 1000;
 
 function buf2ab(buf: Buffer): ArrayBuffer {
     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-}
-
-function finallyPromise(f: any): [any, any] {
-    let action = () => Promise.resolve(f()).catch(() => null);
-    return [
-        (result) => action().then(() => result),
-        (reason) => action().then(() => Promise.reject(reason))
-    ];
 }
 
 export class PeridotClassicBoard extends RubicBoard {

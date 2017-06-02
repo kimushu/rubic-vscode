@@ -1,7 +1,4 @@
 import { WakayamaRbBoard } from "./wakayamaRbBoard";
-import { BoardCandidate, BoardStdio } from "./rubicBoard";
-import * as stream from "stream";
-import * as Canarium from "canarium";
 import * as nls from "vscode-nls";
 
 const localize = nls.loadMessageBundle(__filename);

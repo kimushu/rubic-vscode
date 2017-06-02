@@ -1,4 +1,3 @@
-import { spawn } from "child_process";
 import { EventEmitter } from "events";
 import * as stream from "stream";
 import { InteractiveDebugSession } from "./interactiveDebugSession";

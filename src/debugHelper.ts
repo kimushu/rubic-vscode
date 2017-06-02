@@ -1,8 +1,6 @@
 import { Disposable, commands, OutputChannel, window, workspace, ExtensionContext } from "vscode";
 import { Sketch, generateDebugConfiguration } from "./sketch";
 import * as path from "path";
-import * as pify from "pify";
-import * as mrbc from "mruby-native";
 
 import * as nls from "vscode-nls";
 import { compileMrubySources } from "./mrubyCompiler";
@@ -32,6 +30,7 @@ export class DebugHelper {
     private _rubicOutputChannel: OutputChannel;
     public get rubicOutputChannel() { return this._rubicOutputChannel; }
 
+    /* tslint:disable-next-line:no-unused-variable */
     public constructor(private _context: ExtensionContext) {
         if (DebugHelper._instance) {
             console.warn("Multiple DebugHelper instances!");

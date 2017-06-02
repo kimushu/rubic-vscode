@@ -2,7 +2,7 @@
 import * as nls from "vscode-nls";
 const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
-import { ExtensionContext, Disposable, window, workspace } from "vscode";
+import { ExtensionContext, window, workspace } from "vscode";
 import { Sketch, SketchLoadResult } from "./sketch";
 import { CatalogViewer } from "./catalogViewer";
 import { DebugHelper } from "./debugHelper";

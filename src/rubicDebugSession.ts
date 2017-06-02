@@ -6,13 +6,13 @@ import {
     DebugSession
 } from "vscode-debugadapter";
 import { DebugProtocol } from "vscode-debugprotocol";
-import { RubicBoard, BoardStdio, BoardInformation } from "./rubicBoard";
+import { RubicBoard, BoardInformation } from "./rubicBoard";
 import { BoardClassList } from "./boardClassList";
 import * as path from "path";
 import * as glob from "glob";
 import * as pify from "pify";
 import { Writable } from "stream";
-import { readFile, writeFile } from "fs";
+import { readFile } from "fs";
 import { Sketch } from "./sketch";
 import * as nls from "vscode-nls";
 import { InteractiveDebugSession } from "./interactiveDebugSession";
