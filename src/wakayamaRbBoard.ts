@@ -49,13 +49,6 @@ export class WakayamaRbBoard extends RubicBoard {
 
     public constructor(private _path: string) {
         super();
-        this._port = new SerialPort(_path, {
-            autoOpen: false,
-            baudRate: 115200,
-            //parser: SerialPort.parsers.readline("\r"),
-        });
-        this._port.on("data", this._dataHandler.bind(this));
-        this._port.on("error", this._errorHandler.bind(this));
     }
 
     public static list(): Promise<BoardCandidate[]> {
@@ -92,6 +85,14 @@ export class WakayamaRbBoard extends RubicBoard {
     }
 
     private _portCall(method: string, ...args): Promise<any> {
+        if (this._port == null) {
+            this._port = new SerialPort(this._path, {
+                autoOpen: false,
+                baudRate: 115200,
+            });
+            this._port.on("data", this._dataHandler.bind(this));
+            this._port.on("error", this._errorHandler.bind(this));
+        }
         return new Promise((resolve, reject) => {
             this._port[method](...args, (error, result) => {
                 if (error) { return reject(error); }
@@ -105,7 +106,10 @@ export class WakayamaRbBoard extends RubicBoard {
     }
 
     disconnect(): Promise<void> {
-        return this._portCall("close");
+        if (this._port != null) {
+            return this._portCall("close");
+        }
+        return Promise.resolve();
     }
 
     dispose(): void {
@@ -236,16 +240,16 @@ export class WakayamaRbBoard extends RubicBoard {
     async writeFirmware(debugSession: InteractiveDebugSession, filename: string): Promise<void> {
         let boardName = this.getBoardName();
         if (await debugSession.showInformationMessage(
-            localize("push-reset-button-x", "Push reset button on {0}"),
+            localize("push-reset-button-x", "Push reset button on {0}", boardName),
             {title: localize("continue", "Continue")}
         ) != null) {
             await debugSession.showStatusMessage(
-                `$(watch) ${localize("searching-x", "Searching {0}...")}`
+                `$(watch) ${localize("searching-x", "Searching {0}...", boardName)}`
             );
             let basePath = await this._searchUsbMassStorage();
 
             await debugSession.showStatusMessage(
-                `$(watch) ${localize("writing-firmware-x", "Writing firmware ... (Please wait! Do not disconnect {0})")}`
+                `$(watch) ${localize("writing-firmware-x", "Writing firmware ... (Please wait! Do not disconnect {0})", boardName)}`
             );
             let destPath = path.join(basePath, path.basename(filename));
             let copy_cmd = (process.platform === "win32") ? "copy" : "cp";
@@ -253,7 +257,8 @@ export class WakayamaRbBoard extends RubicBoard {
             await delay(WRBB_PROG_DELAY_MS);
             await debugSession.showInformationMessage(localize(
                 "wait-led-nonblink-x",
-                "Wait until LED on {0} stops blinking"
+                "Wait until LED on {0} stops blinking",
+                boardName
             ));
             return;
         }
