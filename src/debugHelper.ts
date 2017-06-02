@@ -9,6 +9,11 @@ import { compileMrubySources } from "./mrubyCompiler";
 import { RubicExtension } from "./extension";
 const localize = nls.loadMessageBundle(__filename);
 
+interface StartSessionResult {
+    status: "ok"|"initialConfiguration"|"saveConfiguration";
+    content?: string;
+}
+
 const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
 const CMD_PROVIDE_INIT_CFG = "extension.rubic.provideInitialConfigurations";
 const CMD_GUESS_PROGRAM_NAME = "extension.rubic.guessProgramName";
@@ -63,18 +68,22 @@ export class DebugHelper {
         this._disposable = Disposable.from(...subscriptions);
     }
 
-    private async _startDebugSession(config: any): Promise<any> {
+    private async _startDebugSession(config: any): Promise<StartSessionResult> {
         if (Object.keys(config).length === 0) {
-            let result = {
+            return {
                 status: "saveConfiguration",
                 content: await this._provideInitConfig()
             };
-            return result;
         }
         let mergedConfig = Object.assign({
             debugServer: process.env["DEBUG_SERVER_PORT"]
         }, config);
         let {sketch} = RubicExtension.instance;
+        if (sketch.boardPath == null) {
+            if (await RubicExtension.instance.catalogViewer.selectPort() == null) {
+                return {status: "ok"};
+            }
+        }
         await this._compileSources(sketch);
         commands.executeCommand("vscode.startDebug", mergedConfig);
         return {status: "ok"};

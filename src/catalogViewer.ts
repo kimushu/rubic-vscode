@@ -267,10 +267,10 @@ export class CatalogViewer implements TextDocumentContentProvider {
     /**
      * selectPort command receiver
      */
-    public selectPort(): void {
+    public selectPort(): Promise<string> {
         let {sketch} = RubicExtension.instance;
         let boardClass = BoardClassList.getClass(sketch.boardClass);
-        let choose = (filter: boolean) => {
+        let choose = (filter: boolean): Promise<string> => {
             interface PortQuickPickItem extends QuickPickItem {
                 path?: string;
                 rescan?: boolean;
@@ -339,6 +339,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
             if (boardPath != null) {
                 return sketch.update({boardPath}).then(() => {
                     this._triggerUpdate();
+                    return boardPath;
                 });
             }
         });
@@ -685,11 +686,22 @@ export class CatalogViewer implements TextDocumentContentProvider {
     private async _testConnection(): Promise<void> {
         let {sketch, debugHelper} = RubicExtension.instance;
         let channel = debugHelper.rubicOutputChannel;
+        let {boardClass, boardPath} = sketch;
+
+        if (boardClass == null) {
+            return;
+        }
+        if (boardPath == null) {
+            boardPath = await this.selectPort();
+            if (boardPath == null) {
+                return;
+            }
+        }
 
         try {
             let result: BoardInformation = await soloInteractiveDebugRequest("getInfo", {
-                boardClass: sketch.boardClass,
-                boardPath: sketch.boardPath,
+                boardClass: boardClass,
+                boardPath: boardPath,
                 printOutput: true
             });
             window.showInformationMessage(localize(
