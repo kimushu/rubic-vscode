@@ -233,7 +233,7 @@
     "github": "^9.2.0",
     "glob": "^7.1.1",
     "markdown-it": "^8.3.1",
-    "mruby-native": "github:kimushu/node-mruby-native#1.2.0-build2",
+    "mruby-native": "github:kimushu/node-mruby-native#1.2.0-build3",
     "pify": "^2.3.0",
     "request": "^2.81.0",
     "rimraf": "^2.6.1",
