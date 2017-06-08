@@ -5,12 +5,6 @@
 This extension makes it easy to develop embedded-board such as PERIDOT and GR-CITRUS from VSCode.<br>
 To start development with Rubic, open the work folder in VSCode, press `F1` to open command palette and type "rubic". Find "Show Rubic board catalog" in command pallete and select it. See [Quick Start](#quick-start) for detail.
 
-## [!] Note for preview testers
-
-Thanks for testing Rubic!
-This is still a *preview* release. <br>
-If you try this, `rubic.catalog.showPreview` configuration must be set to `true`.
-
 ## Quick Start
 
 1. Open a folder to place files in VSCode
@@ -72,11 +66,6 @@ MIT
 
 この拡張機能は、PERIDOTやGR-CITRUSなどの組み込みボードをVSCode上で開発するためのものです。<br>
 Rubicを使った開発を始めるには、作業用のフォルダをVSCodeで開き、`F1`でコマンドパレットを開いて「rubic」と入力します。そして「Rubicのボードカタログを開く」を選択してください。詳しい手順については[クイックスタート](#quick-start-ja)をご覧下さい。
-
-## [!] プレビュー版を使用される方へのお願い
-
-Rubicのテストにご協力いただきありがとうございます。このリリースはまだ *Preview版* です。<br>
-使用される場合は、設定項目の `rubic.catalog.showPreview` を `true` に変更してお使い下さい。
 
 ## <a id="quick-start-ja"></a>クイックスタート
 
