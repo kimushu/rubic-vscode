@@ -26,32 +26,16 @@ export enum SketchLoadResult {
     NO_SKETCH,
 }
 
+/**
+ * Generate debug configuration
+ */
 export async function generateDebugConfiguration(workspaceRoot: string): Promise<any> {
-    let mainPath = "${command:GuessProgramName}";
-    if (workspaceRoot) {
-        let matches: string[] = await pify(glob)("main.*", {cwd: workspaceRoot});
-        matches.some((file) => {
-            if (file.match(/\.rb$/)) {
-                mainPath = file.replace(/\.rb$/, ".mrb");
-                return true;
-            }
-            if (file.match(/\.ts$/)) {
-                mainPath = file.replace(/\.ts$/, ".js");
-                return true;
-            }
-            if (file.match(/\.js$/)) {
-                mainPath = file;
-                return true;
-            }
-            return false;
-        });
-    }
     return {
         type: "rubic",
         request: "launch",
         name: "Launch on target board",
         workspaceRoot: "${workspaceRoot}",
-        program: "${workspaceRoot}/" + mainPath
+        program: "${file}"
     };
 }
 
