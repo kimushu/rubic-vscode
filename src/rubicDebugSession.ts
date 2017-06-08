@@ -217,6 +217,7 @@ class RubicDebugSession extends InteractiveDebugSession {
         } catch (error) {
             if (printOutput) {
                 this.sendEvent(new OutputEvent(`${error.stack || error.toString()}\n`));
+                throw "";
             }
             throw error;
         } finally {
