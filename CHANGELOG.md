@@ -3,9 +3,13 @@
 
 # Change Log (en)
 
+## 0.99.9
+
+* Add runtime information for each firmware
+
 ## 0.99.8
 
-- Update readme (No change in Rubic extension)
+* Update readme (No change in Rubic extension)
 
 ## 0.99.7
 
@@ -48,6 +52,10 @@
 ----
 
 # 変更ログ (ja)
+
+## 0.99.0
+
+* ファームウェアにランタイムの情報表示を追加
 
 ## 0.99.8
 

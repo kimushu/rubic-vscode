@@ -127,21 +127,19 @@ const sendCommand = (() => {
 
 // Register event handler for page navs
 (() => {
-    let links = document.getElementsByClassName("catalog-page-link");
-    for (let i = 0; i < links.length; ++i) {
-        ((link) => {
-            link.addEventListener("click", () => {
-                let pages = document.getElementsByClassName("catalog-page-container");
-                for (let j = 0; j < pages.length; ++j) {
-                    let page = <HTMLDivElement>pages[j];
-                    if (link.dataset.pidx === page.dataset.pidx) {
-                        page.classList.add("active");
-                    } else {
-                        page.classList.remove("active");
-                    }
-                }
-                link.blur();
-            });
-        })(<HTMLAnchorElement>links[i]);
+    function getArray(className: string) {
+        return Array.from(document.getElementsByClassName(className));
+    }
+    for (let link of <HTMLAnchorElement[]>getArray("catalog-page-link")) {
+        let pidx = link.dataset.pidx;
+        link.addEventListener("click", () => {
+            for (let page of <HTMLDivElement[]>getArray("catalog-page-container")) {
+                page.classList.toggle("active", page.dataset.pidx === pidx);
+            }
+            for (let a_link of <HTMLAnchorElement[]>getArray("catalog-page-link")) {
+                a_link.classList.toggle("disabled", a_link.dataset.pidx === pidx);
+            }
+            link.blur();
+        });
     }    
 })();

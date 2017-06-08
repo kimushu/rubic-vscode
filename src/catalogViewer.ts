@@ -1,6 +1,7 @@
 import * as nls from "vscode-nls";
 import * as path from "path";
 import * as util from "util";
+import * as dedent from "dedent";
 import { BoardClass, RubicBoard, BoardCandidate, BoardInformation } from "./rubicBoard";
 import { BoardClassList } from "./boardClassList";
 import { CacheStorage } from "./cacheStorage";
@@ -617,33 +618,15 @@ export class CatalogViewer implements TextDocumentContentProvider {
         // Make detail pages
         if (sv) {
             let md = new MarkdownIt(<any>{html: true});
-            let cacheDir = await catalogData.prepareCacheDir(this._provSelect.repositoryUuid, this._provSelect.releaseTag);
-            let {size} = await CacheStorage.stat(path.join(cacheDir, sv.path));
-            let sizeText: string;
-            if (size >= 1024) {
-                sizeText = `${Math.round(size / 1024)} kB`;
-            } else {
-                sizeText = `${size} bytes`;
-            }
             pd.disabled = false;
             pd.pages.push({
                 title: localize("conn_and_firmware", "Connection & Firmware"),
                 active: true,
-                content: md.render(`
-## ${localize("connection", "Connection")}
-* <a href="command:${CMD_SELECT_PORT}" class="catalog-page-button catalog-page-button-dropdown">${
-    sketch.boardPath || LOCALIZED_NO_PORT
-}</a><a href="command:${CMD_TEST_CONNECTION}" class="catalog-page-button">${
-    localize("test-connection", "Test connection")
-}</a>
-## ${localize("firmware", "Firmware")}
-* ${sv.path} (${sizeText})<br><a href="command:${CMD_WRITE_FIRMWARE}" class="catalog-page-button">${
-    localize("write-firmware", "Write firmware to board")
-}</a>
-<!--## ${localize("runtimes", "Runtimes")}
-* List1
-* List2-->
-`)
+                content: md.render(await this._generateConnPage(sv))
+            });
+            pd.pages.push({
+                title: localize("runtimes", "Runtimes"),
+                content: md.render(await this._generateRuntimePage(sv))
             });
             if (sv.document != null) {
                 let md = new MarkdownIt();
@@ -678,6 +661,58 @@ export class CatalogViewer implements TextDocumentContentProvider {
 
         // Generate HTML
         return template(variables);
+    }
+
+    private async _generateConnPage(v: RubicCatalog.Variation): Promise<string> {
+        let { catalogData, sketch } = RubicExtension.instance;
+        let cacheDir = await catalogData.prepareCacheDir(this._provSelect.repositoryUuid, this._provSelect.releaseTag);
+        let { size } = await CacheStorage.stat(path.join(cacheDir, v.path));
+        let sizeText: string;
+        if (size >= 1024) {
+            sizeText = `${Math.round(size / 1024)} kB`;
+        } else {
+            sizeText = `${size} bytes`;
+        }
+        return dedent`
+        ## ${localize("connection", "Connection")}
+        * <a href="command:${CMD_SELECT_PORT}" class="catalog-page-button catalog-page-button-dropdown">${
+            sketch.boardPath || LOCALIZED_NO_PORT
+        }</a><a href="command:${CMD_TEST_CONNECTION}" class="catalog-page-button">${
+            localize("test-connection", "Test connection")
+        }</a>
+        ## ${localize("firmware", "Firmware")}
+        * ${v.path} (${sizeText})<br><a href="command:${CMD_WRITE_FIRMWARE}" class="catalog-page-button">${
+            localize("write-firmware", "Write firmware to board")
+        }</a>
+        `;
+    }
+
+    private _generateRuntimePage(v: RubicCatalog.Variation): string {
+        let result: string[] = [];
+        let sver = localize("version", "Version");
+        for (let rt of v.runtimes) {
+            switch (rt.name) {
+                case "mruby":
+                    let rtm = <RubicCatalog.Runtime.Mruby>rt;
+                    result.push(`## ${localize("mruby-desc", "mruby (Lightweight Ruby)")}`);
+                    result.push(`* ${sver} : \`${rtm.version}\``);
+                    if (rtm.mrbgems) {
+                        result.push(`* ${localize("included-mrbgems", "Included mrbgems")} :`);
+                        for (let gem of rtm.mrbgems) {
+                            result.push(`  * \`${gem.name}\` : ${gem.description}`);
+                        }
+                    }
+                    break;
+                case "duktape":
+                    let rtd = <RubicCatalog.Runtime.Duktape>rt;
+                    result.push(`* ${sver} : \`${rtd.version}\``);
+                    result.push(`* ${localize("support-langs", "Supported languages")} : ` +
+                        "JavaScript(ES5) / TypeScript"
+                    );
+                    break;
+            }
+        }
+        return result.join("\n");
     }
 
     /**
