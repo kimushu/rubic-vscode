@@ -239,17 +239,27 @@ export class WakayamaRbBoard extends RubicBoard {
 
     async writeFirmware(debugSession: InteractiveDebugSession, filename: string): Promise<void> {
         let boardName = this.getBoardName();
+        await debugSession.showProgressMessage(
+            `${localize(
+                "follow-inst",
+                "Please follow instructions showed on the top of window"
+            )} $(arrow-up)`
+        );
         if (await debugSession.showInformationMessage(
             localize("push-reset-button-x", "Push reset button on {0}", boardName),
-            {title: localize("continue", "Continue")}
+            {title: localize("push-done", "Pushed")}
         ) != null) {
-            await debugSession.showStatusMessage(
-                `$(watch) ${localize("searching-x", "Searching {0}...", boardName)}`
+            await debugSession.showProgressMessage(
+                localize("searching-x", "Searching {0}...", boardName)
             );
             let basePath = await this._searchUsbMassStorage();
 
-            await debugSession.showStatusMessage(
-                `$(watch) ${localize("writing-firmware-x", "Writing firmware ... (Please wait! Do not disconnect {0})", boardName)}`
+            await debugSession.showProgressMessage(
+                localize(
+                    "writing-firmware-x",
+                    "Writing firmware ... $(stop)Please wait! Do not disconnect {0}",
+                    boardName
+                ) + " "
             );
             let destPath = path.join(basePath, path.basename(filename));
             let copy_cmd = (process.platform === "win32") ? "copy" : "cp";
@@ -259,7 +269,10 @@ export class WakayamaRbBoard extends RubicBoard {
                 "wait-led-nonblink-x",
                 "Wait until LED on {0} stops blinking",
                 boardName
-            ));
+            ), {
+                title: localize("confirm-done", "Confirmed"),
+                isCloseAffordance: true
+            });
             return;
         }
         return Promise.reject(
