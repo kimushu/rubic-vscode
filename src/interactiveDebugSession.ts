@@ -95,6 +95,14 @@ export class InteractiveDebugSession extends DebugSession {
         return this._question({question: "hideStatusMessage"});
     }
 
+    public showProgressMessage(title: string): Thenable<void> {
+        return this._question({question: "showProgressMessage", title});
+    }
+
+    public hideProgressMessage(): Thenable<void> {
+        return this._question({question: "hideProgressMessage"});
+    }
+
     private _showMessage(question: string, message: string, rawItems: any[]): Thenable<any> {
         let options: vscode.MessageOptions;
         if (typeof(rawItems[0]) === "object" && rawItems[0].title == null) {

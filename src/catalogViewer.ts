@@ -720,7 +720,6 @@ export class CatalogViewer implements TextDocumentContentProvider {
      */
     private async _testConnection(): Promise<void> {
         let {sketch, debugHelper} = RubicExtension.instance;
-        let channel = debugHelper.rubicOutputChannel;
         let {boardClass, boardPath} = sketch;
 
         if (boardClass == null) {

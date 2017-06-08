@@ -1,4 +1,8 @@
-import { commands, window, workspace, StatusBarItem, StatusBarAlignment } from "vscode";
+import {
+    commands, window, workspace,
+    StatusBarItem, StatusBarAlignment,
+    ProgressOptions, ProgressLocation, MessageItem
+} from "vscode";
 
 const DEBUG_SESSION_DELAY_MS = 1000;
 const DEBUG_SESSION_MAX_TRIES = 5;
@@ -44,11 +48,18 @@ export function interactiveDebugRequest(command: string, args: any): Thenable<an
         pendingRequests[command_id] = {resolve, reject};
     });
     let statusBarItem: StatusBarItem;
+    let progressResolve: Function;
     let removeStatus = () => {
         if (statusBarItem) {
             statusBarItem.hide();
             statusBarItem.dispose();
             statusBarItem = null;
+        }
+    };
+    let removeProgress = () => {
+        if (progressResolve) {
+            progressResolve();
+            progressResolve = null;
         }
     };
     let issue = (args) => {
@@ -111,6 +122,18 @@ export function interactiveDebugRequest(command: string, args: any): Thenable<an
                 case "hideStatusMessage":
                     removeStatus();
                     return;
+                case "showProgressMessage":
+                    removeProgress();
+                    window.withProgress({
+                        location: ProgressLocation.Window,
+                        title: body.title
+                    }, () => new Promise((resolve) => {
+                        progressResolve = resolve;
+                    }));
+                    return;
+                case "hideProgressMessage":
+                    removeProgress();
+                    return;
                 default:
                     console.warn(`unknown question: ${question}`);
             }
@@ -125,9 +148,11 @@ export function interactiveDebugRequest(command: string, args: any): Thenable<an
     });
     return promise.then((result) => {
         removeStatus();
+        removeProgress();
         return result;
     }, (reason) => {
         removeStatus();
+        removeProgress();
         return Promise.reject(reason);
     });
 }
