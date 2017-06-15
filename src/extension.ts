@@ -5,10 +5,10 @@ const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 import { ExtensionContext, window, workspace } from "vscode";
 import { commands, ProgressOptions, ProgressLocation, Progress } from "vscode";
 import { Sketch, SketchLoadResult } from "./sketch";
-import { CatalogViewer } from "./catalogViewer";
+import { CatalogViewer } from "./catalog/catalogViewer";
 import { DebugHelper } from "./debugHelper";
 import * as path from "path";
-import { CatalogData } from "./catalogData";
+import { CatalogData } from "./catalog/catalogData";
 
 export class RubicExtension {
     /**
@@ -95,30 +95,6 @@ export class RubicExtension {
 
 export function activate(context: ExtensionContext) {
     console.log(`Rubic extension at: ${context.extensionPath}`);
-    window.withProgress({
-        location: ProgressLocation.SourceControl,
-        title: "HogeBar"
-    }, () => {
-        return new Promise((resolve) => {
-            setTimeout(resolve, 3500);
-        });
-    })
-    .then(() => { console.log("hogebar done"); });
-    window.withProgress({
-        location: ProgressLocation.Window,
-        title: "Test Progress"
-    }, (progress: Progress<{message?: string}>) => {
-        return new Promise((resolve) => {
-            let i = 0;
-            setInterval(() => {
-                progress.report({message: `1000ms after (${++i})`});
-            }, 1000);
-            setTimeout(resolve, 5000);
-        });
-    })
-    .then(() => {
-        console.log("progress done");
-    });
     RubicExtension.start(context);
 }
 

@@ -1,5 +1,5 @@
 import { PeridotClassicBoard } from "./peridotClassicBoard";
-import { BoardCandidate } from "./rubicBoard";
+import { BoardCandidate, Board } from "./board";
 
 export class PeridotPiccoloBoard extends PeridotClassicBoard {
     constructor(path: string) {
@@ -11,3 +11,4 @@ export class PeridotPiccoloBoard extends PeridotClassicBoard {
         // Piccolo has no fixed USB-UART device, so all VCP devices may be used as piccolo
     }
 }
+Board.addConstructor(PeridotPiccoloBoard);

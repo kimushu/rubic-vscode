@@ -1,8 +1,8 @@
-///<reference path="../node_modules/@rubic/catalog-fetcher/lib/catalog.d.ts" />
-import { CacheStorage } from "./cacheStorage";
-import { readGithubFile, GitHubRepository } from "./githubFetcher";
+///<reference path="../../node_modules/@rubic/catalog-fetcher/lib/catalog.d.ts" />
+import { CacheStorage } from "../util/cacheStorage";
+import { readGithubFile, GitHubRepository } from "../util/githubFetcher";
 import * as semver from "semver";
-import { RubicExtension } from "./extension";
+import { RubicExtension } from "../extension";
 import * as nls from "vscode-nls";
 import * as path from "path";
 import * as pify from "pify";

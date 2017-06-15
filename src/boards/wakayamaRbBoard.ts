@@ -1,13 +1,15 @@
-import { Board, BoardCandidate, BoardStdio, BoardInformation } from "./board";
+import { Board, BoardCandidate, BoardStdioStream, BoardInformation, BoardConstructor } from "./board";
 import * as stream from "stream";
 import * as SerialPort from "serialport";
 import * as nls from "vscode-nls";
 import * as fse from "fs-extra";
 import * as pify from "pify";
 import * as path from "path";
-import { InteractiveDebugSession } from "./interactiveDebugSession";
-import { enumerateRemovableDisks } from "./diskEnumerator";
+import { InteractiveDebugSession } from "../interactiveDebugSession";
+import { enumerateRemovableDisks } from "../util/diskEnumerator";
 import { exec } from "child_process";
+import { RubicProcess } from "../rubicProcess";
+import * as xml2js from "xml2js";
 
 const localize = nls.loadMessageBundle(__filename);
 const DEBUG = false;
@@ -28,7 +30,7 @@ function delay(ms: number): Promise<void> {
 export class WakayamaRbBoard extends Board {
     private _port: SerialPort;
     private _info: BoardInformation;
-    private _stdio: BoardStdio;
+    private _stdio: BoardStdioStream;
     private _waiter: {
         resolve: Function, reject: Function,
         timerId: NodeJS.Timer,
@@ -38,13 +40,13 @@ export class WakayamaRbBoard extends Board {
     private _received: Buffer;
     private _DRAIN_INTERVAL_MS = 250;
 
-    protected getBoardName(): string {
+    public static getBoardName(): string {
         return localize("board-name", "Wakayama.rb board");
     }
 
-    protected static _VID_PID_LIST = [
-        {name: "WAKAYAMA.RB board", vendorId: 0x2129, productId: 0x0531}, // TOKUDEN
-        {name: "WAKAYAMA.RB board", vendorId: 0x045b, productId: 0x0234}, // Renesas
+    protected static VID_PID_LIST = [
+        {vendorId: 0x2129, productId: 0x0531},  // TOKUDEN
+        {vendorId: 0x045b, productId: 0x0234},  // Renesas
     ];
 
     public constructor(private _path: string) {
@@ -52,36 +54,34 @@ export class WakayamaRbBoard extends Board {
     }
 
     public static list(): Promise<BoardCandidate[]> {
-        return new Promise((resolve, reject) => {
-            SerialPort.list((err, ports: any[]) => {
-                if (err) { return reject(err); }
-                let result: BoardCandidate[] = [];
-                ports.forEach((port) => {
-                    let vid = parseInt(port.vendorId, 16);
-                    let pid = parseInt(port.productId, 16);
-                    if (isNaN(vid) || isNaN(pid)) {
-                        return;
-                    }
-                    let entry = this._VID_PID_LIST.find((entry) => {
-                        return (vid === entry.vendorId && pid === entry.productId);
-                    });
-                    let board: BoardCandidate = {
-                        boardClass: this.name,
-                        path: port.comName,
-                        name: port.name,
-                        vendorId: vid,
-                        productId: pid
-                    };
-                    if (entry) {
-                        board.name = entry.name;
-                    } else {
-                        board.unsupported = true;
-                    }
-                    result.push(board);
+        return pify(SerialPort.list).call(SerialPort)
+        .then((ports: SerialPort.portConfig[]) => {
+            let result: BoardCandidate[] = [];
+            ports.forEach((port) => {
+                let vid = parseInt(port.vendorId, 16);
+                let pid = parseInt(port.productId, 16);
+                if (isNaN(vid) || isNaN(pid)) {
+                    return;
+                }
+                let entry = this.VID_PID_LIST.find((entry) => {
+                    return (vid === entry.vendorId && pid === entry.productId);
                 });
-                resolve(result);
+                let board: BoardCandidate = {
+                    boardClass: this.name,
+                    path: port.comName,
+                    name: port.comName,
+                    vendorId: vid,
+                    productId: pid
+                };
+                if (!entry) {
+                    board.name = this.getBoardName();
+                } else {
+                    board.unsupported = true;
+                }
+                result.push(board);
             });
-        });  // return new Promise()
+            return result;
+        });
     }
 
     private _portCall(method: string, ...args): Promise<any> {
@@ -238,7 +238,7 @@ export class WakayamaRbBoard extends Board {
     }
 
     async writeFirmware(debugSession: InteractiveDebugSession, filename: string): Promise<void> {
-        let boardName = this.getBoardName();
+        let boardName = (<BoardConstructor>this.constructor).getBoardName();
         await debugSession.showProgressMessage(
             `${localize(
                 "follow-inst",
@@ -291,7 +291,7 @@ export class WakayamaRbBoard extends Board {
         }); // return Promise.resolve().then()...
     }
 
-    runSketch(filename: string): Promise<void> {
+    runProgram(filename: string): Promise<void> {
         return Promise.resolve(
         ).then(() => {
             return this._send(`R ${filename}\r`);
@@ -323,12 +323,46 @@ export class WakayamaRbBoard extends Board {
         }); // return Promise.resolve().then()...
     }
 
-    getStdio(): Promise<BoardStdio> {
+    getStdioStream(): Promise<BoardStdioStream> {
         return Promise.resolve(this._stdio);
     }
 
-    isSketchRunning(): Promise<boolean> {
+    isRunning(): Promise<boolean> {
         return Promise.resolve(!!this._stdio);
+    }
+
+    protected getConfigXmlPath(): string {
+        return path.join(RubicProcess.self.workspaceRoot, "wrbb.xml");
+    }
+
+    getAutoStartProgram(): Promise<string> {
+        return Promise.resolve(RubicProcess.self.readTextFile(
+            this.getConfigXmlPath(), false, ""
+        ))
+        .then((content) => {
+            return pify(xml2js.parseString)(content);
+        })
+        .then((root) => {
+            return ((((root || {}).Config || {}).Start || {}).$ || {}).file;
+        });
+    }
+
+    setAutoStartProgram(relativePath: string): Promise<void> {
+        return Promise.resolve(RubicProcess.self.updateTextFile(
+            this.getConfigXmlPath(),
+            (content) => {
+                return pify(xml2js.parseString)(content)
+                .then((root) => {
+                    let obj = root || {};
+                    obj = (obj.Config == null) ? (obj.Config = {}) : obj.Config;
+                    obj = (obj.Start == null) ? (obj.Start = {}) : obj.Start;
+                    obj = (obj.$ == null) ? (obj.$ = {}) : obj.$;
+                    obj.file = relativePath;
+                    let builder = new xml2js.Builder();
+                    return builder.buildObject(root);
+                });
+            }
+        ));
     }
 
     private async _searchUsbMassStorage(): Promise<string> {
@@ -438,3 +472,4 @@ export class WakayamaRbBoard extends Board {
         console.error(error);
     }
 }
+Board.addConstructor(WakayamaRbBoard);

@@ -2,7 +2,7 @@ import * as nls from "vscode-nls";
 import * as path from "path";
 import * as fse from "fs-extra";
 import * as semver from "semver";
-import { RUBIC_VERSION } from "./rubicVersion";
+import { RUBIC_VERSION } from "./util/rubicVersion";
 import * as CJSON from "comment-json";
 import * as pify from "pify";
 import { EventEmitter } from "events";

@@ -3,7 +3,7 @@ import { Sketch, generateDebugConfiguration } from "./sketch";
 import * as path from "path";
 
 import * as nls from "vscode-nls";
-import { compileMrubySources } from "./mrubyCompiler";
+import { compileMrubySources } from "./util/mrubyCompiler";
 import { RubicExtension } from "./extension";
 const localize = nls.loadMessageBundle(__filename);
 

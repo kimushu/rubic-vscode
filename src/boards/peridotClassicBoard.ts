@@ -1,11 +1,11 @@
-import { Board, BoardCandidate, BoardStdio, BoardInformation } from "./board";
+import { Board, BoardCandidate, BoardStdioStream, BoardInformation } from "./board";
 import * as stream from "stream";
 import { Canarium } from "canarium";
 import * as nls from "vscode-nls";
 import * as path from "path";
 import * as fs from "fs";
 import * as pify from "pify";
-import { InteractiveDebugSession } from "./interactiveDebugSession";
+import { InteractiveDebugSession } from "../interactiveDebugSession";
 const localize = nls.loadMessageBundle(__filename);
 
 const WRITER_RBF_PATH = path.join(__dirname, "..", "..", "lib", "peridot_classic_writer.rbf");
@@ -19,7 +19,7 @@ function buf2ab(buf: Buffer): ArrayBuffer {
 export class PeridotClassicBoard extends Board {
     private _storageRoot: string = "/mnt/internal";
     private _canarium: Canarium;
-    private _stdio: BoardStdio;
+    private _stdio: BoardStdioStream;
 
     public constructor(private _path: string) {
         super();
@@ -160,7 +160,7 @@ export class PeridotClassicBoard extends Board {
         });
     }
 
-    runSketch(filename: string): Promise<void> {
+    runProgram(filename: string): Promise<void> {
         return Promise.resolve(
         ).then(() => {
             return this._canarium.openRemoteFile(
@@ -177,7 +177,7 @@ export class PeridotClassicBoard extends Board {
         });
     }
 
-    stopSketch(): Promise<void> {
+    stopProgram(): Promise<void> {
         return Promise.resolve(
         ).then(() => {
             return this._canarium.openRemoteFile(
@@ -189,7 +189,7 @@ export class PeridotClassicBoard extends Board {
         });
     }
 
-    getStdio(options?: {stdin?: string, stdout?: string, stderr?:string}): Promise<BoardStdio> {
+    getStdioStream(options?: {stdin?: string, stdout?: string, stderr?:string}): Promise<BoardStdioStream> {
         if (this._stdio) {
             return Promise.resolve(this._stdio);
         }
@@ -222,7 +222,7 @@ export class PeridotClassicBoard extends Board {
                 (error) => { console.error(error); }
             );
         }).then(() => {
-            this._stdio = <BoardStdio>{stdin, stdout, stderr};
+            this._stdio = <BoardStdioStream>{stdin, stdout, stderr};
             return this._stdio;
         });  // return Promise.resolve().then()...
     }
@@ -235,6 +235,7 @@ export class PeridotClassicBoard extends Board {
         return this._storageRoot + "/" + filename;
     }
 }
+Board.addConstructor(PeridotClassicBoard);
 
 class CanariumWritableStream extends stream.Writable {
     constructor(private _file: any) {

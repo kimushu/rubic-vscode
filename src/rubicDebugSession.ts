@@ -6,8 +6,7 @@ import {
     DebugSession
 } from "vscode-debugadapter";
 import { DebugProtocol } from "vscode-debugprotocol";
-import { Board, BoardInformation } from "./board";
-import { BoardClassList } from "./boardClassList";
+import { Board, BoardInformation } from "./boards/board";
 import * as path from "path";
 import * as glob from "glob";
 import * as pify from "pify";
@@ -152,14 +151,9 @@ class RubicDebugSession extends InteractiveDebugSession {
             let boardPath = args.boardPath || this._sketch.boardPath;
 
             // Get board class constructor
-            let boardClass = BoardClassList.getClass(boardId);
+            let boardClass = Board.getConstructor(boardId);
             if (!boardClass) {
                 return;
-            }
-
-            // Disconnect board (if old instance exists)
-            if (this._board) {
-                this._board.dispose();
             }
 
             // Instantiate new board
@@ -169,7 +163,7 @@ class RubicDebugSession extends InteractiveDebugSession {
             this._board.on("stop", this._handleBoardStop.bind(this));
 
             // Connect
-            return this._board.connect();
+            return this._board.connect(boardPath);
         }); // Promise.resolve().then()
     }
 
@@ -180,7 +174,7 @@ class RubicDebugSession extends InteractiveDebugSession {
      * @param printOutput If true, print output to Debug console
      */
     private async _getBoardInfo(boardClassName: string, boardPath: string, printOutput: boolean): Promise<BoardInformation> {
-        let boardClass = BoardClassList.getClass(boardClassName);
+        let boardClass = Board.getConstructor(boardClassName);
         let board = new boardClass(boardPath);
         try {
             if (printOutput) {
@@ -190,7 +184,7 @@ class RubicDebugSession extends InteractiveDebugSession {
                 ) + ` (${new Date().toLocaleString()})\n`));
                 this.sendEvent(new OutputEvent(SEPARATOR_RUN));
             }
-            await board.connect();
+            await board.connect(boardPath);
             let info = await board.getInfo();
 
             if (printOutput) {
@@ -234,7 +228,7 @@ class RubicDebugSession extends InteractiveDebugSession {
      * @param filename Filename of firmware
      */
     private async _writeFirmware(boardClassName: string, boardPath: string, filename: string): Promise<void> {
-        let boardClass = BoardClassList.getClass(boardClassName);
+        let boardClass = Board.getConstructor(boardClassName);
         let board = new boardClass(boardPath);
         try {
             await board.writeFirmware(this, filename);
@@ -325,8 +319,8 @@ class RubicDebugSession extends InteractiveDebugSession {
             localize("run-program-x", "Run program: {0}", file) + "\n"
         ));
         this.sendEvent(new OutputEvent(SEPARATOR_RUN));
-        return this._board.runSketch(file).then(() => {
-            return this._board.getStdio();
+        return this._board.runProgram(file).then(() => {
+            return this._board.getStdioStream();
         }).then(({stdin, stderr, stdout}) => {
             this._stdin = stdin;
             if (stdout) {

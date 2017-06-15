@@ -2,9 +2,8 @@ import * as nls from "vscode-nls";
 import * as path from "path";
 import * as util from "util";
 import * as dedent from "dedent";
-import { BoardClass, Board, BoardCandidate, BoardInformation } from "./board";
-import { BoardClassList } from "./boardClassList";
-import { CacheStorage } from "./cacheStorage";
+import { BoardConstructor, Board, BoardCandidate, BoardInformation } from "../boards/board";
+import { CacheStorage } from "../util/cacheStorage";
 import {
     CancellationToken, Disposable,
     EventEmitter, ExtensionContext,
@@ -15,11 +14,11 @@ import {
 } from "vscode";
 import { CatalogData, toLocalizedString } from "./catalogData";
 import { FSWatcher, readFileSync, watch } from "fs";
-import { RubicExtension } from "./extension";
-import { SketchLoadResult } from "./sketch";
+import { RubicExtension } from "../extension";
+import { SketchLoadResult } from "../sketch";
 import * as MarkdownIt from "markdown-it";
-import { GitHubRepository } from "./githubFetcher";
-import { interactiveDebugRequest, soloInteractiveDebugRequest } from "./interactiveRequester";
+import { GitHubRepository } from "../util/githubFetcher";
+import { interactiveDebugRequest, soloInteractiveDebugRequest } from "../interactiveRequester";
 
 const Handlebars = require("./handlebars");
 require("./templates");
@@ -270,7 +269,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
      */
     public selectPort(): Promise<string> {
         let {sketch} = RubicExtension.instance;
-        let boardClass = BoardClassList.getClass(sketch.boardClass);
+        let boardClass = Board.getConstructor(sketch.boardClass);
         let choose = (filter: boolean): Promise<string> => {
             interface PortQuickPickItem extends QuickPickItem {
                 path?: string;
