@@ -21,7 +21,7 @@ import { GitHubRepository } from "../util/githubFetcher";
 import { interactiveDebugRequest, soloInteractiveDebugRequest } from "../interactiveRequester";
 
 const Handlebars = require("./handlebars");
-require("./templates");
+require("./template");
 
 const localize = nls.loadMessageBundle(__filename);
 const LOCALIZED_NO_PORT = localize("no-port", "No port selected");
@@ -442,7 +442,7 @@ export class CatalogViewer implements TextDocumentContentProvider {
 
         let cfg = workspace.getConfiguration(CFG_PATH);
         let {sketch} = RubicExtension.instance;
-        let template: Function = Handlebars.templates["catalog.hbs"];
+        let template: Function = Handlebars.templates["template.hbs"];
         let defaultPanel = 0;
         let variables: any = {
             extensionPath: context.extensionPath,

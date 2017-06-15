@@ -4,11 +4,13 @@ import { RubicDebugProcess } from "../rubicDebugProcess";
 
 class RubicDebugSession extends DebugSession {
     protected launchRequest(response: DebugProtocol.LaunchResponse, args: DebugProtocol.LaunchRequestArguments): void {
-        let process = new RubicDebugProcess(this, args);
+        // tslint:disable-next-line:no-unused-expression
+        new RubicDebugProcess(this, args);
     }
 
     protected attachRequest(response: DebugProtocol.AttachResponse, args: DebugProtocol.AttachRequestArguments): void {
-        let process = new RubicDebugProcess(this, args);
+        // tslint:disable-next-line:no-unused-expression
+        new RubicDebugProcess(this, args);
     }
 }
 
