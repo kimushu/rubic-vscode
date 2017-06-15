@@ -1,4 +1,4 @@
-import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from "./rubicBoard";
+import { Board, BoardCandidate, BoardStdio, BoardInformation } from "./board";
 import * as stream from "stream";
 import * as SerialPort from "serialport";
 import * as nls from "vscode-nls";
@@ -25,7 +25,7 @@ function delay(ms: number): Promise<void> {
     });
 }
 
-export class WakayamaRbBoard extends RubicBoard {
+export class WakayamaRbBoard extends Board {
     private _port: SerialPort;
     private _info: BoardInformation;
     private _stdio: BoardStdio;

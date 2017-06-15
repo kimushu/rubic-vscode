@@ -5,7 +5,6 @@ import * as semver from "semver";
 import { RUBIC_VERSION } from "./rubicVersion";
 import * as CJSON from "comment-json";
 import * as pify from "pify";
-import * as glob from "glob";
 import { EventEmitter } from "events";
 import * as chokidar from "chokidar";
 ///<reference path="../schema/sketch.d.ts" />

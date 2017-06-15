@@ -1,4 +1,4 @@
-import { RubicBoard, BoardCandidate, BoardStdio, BoardInformation } from "./rubicBoard";
+import { Board, BoardCandidate, BoardStdio, BoardInformation } from "./board";
 import * as stream from "stream";
 import { Canarium } from "canarium";
 import * as nls from "vscode-nls";
@@ -16,7 +16,7 @@ function buf2ab(buf: Buffer): ArrayBuffer {
     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 }
 
-export class PeridotClassicBoard extends RubicBoard {
+export class PeridotClassicBoard extends Board {
     private _storageRoot: string = "/mnt/internal";
     private _canarium: Canarium;
     private _stdio: BoardStdio;

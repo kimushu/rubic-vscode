@@ -2,7 +2,7 @@ import * as nls from "vscode-nls";
 import * as path from "path";
 import * as util from "util";
 import * as dedent from "dedent";
-import { BoardClass, RubicBoard, BoardCandidate, BoardInformation } from "./rubicBoard";
+import { BoardClass, Board, BoardCandidate, BoardInformation } from "./board";
 import { BoardClassList } from "./boardClassList";
 import { CacheStorage } from "./cacheStorage";
 import {

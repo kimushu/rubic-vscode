@@ -45,10 +45,10 @@ export interface BoardClass {
     /** Enumerate boards */
     list: () => Promise<BoardCandidate[]>;
     /** Constructor */
-    new (path: string): RubicBoard;
+    new (path: string): Board;
 }
 
-export class RubicBoard extends EventEmitter {
+export class Board extends EventEmitter {
     protected constructor() {
         super();
     }

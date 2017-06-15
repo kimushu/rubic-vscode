@@ -6,7 +6,7 @@ import {
     DebugSession
 } from "vscode-debugadapter";
 import { DebugProtocol } from "vscode-debugprotocol";
-import { RubicBoard, BoardInformation } from "./rubicBoard";
+import { Board, BoardInformation } from "./board";
 import { BoardClassList } from "./boardClassList";
 import * as path from "path";
 import * as glob from "glob";
@@ -42,7 +42,7 @@ class RubicDebugSession extends InteractiveDebugSession {
     private static THREAD_ID: number = 1;
     private static THREAD_NAME: string = "Main thread";
     private _attachMode: boolean;
-    private _board: RubicBoard;
+    private _board: Board;
     private _sketch: Sketch;
     private _stdin: Writable;
 
