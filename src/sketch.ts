@@ -2,7 +2,6 @@ import * as nls from "vscode-nls";
 import * as path from "path";
 import * as fse from "fs-extra";
 import * as semver from "semver";
-import { RUBIC_VERSION } from "./util/rubicVersion";
 import * as CJSON from "comment-json";
 import * as pify from "pify";
 import { EventEmitter } from "events";
@@ -11,6 +10,7 @@ import * as chokidar from "chokidar";
 
 // Declaration only
 import vscode = require("vscode");
+import { RubicProcess } from "./rubicProcess";
 
 const RUBIC_JSON  = "rubic.json";
 const SKETCH_ENCODING = "utf8";
@@ -42,11 +42,11 @@ export async function generateDebugConfiguration(workspaceRoot: string): Promise
  * Rubic configuration for each workspace
  * (.vscode/rubic.json)
  */
-export class Sketch extends EventEmitter implements vscode.Disposable {
+export class Sketch extends EventEmitter {
     private _rubicFile: string;
     private _launchFile: string;
     private _watcher: chokidar.FSWatcher;
-    private _data: V1_0_x.Top;
+    private _data: V0_99_0x.Top;
     private _invalid: boolean;
 
     /**
@@ -58,59 +58,65 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
         super();
         this._rubicFile = path.join(_workspaceRoot, ".vscode", RUBIC_JSON);
         this._launchFile = path.join(_workspaceRoot, ".vscode", LAUNCH_JSON);
-        this._watcher = chokidar.watch(this._rubicFile).on("change", () => {
-            this.emit("reload");
-            this.load();
-        });
     }
 
     /**
      * Load configuration (with migration when window argument passed)
      */
-    async load(convert: boolean = false): Promise<SketchLoadResult> {
-        let result = SketchLoadResult.LOAD_SUCCESS;
-        this.close();
-        let jsonText;
-        try {
-            jsonText = await pify(fse.readFile)(this._rubicFile, SKETCH_ENCODING);
-        } catch (error) {
-            if (!convert || !this._window) {
-                result = SketchLoadResult.NO_SKETCH;
-                return null;
-            }
-            // Try migration from Rubic 0.9.x or earlier
-            result = await this._migrateFromChrome();
-            if (result === SketchLoadResult.LOAD_MIGRATED) {
-                // Read migrated data again
-                jsonText = await pify(fse.readFile)(this._rubicFile, SKETCH_ENCODING);
-            }
-        }
-        if (jsonText) {
-            try {
-                this._data = CJSON.parse(jsonText);
-                this._invalid = false;
-            } catch (error) {
-                this._data = null;
-                this._invalid = true;
-            }
+    load(convert: boolean = false, defaultResult: SketchLoadResult = SketchLoadResult.LOAD_SUCCESS): Promise<SketchLoadResult> {
+        let result = defaultResult;
+        this.unload();
+        return Promise.resolve(
+            RubicProcess.self.readTextFile(this._rubicFile, true, {}, SKETCH_ENCODING)
+        )
+        .then((data) => {
+            /* rubic.json found */
+            this._data = data;
+            this._invalid = false;
             this.emit("load");
-        }
-        return result;
+            if (this._watcher == null) {
+                this._watcher = chokidar.watch(this._rubicFile).on("change", () => {
+                    this.emit("reload");
+                    this.load();
+                });
+            }
+            return result;
+        }, (reason) => {
+            /* rubic.json is not found / rubic.json is invalid */
+            this._data = null;
+            this._invalid = true;
+            if (reason instanceof SyntaxError) {
+                throw reason;
+            }
+            if (!convert) {
+                return SketchLoadResult.NO_SKETCH;
+            }
+            return this._migrateFromChrome()
+            .then((result) => {
+                if (result === SketchLoadResult.LOAD_MIGRATED) {
+                    return this.load(false, result);
+                }
+                return result;
+            });
+        });
     }
 
-    /** Close sketch */
-    close() {
-        this._data = null;
-        this.emit("close");
+    /** Unload sketch */
+    unload() {
+        if (this._watcher) {
+            this._watcher.close();
+            this._watcher = null;
+        }
+        if (this._data != null) {
+            this.emit("unload");
+            this._data = null;
+            this._invalid = true;
+        }
     }
 
     /** Dispose this instance */
     dispose() {
-        this.close();
-        if (this._watcher) {
-            this._watcher.close();
-        }
-        this._watcher = null;
+        this.unload();
     }
 
     /** Path of workspace */
@@ -154,12 +160,12 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
             this._data = <any>{};
         }
         if (!semver.valid(this._data.rubicVersion)) {
-            this._data.rubicVersion = RUBIC_VERSION;
-        } else if (semver.lt(this._data.rubicVersion, RUBIC_VERSION)) {
+            this._data.rubicVersion = RubicProcess.self.version;
+        } else if (semver.lt(this._data.rubicVersion, RubicProcess.self.version)) {
             if (this._data.minRubicVersion == null) {
                 this._data.minRubicVersion = this._data.rubicVersion;
             }
-        } else if (semver.gt(this._data.rubicVersion, RUBIC_VERSION)) {
+        } else if (semver.gt(this._data.rubicVersion, RubicProcess.self.version)) {
             if (this._data.maxRubicVersion == null) {
                 this._data.maxRubicVersion = this._data.rubicVersion;
             }
@@ -245,7 +251,7 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
         }
         let keepOld = (item === items.keepOld);
 
-        let top: V1_0_x.Top = <any>{};
+        let top: V0_99_0x.Top = <any>{};
 
         // Convert board information
         switch (v09x.board.__class__) {
@@ -272,7 +278,7 @@ export class Sketch extends EventEmitter implements vscode.Disposable {
                     localize("unknown-board-x", "Unknown board name: {0}", v09x.board.__class__)
                 );
         }
-        top.rubicVersion = RUBIC_VERSION;
+        top.rubicVersion = RubicProcess.self.version;
         top.minRubicVersion = v09x.rubicVersion;
 
         await pify(fse.ensureDir)(path.dirname(this._rubicFile));

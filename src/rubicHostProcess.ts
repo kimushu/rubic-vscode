@@ -7,6 +7,9 @@ import * as ipc from "node-ipc";
 import * as path from "path";
 import * as nls from "vscode-nls";
 import * as fs from "fs";
+import { Sketch } from "./sketch";
+import * as CJSON from "comment-json";
+import { CatalogData } from "./catalog/catalogData";
 
 const localize = nls.loadMessageBundle(__filename);
 
@@ -37,12 +40,14 @@ interface ProgressContextSet {
 /**
  * Extension host process
  */
-class RubicHostProcess extends RubicProcess {
+export class RubicHostProcess extends RubicProcess {
     /* Properties */
     get isHost() { return true; }
     get isDebug() { return false; }
     get workspaceRoot() { return workspace.rootPath; }
     get extensionRoot() { return this._context.extensionPath; }
+    get sketch() { return this._sketch; }
+    get catalogData() { return this._catalogData; }
     get debugConfiguration() {
         throw new Error("debugConfiguration is not available in host process");
     }
@@ -75,7 +80,7 @@ class RubicHostProcess extends RubicProcess {
         }
         return window.withProgress(options, task);
     };
-    private _withProgressStart(options: RubicProgressOptions): Promise<string> {
+    private _withProgressStart(options: RubicProgressOptions): Thenable<string> {
         let progress_id = `rubic-p-${Math.random().toString(36).substr(2)}`;
         let ctx = <ProgressContext>{ progress_id };
         ctx.thenable = this.withProgress(options, (progress) => {
@@ -86,7 +91,7 @@ class RubicHostProcess extends RubicProcess {
         });
         return Promise.resolve(progress_id);
     }
-    private _withProgressReport(progress_id: string, message: string): Promise<void> {
+    private _withProgressReport(progress_id: string, message: string): Thenable<void> {
         let ctx = this._progressContexts[progress_id];
         if (ctx == null) {
             return Promise.reject(new Error(
@@ -96,7 +101,7 @@ class RubicHostProcess extends RubicProcess {
         ctx.reporter({ message });
         return Promise.resolve();
     }
-    private _withProgressEnd(progress_id: string): Promise<void> {
+    private _withProgressEnd(progress_id: string): Thenable<void> {
         let ctx = this._progressContexts[progress_id];
         if (ctx == null) {
             return Promise.reject(new Error(
@@ -107,7 +112,7 @@ class RubicHostProcess extends RubicProcess {
         ctx.completer();
         return Promise.resolve(ctx.thenable);
     }
-    readonly printOutput = function (this: RubicHostProcess, text: string, preserveFocus?: boolean): Promise<void> {
+    readonly printOutput = function (this: RubicHostProcess, text: string, preserveFocus?: boolean): Thenable<void> {
         if (this._outputChannel == null) {
             this._outputChannel = window.createOutputChannel("Rubic");
             this._context.subscriptions.push(this._outputChannel);
@@ -124,7 +129,7 @@ class RubicHostProcess extends RubicProcess {
     };
 
     /* Debug process management */
-    readonly startDebugProcess = function(this: RubicHostProcess, configuration: any): Promise<string> {
+    readonly startDebugProcess = function(this: RubicHostProcess, configuration: any): Thenable<string> {
         return this._serverSetup.then(() => {
             let host_id = ipc.config.id;
             let debugger_id = `rubic-d-${Math.random().toString(36).substr(2)}`;
@@ -141,7 +146,7 @@ class RubicHostProcess extends RubicProcess {
             });
         });
     };
-    readonly stopDebugProcess = function(this: RubicHostProcess, debugger_id: string): Promise<void> {
+    readonly stopDebugProcess = function(this: RubicHostProcess, debugger_id: string): Thenable<void> {
         return this._serverSetup.then(() => {
             let ref = this._debuggers[debugger_id];
             if (ref == null) {
@@ -158,10 +163,19 @@ class RubicHostProcess extends RubicProcess {
     };
 
     /* Settings */
-    readonly getRubicSetting = function(this: RubicHostProcess, path: string): Promise<any> {
-        return workspace.getConfiguration().get<any>(path);
+    readonly getRubicSetting = function(this: RubicHostProcess, path: string): Thenable<any> {
+        return Promise.resolve(workspace.getConfiguration().get<any>(`rubic.${path}`));
     };
-    readonly readTextFile = function(this: RubicHostProcess, fullPath: string, json?: boolean, defaultValue?: string | any): Thenable<string | any> {
+    readonly getMementoValue = function<T>(this: RubicHostProcess, key: string, defaultValue?: T): Thenable<T> {
+        return Promise.resolve()
+        .then(() => this._context.globalState.get(key, defaultValue));
+    };
+    readonly setMementoValue = function<T>(this: RubicHostProcess, key: string, value: T): Thenable<void> {
+        return this._context.globalState.update(key, value);
+    };
+
+    /* File access */
+    readonly readTextFile = function(this: RubicHostProcess, fullPath: string, json?: boolean, defaultValue?: string | any, encoding?: string): Thenable<string | any> {
         if (!fs.existsSync(fullPath)) {
             if (defaultValue == null) {
                 return Promise.reject(
@@ -172,31 +186,76 @@ class RubicHostProcess extends RubicProcess {
         }
         return Promise.resolve()
         .then(() => {
-            let value = fs.readFileSync(fullPath, "utf8");
+            let value = fs.readFileSync(fullPath, encoding || "utf8");
             if (json) {
-                value = JSON.parse(value);
+                value = CJSON.parse(value);
             }
             return value;
         });
     };
-    readonly updateTextFile = function(this: RubicHostProcess, fullPath: string, updater: any, remover?: any): Thenable<void> {
+    readonly updateTextFile = function(this: RubicHostProcess, fullPath: string, updater: any, defaultOrRemover?: any, encoding?: string): Thenable<void> {
         let relPath = path.relative(fullPath, this.workspaceRoot);
         let editor = window.visibleTextEditors.find((editor) => {
             return path.relative(editor.document.fileName, fullPath) === "";
         });
         if (editor == null || !editor.document.isDirty) {
-            return Promise.resolve();
+            if (typeof(updater) === "function") {
+                return this.readTextFile(fullPath, false, defaultOrRemover, encoding)
+                .then((oldValue) => {
+                    return updater(oldValue);
+                })
+                .then((newValue) => {
+                    fs.writeFileSync(fullPath, newValue, encoding || "utf8");
+                });
+            } else {
+                return this.readTextFile(fullPath, true, {}, encoding)
+                .then((obj) => {
+                    // Update values
+                    Object.assign(obj, updater);
+
+                    // Remove values
+                    let remove = (target, src) => {
+                        if ((target == null) || (src == null)) {
+                            return;
+                        }
+                        for (let key in Object.keys(src)) {
+                            let sub = src[key];
+                            if (sub === true) {
+                                delete target[key];
+                            } else {
+                                remove(target[key], sub);
+                            }
+                        }
+                    };
+                    remove(obj, defaultOrRemover);
+
+                    fs.writeFileSync(fullPath, CJSON.stringify(obj, null, 4));
+                });
+            }
         }
         return Promise.reject(new Error(
             localize("file-x-dirty", "File \"{0}\" is modified and not saved.", relPath)
         ));
     };
 
+    /* Construct and dispose */
+
     /**
      * Construct abstraction layer for Extension Host process
      */
     constructor(private _context: ExtensionContext) {
         super();
+        if (this.workspaceRoot != null) {
+            this._sketch = new Sketch(this.workspaceRoot);
+            _context.subscriptions.push(this._sketch);
+            this._sketch.load(true)
+            .catch((reason) => {
+                this.showErrorMessage(
+                    localize("sketch-load-failed-x", "Failed to load sketch: {0}", reason)
+                );
+            });
+        }
+        this._catalogData = new CatalogData();
         this._serverSetup = new Promise<void>((resolve) => {
             ipc.config.id = `rubic-h-${Math.random().toString(36).substr(2)}`;
             ipc.serve(resolve);
@@ -229,11 +288,18 @@ class RubicHostProcess extends RubicProcess {
                     });
                 });
             });
+            ipc.server.on("socket.disconnected", (socket, destroyedSocketID) => {
+                // FIXME
+            });
         });
     }
 
+    readonly dispose = function(this: RubicHostProcess): Thenable<void> {
+        return Promise.resolve();
+    };
+
     /** Request handler */
-    private _processRequest(type: string, args: any): Promise<any> {
+    private _processRequest(type: string, args: any): Thenable<any> {
         switch (type) {
             case "getRubicSetting":
                 return this.getRubicSetting(args.path);
@@ -267,6 +333,12 @@ class RubicHostProcess extends RubicProcess {
         );
     }
 
+    /** Sketch instance */
+    private readonly _sketch: Sketch;
+
+    /** CatalogData instance */
+    private readonly _catalogData: CatalogData;
+
     /** Server setup */
     private readonly _serverSetup: Promise<void>;
 
@@ -278,5 +350,4 @@ class RubicHostProcess extends RubicProcess {
 
     /** Output channel for Rubic */
     private _outputChannel: OutputChannel;
-
 }

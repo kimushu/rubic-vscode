@@ -9,6 +9,8 @@ import { CatalogViewer } from "./catalog/catalogViewer";
 import { DebugHelper } from "./debugHelper";
 import * as path from "path";
 import { CatalogData } from "./catalog/catalogData";
+import { RubicHostProcess } from "./rubicHostProcess";
+import { RubicStatusBar } from "./catalog/rubicStatusBar";
 
 export class RubicExtension {
     /**
@@ -56,7 +58,6 @@ export class RubicExtension {
         let noWorkspace = (workspace.rootPath == null);
         RubicExtension._instance = this;
         RubicExtension._version = require(path.join(__dirname, "..", "..", "package.json")).version;
-        this._catalogViewer = new CatalogViewer(_context, noWorkspace);
         if (noWorkspace) {
             return;
         }
@@ -78,9 +79,6 @@ export class RubicExtension {
         }).then(() => {
             // Load catalog (with auto update)
             return this._catalogViewer.loadCache();
-        }).then(() => {
-            // Start automatic update
-            return this._catalogViewer.startWatcher();
         }).catch((error) => {
             // Ignore errors
             console.log("Rubic ignored background error", error);
@@ -93,12 +91,20 @@ export class RubicExtension {
     }
 }
 
-export function activate(context: ExtensionContext) {
-    console.log(`Rubic extension at: ${context.extensionPath}`);
-    RubicExtension.start(context);
+/**
+ * Activate VSCode extension (Entry point of Rubic)
+ * @param context Extension context
+ */
+export function activate(context: ExtensionContext): any {
+    console.log(`Loading Rubic from "${context.extensionPath}"`);
+    context.subscriptions.push(new RubicHostProcess(context));
+    context.subscriptions.push(new CatalogViewer(context));
+    context.subscriptions.push(new RubicStatusBar(context));
 }
 
-export function deactivate() {
+/**
+ * Deactivate VSCode extension
+ */
+export function deactivate(): any {
     // Nothing to do
-    // (All objects are disposable and maintained by ExtensionContext)
 }

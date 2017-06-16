@@ -75,9 +75,9 @@ body {
 .catalog-header-disabled,
 .catalog-header-not-selected,
 .catalog-header-changed,
-.catalog-panel-loading .catalog-header-decision,
-.catalog-panel-disabled .catalog-header-decision,
-.catalog-panel-not-selected .catalog-header-decision {
+.catalog-panel-loading .catalog-header-selection,
+.catalog-panel-disabled .catalog-header-selection,
+.catalog-panel-not-selected .catalog-header-selection {
     display: none;
 }
 .catalog-panel-loading .catalog-header-loading,

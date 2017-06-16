@@ -1,5 +1,42 @@
 declare namespace V1_0_x {
     interface Top {
+        /** Hardware configuration */
+        hardwareConfiguration: {
+            /** USE RUBIC CATALOG TO CHANGE THIS VALUE: The name of board class */
+            boardClass: string;
+            /** USE RUBIC CATALOG TO CHANGE THIS VALUE: UUID of repository */
+            repositoryUuid: string;
+            /** USE RUBIC CATALOG TO CHANGE THIS VALUE: The tag name of release */
+            releaseTag: string;
+            /** USE RUBIC CATALOG TO CHANGE THIS VALUE: The path name of variation */
+            variationPath: string;
+            /** The port name or path which is connected to the board */
+            boardPath: string;
+            /** Board data override */
+            boardData?: any;
+        };
+        /** File transfer settings */
+        transfer?: {
+            /** List of files or glob patterns to be transfered to the board */
+            include?: string[];
+            /** List of files or glob patterns not to be transfered to the board */
+            exclude?: string[];
+        }
+        /** DO NOT EDIT: Version history */
+        rubicVersion: {
+            /** DO NOT EDIT: The version of Rubic which is used to save this sketch latest */
+            last: string;
+            /** DO NOT EDIT: The minimum version of Rubic which is used to save this sketch */
+            min?: string;
+            /** DO NOT EDIT: The maximum version of Rubic which is used to save this sketch */
+            max?: string;
+        }
+    }
+}
+
+// Old version structures for migration
+declare namespace V0_99_0x {
+    interface Top {
         /** DO NOT EDIT: Version of Rubic which saved configuration latest */
         rubicVersion: string;
         /** DO NOT EDIT: Minimum version of Rubic which saved this configuration */
@@ -23,7 +60,6 @@ declare namespace V1_0_x {
     }
 }
 
-// Old version structures for migration
 declare namespace V0_9_x {
     interface Top {
         __class__: string;

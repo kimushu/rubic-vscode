@@ -1,6 +1,10 @@
+import * as path from "path";
+
 // Import declaration only
 import vscode = require("vscode");
 import vsdp = require("vscode-debugprotocol");
+import SketchModule = require("./sketch");
+import CatalogDataModule = require("./catalog/catalogData");
 
 interface RubicMessageFunction {
     /**
@@ -79,7 +83,7 @@ interface RubicTextUpdaterFunction {
      * @param fullPath Full path of the file to edit
      * @param updator Contents updater function
      */
-    (fullPath: string, updater: (value: string) => string): Thenable<void>;
+    (fullPath: string, updater: (value: string) => string | Thenable<string>, defaultValue?: string, encoding?: string): Thenable<void>;
 
     /**
      * Merge JSON file with values
@@ -87,7 +91,7 @@ interface RubicTextUpdaterFunction {
      * @param updatedValues Object to update
      * @param removedValues Object to remove
      */
-    (fullPath: string, updatedValues: object, removedValues?: object): Thenable<void>;
+    (fullPath: string, updatedValues: object, removedValues?: object, encoding?: string): Thenable<void>;
 }
 
 /**
@@ -114,8 +118,17 @@ export class RubicProcess {
     /** Extension root path */
     readonly extensionRoot: string;
 
+    /** Sketch instance */
+    readonly sketch: SketchModule.Sketch;
+
+    /** Catalog data */
+    readonly catalogData: CatalogDataModule.CatalogData;
+
     /** Debug configuration (for debug-side only) */
     readonly debugConfiguration: any;
+
+    /** Version */
+    readonly version: string;
 
     /**
      * Start a new debug process (for host-side only)
@@ -137,9 +150,19 @@ export class RubicProcess {
     readonly getRubicSetting: (path: string) => Thenable<any>;
 
     /**
+     * Get Memento storage value
+     */
+    readonly getMementoValue: <T>(key: string, defaultValue?: T) => Thenable<T>;
+
+    /**
+     * Set Memento storage value
+     */
+    readonly setMementoValue: <T>(key: string, value: T) => Thenable<void>;
+
+    /**
      * Read text file
      */
-    readonly readTextFile: (fullPath: string, json?: boolean, defaultValue?: string | any) => Thenable<string | any>;
+    readonly readTextFile: (fullPath: string, json?: boolean, defaultValue?: string | any, encoding?: string) => Thenable<string | any>;
 
     /**
      * Update text file
@@ -190,6 +213,11 @@ export class RubicProcess {
      */
     readonly clearOutput: () => Thenable<void>;
 
+    /**
+     * Dispose object
+     */
+    readonly dispose: () => Thenable<void>;
+
     /** The instance of current process */
     static get self() { return this._self; }
 
@@ -203,6 +231,7 @@ export class RubicProcess {
             throw new Error("RubicProcess must be instantiated once");
         }
         RubicProcess._self = this;
+        this.version = require(path.join(__dirname, "..", "..", "package.json")).version;
     }
 }
 

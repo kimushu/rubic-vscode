@@ -246,6 +246,8 @@
     "xml2js": "^0.4.17"
   },
   "devDependencies": {
+    "@types/chai": "^4.0.0",
+    "@types/chai-as-promised": "0.0.31",
     "@types/chokidar": "^1.6.0",
     "@types/comment-json": "^1.1.0",
     "@types/glob": "^5.0.30",
@@ -259,6 +261,8 @@
     "@types/semver": "^5.3.31",
     "@types/serialport": "^4.0.9",
     "@types/xml2js": "0.0.33",
+    "chai": "^4.0.2",
+    "chai-as-promised": "^7.0.0",
     "handlebars": "^4.0.6",
     "license-checker": "^11.0.0",
     "mocha": "^2.3.3",

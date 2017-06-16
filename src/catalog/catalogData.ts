@@ -2,7 +2,6 @@
 import { CacheStorage } from "../util/cacheStorage";
 import { readGithubFile, GitHubRepository } from "../util/githubFetcher";
 import * as semver from "semver";
-import { RubicExtension } from "../extension";
 import * as nls from "vscode-nls";
 import * as path from "path";
 import * as pify from "pify";
@@ -10,18 +9,23 @@ import * as request from "request";
 import * as decompress from "decompress";
 
 import vscode = require("vscode");
+import { RubicProcess } from "../rubicProcess";
+
+const localize = nls.loadMessageBundle(__filename);
 
 const CATALOG_JSON = "catalog.json";
 const CATALOG_ENCODING = "utf8";
 const RELEASE_JSON  = "release.json";
 
-const OFFICIAL_CATALOG: GitHubRepository = {
+const OFFICIAL_CATALOG_REPO: GitHubRepository = {
     owner: "kimushu",
     repo: "rubic-catalog",
     branch: "vscode-master"
 };
 
-const localize = nls.loadMessageBundle(__filename);
+interface CatalogRootOverlay {
+    __custom__?: boolean;
+}
 
 const LOCALE: string = JSON.parse(process.env.VSCODE_NLS_CONFIG).locale;
 
@@ -49,6 +53,9 @@ export class CatalogData implements vscode.Disposable {
     /** Check if catalog data is loaded */
     get loaded() { return (this._root != null); }
 
+    /** Check if catalog data is from custom repository */
+    get custom() { return (this._root && !!(<CatalogRootOverlay>this._root).__custom__); }
+
     /** Get list of boards */
     get boards() { return (this._root && this._root.boards) || []; }
 
@@ -60,7 +67,7 @@ export class CatalogData implements vscode.Disposable {
      * @param boardClass Class name of board
      */
     getBoard(boardClass: string): RubicCatalog.Board {
-        if (!this._root) { return null; }
+        if (this._root == null || boardClass == null) { return null; }
         return this._root.boards.find((board: RubicCatalog.Board) => {
             return (board.class === boardClass);
         });
@@ -71,9 +78,8 @@ export class CatalogData implements vscode.Disposable {
      * @param uuid UUID of repository
      */
     getRepository(uuid: string): RubicCatalog.RepositorySummary {
-        if (!this._root) { return null; }
-        for (let index = 0; index < this._root.boards.length; ++index) {
-            let board = this._root.boards[index];
+        if (this._root == null || uuid == null) { return null; }
+        for (let board of this._root.boards) {
             let repo = board.repositories.find((repo) => {
                 return (repo.uuid === uuid);
             });
@@ -141,13 +147,27 @@ export class CatalogData implements vscode.Disposable {
     /**
      * Update catalog data
      */
-    update(repo: GitHubRepository = OFFICIAL_CATALOG): Promise<void> {
-        return Promise.resolve(
-        ).then(() => {
+    fetch(): Promise<void> {
+        let isCustomRepo = false;
+        return Promise.resolve()
+        .then(() => {
+            return RubicProcess.self.getRubicSetting("catalog");
+        })
+        .then(({owner, repo, branch}) => {
+            if (owner != null && repo != null) {
+                isCustomRepo = true;
+                return {owner, repo, branch: branch || "master"};
+            }
+            return OFFICIAL_CATALOG_REPO;
+        })
+        .then((repo) => {
             return readGithubFile(repo, CATALOG_JSON, CATALOG_ENCODING);
         }).then((jsonText: string) => {
             return JSON.parse(jsonText);
         }).then((root: RubicCatalog.Root) => {
+            if (isCustomRepo) {
+                (<CatalogRootOverlay>root).__custom__ = true;
+            }
             return this.import(root);
         }).then(() => {
             return this.store();
@@ -157,9 +177,10 @@ export class CatalogData implements vscode.Disposable {
     /**
      * Import catalog
      * @param root Root definition
+     * @param isCustomRepo Whether the definition is from custom repository
      */
     import(root: RubicCatalog.Root): Promise<void> {
-        if (!semver.satisfies(RubicExtension.version, root.rubicVersion)) {
+        if (!semver.satisfies(RubicProcess.self.version, root.rubicVersion)) {
             return Promise.reject(Error(localize(
                 "rubic-is-too-old",
                 "Rubic is too old. Please update Rubic extension"

@@ -98,9 +98,22 @@ export class RubicDebugProcess extends RubicProcess {
     readonly getRubicSetting = function(this: RubicDebugProcess, path: string): Thenable<any> {
         return this._request("getRubicSetting", {path});
     };
+    readonly getMementoValue = function<T>(this: RubicDebugProcess, key: string, defaultValue?: T): Thenable<T> {
+        return Promise.reject(new Error("getMementoValue() is not available in debug process"));
+    };
+    readonly setMementoValue = function<T>(this: RubicDebugProcess, key: string, value: T): Thenable<void> {
+        return Promise.reject(new Error("setMementoValue() is not available in debug process"));
+    };
+
+    /* File access */
+    readonly readTextFile = function(this: RubicDebugProcess, fullPath: string, json?: boolean, defaultValue?: string | any, encoding?: string): Thenable<string | any> {
+        return Promise.reject(new Error("readTextFile() is not available in debug process"));
+    };
     readonly updateTextFile = function(this: RubicDebugProcess, fullPath: string, updater: any, remover?: any): Thenable<void> {
         return Promise.reject(new Error("updateTextFile() is not available in debug process"));
     };
+
+    /* Construct and dispose */
 
     /**
      * Construct abstraction laer for Debug Adapter process
@@ -140,6 +153,10 @@ export class RubicDebugProcess extends RubicProcess {
             });
         });
     }
+
+    readonly dispose = function(this: RubicDebugProcess): Thenable<void> {
+        return Promise.resolve();
+    };
 
     /** Requester */
     private _request(type: string, args: any): Promise<any> {

@@ -1,57 +1,146 @@
 
+interface PanelElement extends HTMLDivElement {
+    dataset: {
+        selectedItemId: string;
+        initialItemId: string;
+        savedItemId: string;
+        panelId: string;
+    };
+}
+interface ItemElement extends HTMLDivElement {
+    dataset: {
+        itemId: string;
+    };
+}
+
 // Define utility function for sending message to extension
 const sendCommand = (() => {
     let element = <HTMLAnchorElement>document.getElementById("sendCommand");
     let base = element.href;
-    return (param) => {
+    return (param: any): false => {
         element.href = base + encodeURI(JSON.stringify(param));
         element.click();
         return false;
     };
 })();
 
-// Register event handler for panel headers
 (() => {
-    let elements = document.getElementsByClassName("catalog-panel");
-    for (let i = 0; i < elements.length; ++i) { ((i) => {
-        let header = <HTMLDivElement>elements[i].getElementsByClassName("catalog-header")[0];
+    let panels = Array.from(document.getElementsByClassName("catalog-panel"));
+    let requesting = false;
+    let lastChanged = false;
+    panels.forEach((panel: PanelElement) => {
+        // Register event handler for panel headers
+        let header = <HTMLDivElement>panel.getElementsByClassName("catalog-header")[0];
+        panel.classList.toggle("catalog-panel-changed",
+            (!lastChanged && panel.dataset.selectedItemId !== "" &&
+                panel.dataset.savedItemId !== panel.dataset.selectedItemId));
+        if (panel.dataset.savedItemId !== panel.dataset.selectedItemId) {
+            panel.classList.toggle("catalog-panel-changed", (panel.dataset.selectedItemId !== "") || !lastChanged);
+            lastChanged = true;
+        } else {
+            panel.classList.remove("catalog-panel-changed");
+        }
+        panel.classList.toggle("catalog-panel-not-selected",
+            panel.dataset.selectedItemId === "");
         header.onclick = (event) => {
-            if (elements[i].classList.contains("catalog-panel-disabled")) {
+            event.preventDefault();
+            if (panel.classList.contains("catalog-panel-disabled") ||
+                panel.classList.contains("catalog-panel-opened")) {
+                // No UI change
                 return;
             }
-            for (let j = 0; j < elements.length; ++j) { ((j) => {
-                let element = elements[j];
-                if (i === j && !element.classList.contains("catalog-panel-opened")) {
-                    element.parentElement.classList.add("disable-scroll");
-                    let listener = () => {
-                        element.parentElement.classList.remove("disable-scroll");
-                        element.removeEventListener("transitionend", listener);
-                    };
-                    element.addEventListener("transitionend", listener);
-                }
-                (<any>element.classList[i === j ? "add" : "remove"])("catalog-panel-opened");
-            })(j); }
-        };
-    })(i); }
-})();
 
-// Register event handler for items
-(() => {
+            // Disable scroll during animation
+            panel.parentElement.classList.add("disable-scroll");
+            panel.addEventListener("transitionend", () => {
+                panel.parentElement.classList.remove("disable-scroll");
+            }, <any>{once: true});
+
+            // Change "opened" state of panels
+            panels.forEach((aPanel: HTMLDivElement) => {
+                aPanel.classList.toggle("catalog-panel-opened", panel === aPanel);
+            });
+        };
+
+        let panelSelection = panel.getElementsByClassName("catalog-header-selection")[0];
+
+        // Register event handler for items
+        let items = Array.from(panel.getElementsByClassName("catalog-item"));
+        items.forEach((item: ItemElement) => {
+            let { itemId } = item.dataset;
+            let itemTitle = item.getElementsByClassName("catalog-item-title")[0];
+            if (panel.dataset.initialItemId === itemId) {
+                panelSelection.innerHTML = itemTitle.innerHTML;
+            }
+            item.onclick = (event) => {
+                event.preventDefault();
+                if (requesting) {
+                    return;
+                }
+                let nextPanels = <PanelElement[]>getNextElements(panel, "catalog-panel");
+
+                if (panel.dataset.selectedItemId !== itemId) {
+                    // Select item
+                    panelSelection.innerHTML = itemTitle.innerHTML;
+                    panel.dataset.selectedItemId = itemId;
+                    panel.classList.toggle("catalog-panel-changed", panel.dataset.savedItemId !== itemId);
+                    panel.classList.remove("catalog-panel-not-selected");
+                    items.forEach((anItem: HTMLDivElement) => {
+                        anItem.classList.toggle("catalog-item-settled", anItem.dataset.itemId === itemId);
+                    });
+
+                    // Update succession panels
+                    let changed = (panel.dataset.initialItemId !== itemId);
+                    if (nextPanels.length >= 1) {
+                        nextPanels[0].classList.toggle("catalog-panel-loading", changed);
+                        nextPanels[0].classList.remove("catalog-panel-not-selected");
+                        nextPanels.slice(1).forEach((aPanel) => {
+                            aPanel.classList.toggle("catalog-panel-disabled", changed);
+                        });
+                    }
+
+                    // Request update
+                    if (changed) {
+                        requesting = true;
+                        setTimeout(() => {
+                            sendCommand({
+                                panelId: panel.dataset.panelId,
+                                itemId: itemId
+                            });
+                        }, 500);
+                    }
+                }
+
+                if (nextPanels[0] != null) {
+                    // Open next panel
+                    (<HTMLDivElement>nextPanels[0].getElementsByClassName("catalog-header")[0]).click();
+                }
+            };
+        });
+    });
+    function _getElement(baseElement: HTMLElement, className: string, prop: string): HTMLElement {
+        let newElement = baseElement[prop];
+        while (newElement && !newElement.classList.contains(className)) {
+            newElement = newElement[prop];
+        }
+        return newElement;
+    }
+    function getParentElement(element: HTMLElement, className: string): HTMLElement {
+        return _getElement(element, className, "parentElement");
+    }
+    function getNextElement(element: HTMLElement, className: string): HTMLElement {
+        return _getElement(element, className, "nextElementSibling");
+    }
+    function getNextElements(element: HTMLElement, className: string): HTMLElement[] {
+        let elements: HTMLElement[] = [];
+        while ((element = getNextElement(element, className)) != null) {
+            elements.push(element);
+        }
+        return elements;
+    }
+/*
     let spinner = null;
     let elements = document.getElementsByClassName("catalog-item");
-    function _getElement(element: HTMLElement, cls: string, prop: string): HTMLElement {
-        let panel = element[prop];
-        while (panel && !panel.classList.contains(cls)) {
-            panel = panel[prop];
-        }
-        return panel;
-    }
-    function getParentElement(element: HTMLElement, cls: string): HTMLElement {
-        return _getElement(element, cls, "parentElement");
-    }
-    function getNextElement(element: HTMLElement, cls: string): HTMLElement {
-        return _getElement(element, cls, "nextElementSibling");
-    }
     function getChildElement(element: HTMLElement, cls: string): HTMLElement {
         return <HTMLElement>element.getElementsByClassName(cls)[0];
     }
@@ -123,6 +212,7 @@ const sendCommand = (() => {
             }
         });
     })(i); }
+    */
 })();
 
 // Register event handler for page navs
