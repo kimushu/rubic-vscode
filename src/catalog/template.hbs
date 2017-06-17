@@ -75,7 +75,14 @@
             {{/each}}
           </div>
           {{/if}}
-          <!--<span class="catalog-item-config icon-gear">&nbsp;</span>-->
+          {{#if menus}}
+          <div class="catalog-item-config icon-gear">&nbsp;</div>
+          <ul class="catalog-popup-menu">
+          {{#each menus}}
+            <li><a href="{{url}}">{{title}}</a></li>
+          {{/each}}
+          </ul>
+          {{/if}}
         </div>
         {{else}}{{!--each items--}}
         <div class="catalog-item-none">{{@root.localized.no_item}}</div>

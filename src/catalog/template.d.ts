@@ -62,6 +62,8 @@ interface CatalogTemplateItem {
     details?: string;
     /** Topics badge */
     topics?: CatalogTemplateTopic[];
+    /** Menu items */
+    menus?: CatalogTemplateMenu[];
 }
 
 interface CatalogTemplateTopic {
@@ -71,6 +73,13 @@ interface CatalogTemplateTopic {
     color: string;
     /** Tooltip text */
     tooltip?: string;
+}
+
+interface CatalogTemplateMenu {
+    /** Localized title */
+    title: string;
+    /** Link address */
+    url: string;
 }
 
 interface CatalogTemplatePage {
