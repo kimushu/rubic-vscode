@@ -18,7 +18,7 @@ import { SketchLoadResult } from "../sketch";
 import * as MarkdownIt from "markdown-it";
 import { GitHubRepository } from "../util/githubFetcher";
 import { interactiveDebugRequest, soloInteractiveDebugRequest } from "../interactiveRequester";
-import { RubicProcess } from "../rubicProcess";
+import { RubicProcess, RubicMessageItem } from "../rubicProcess";
 
 const Handlebars = require("./handlebars");
 require("./template");
@@ -54,6 +54,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
     private _sbiBoard: StatusBarItem;
     private _currentSelection: CatalogSelection;
     private _currentPanel: "board" | "repository" | "release" | "variation" | "details";
+    private _pendingSave: boolean;
     private _onDidChange = new EventEmitter<Uri>();
     get onDidChange() { return this._onDidChange.event; }
 
@@ -106,6 +107,28 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 localize("failed-load-catalog-x", "Failed to load catalog: {0}", reason)
             );
         });
+
+        // Register event handler for closing
+        context.subscriptions.push(
+            workspace.onDidCloseTextDocument((document) => {
+                if (document.uri.scheme === "rubic") {
+                    if (this._pendingSave) {
+                        let items: RubicMessageItem[] = [{
+                            title: localize("open-catalog", "Open catalog")
+                        }];
+                        RubicProcess.self.showWarningMessage(
+                            localize("hw-config-not-saved", "New hardware configuration is not saved!"),
+                            ...items
+                        )
+                        .then((item) => {
+                            if (item === items[0]) {
+                                this._updateCatalogView({panelId: "details"});
+                            }
+                        });
+                    }
+                }
+            })
+        );
     }
 
     /**
@@ -159,6 +182,9 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         let { panelId, itemId } = params;
         if (itemId == null) {
             this._currentPanel = panelId;
+            if (panelId === "details") {
+                this._showSaveMessage();
+            }
             return;
         }
         switch (panelId) {
@@ -187,46 +213,53 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         }
         if (this._currentSelection.variationPath != null) {
             // Download release assets (background)
-            let { catalogData, sketch } = RubicProcess.self;
+            let { catalogData } = RubicProcess.self;
             catalogData.prepareCacheDir(
                 this._currentSelection.repositoryUuid,
                 this._currentSelection.releaseTag
             );
-            /*
-            let confirm: Promise<void>;
-            if ((this._currentSelection.boardClass === sketch.boardClass) &&
-                (this._currentSelection.repositoryUuid === sketch.repositoryUuid) &&
-                (this._currentSelection.releaseTag === sketch.releaseTag) &&
-                (this._currentSelection.variationPath === sketch.variationPath)) {
-                return prepare;
-            }
-            let items: MessageItem[] = [{
+            this._showSaveMessage();
+        }
+        // Update page
+        this._triggerUpdate();
+    }
+
+    /**
+     * Show configuration save message
+     */
+    private _showSaveMessage(): void {
+        this._pendingSave = false;
+        if (this._currentSelection.variationPath == null) {
+            return;
+        }
+        let { sketch } = RubicProcess.self;
+        if ((this._currentSelection.boardClass !== sketch.boardClass) ||
+            (this._currentSelection.repositoryUuid !== sketch.repositoryUuid) ||
+            (this._currentSelection.releaseTag !== sketch.releaseTag) ||
+            (this._currentSelection.variationPath !== sketch.variationPath)) {
+
+            let items: RubicMessageItem[] = [{
                 title: localize("yes", "Yes")
             },{
                 title: localize("no", "No"),
                 isCloseAffordance: true
             }];
 
-            return Promise.resolve(window.showInformationMessage(
-                localize("board-changed", "Board configuration has been changed. Are you sure to save?"),
+            RubicProcess.self.showInformationMessage(
+                localize("hw-changed", "Hardware configuration has been changed. Are you sure to save?"),
                 ...items
-            ))
-            .then((item) => {
+            ).then((item) => {
                 if (item === items[0]) {
-                    // Save
-                    return sketch.update(this._currentSelection);
+                    sketch.boardClass = this._currentSelection.boardClass;
+                    sketch.repositoryUuid = this._currentSelection.repositoryUuid;
+                    sketch.releaseTag = this._currentSelection.releaseTag;
+                    sketch.variationPath = this._currentSelection.variationPath;
+                    return sketch.store();
                 } else {
-                    // Return to variation select
-                    this._currentSelection.variationPath = null;
+                    this._pendingSave = true;
                 }
-            })
-            .then(() => {
-                return prepare;
-            });*/
+            });
         }
-
-        // Update page
-        this._triggerUpdate();
     }
 
     /**
@@ -342,7 +375,8 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         };
         return choose(true).then((boardPath: string) => {
             if (boardPath != null) {
-                return sketch.update({boardPath}).then(() => {
+                sketch.boardPath = boardPath;
+                return sketch.store().then(() => {
                     this._triggerUpdate();
                     return boardPath;
                 });

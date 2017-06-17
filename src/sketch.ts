@@ -1,3 +1,4 @@
+///<reference path="../schemas/sketch.d.ts" />
 import * as nls from "vscode-nls";
 import * as path from "path";
 import * as fse from "fs-extra";
@@ -6,11 +7,10 @@ import * as CJSON from "comment-json";
 import * as pify from "pify";
 import { EventEmitter } from "events";
 import * as chokidar from "chokidar";
-///<reference path="../schema/sketch.d.ts" />
+import { RubicProcess } from "./rubicProcess";
 
 // Declaration only
 import vscode = require("vscode");
-import { RubicProcess } from "./rubicProcess";
 
 const RUBIC_JSON  = "rubic.json";
 const SKETCH_ENCODING = "utf8";
@@ -46,7 +46,8 @@ export class Sketch extends EventEmitter {
     private _rubicFile: string;
     private _launchFile: string;
     private _watcher: chokidar.FSWatcher;
-    private _data: V0_99_0x.Top;
+    private _data: V1_0_x.Top;
+    private _pending: V1_0_x.Top;
     private _invalid: boolean;
 
     /**
@@ -71,7 +72,7 @@ export class Sketch extends EventEmitter {
         )
         .then((data) => {
             /* rubic.json found */
-            this._data = data;
+            this._data = this._migrateFromVSCode(data);
             this._invalid = false;
             this.emit("load");
             if (this._watcher == null) {
@@ -132,56 +133,177 @@ export class Sketch extends EventEmitter {
     get invalid() { return this._invalid; }
 
     /** Get board class */
-    get boardClass() { return this._data && this._data.boardClass; }
+    get boardClass() { return this._get<string>("hardware.boardClass"); }
 
-    /** Get board path */
-    get boardPath() { return this._data && this._data.boardPath; }
+    /** Set board class for write pending */
+    set boardClass(value: string) { this._set("hardware.boardClass", value); }
 
     /** Get repository UUID */
-    get repositoryUuid() { return this._data && this._data.repositoryUuid; }
+    get repositoryUuid() { return this._get<string>("hardware.repositoryUuid"); }
+
+    /** Set repository UUID for write pending */
+    set repositoryUuid(value: string) { this._set("hardware.repositoryUuid", value); }
 
     /** Get release tag */
-    get releaseTag() { return this._data && this._data.releaseTag; }
+    get releaseTag() { return this._get<string>("hardware.releaseTag"); }
+
+    /** Set release tag for write pending */
+    set releaseTag(value: string) { this._set("hardware.releaseTag", value); }
 
     /** Get variation path */
-    get variationPath() { return this._data && this._data.variationPath; }
+    get variationPath() { return this._get<string>("hardware.variationPath"); }
 
-    public get transfer_include(): string[] {
-        return this._get("transfer.include", ["*.mrb", "*.js"]);
-    }
-    public get transfer_exclude(): string[] {
-        return this._get("transfer.exclude", []);
+    /** Set variation path for write pending */
+    set variationPath(value: string) { this._set("hardware.variationPath", value); }
+
+    /** Get board path */
+    get boardPath() { return this._get<string>("hardware.boardPath"); }
+
+    /** Set board path for write pending */
+    set boardPath(value: string) { this._set("hardware.boardPath", value); }
+
+    /** Get board data */
+    get boardData() { return this._get<any>("hardware.boardData"); }
+
+    /** Set board data */
+    set boardData(value: any) { this._set("hardware.boardData", value); }
+
+    /** Get transfer include patterns */
+    get transfer_include() {
+        return this._get<string[]>("transfer.include", ["*.mrb", "*.js"]);
     }
 
-    async update(obj): Promise<void> {
-        await this._ensureSaved(this._rubicFile);
-        await this.load();
-        if (this._data == null) {
-            this._data = <any>{};
+    /** Set transfer include patterns for write pending */
+    set transfer_include(value: string[]) { this._set("transfer.include", value); }
+
+    /** Get transfer exclude patterns */
+    get transfer_exclude(): string[] {
+        return this._get<string[]>("transfer.exclude", []);
+    }
+
+    /** Set transfer exclude patterns for write pending */
+    set transfer_exclude(value: string[]) { this._set("transfer.exclude", value); }
+
+    /**
+     * Write pended changes
+     */
+    store(): Promise<void> {
+        if (this._pending == null) {
+            return Promise.resolve();
         }
-        if (!semver.valid(this._data.rubicVersion)) {
-            this._data.rubicVersion = RubicProcess.self.version;
-        } else if (semver.lt(this._data.rubicVersion, RubicProcess.self.version)) {
-            if (this._data.minRubicVersion == null) {
-                this._data.minRubicVersion = this._data.rubicVersion;
+
+        return Promise.resolve(
+            RubicProcess.self.updateTextFile(this._rubicFile, (text: string) => {
+                let data = this._migrateFromVSCode(CJSON.parse(text));
+
+                // Update changes
+                function assignRecursive(dest: any, src: any) {
+                    if (src == null) {
+                        return;
+                    }
+                    for (let key of Object.keys(src)) {
+                        if (typeof(src[key]) !== "object") {
+                            dest[key] = src[key];
+                        } else {
+                            if (dest[key] == null) {
+                                dest[key] = {};
+                            }
+                            assignRecursive(dest[key], src[key]);
+                        }
+                    }
+                }
+                assignRecursive(data, this._pending);
+
+                // Update version info
+                function semver_each(method: string, ...versions: string[]): string {
+                    versions = versions.filter((v) => semver.valid(v));
+                    if (versions.length <= 1) {
+                        return versions[0];
+                    }
+                    return versions.reduce((a, b) => semver[method](a, b) ? a : b);
+                }
+                let newVer = RubicProcess.self.version;
+                data.rubicVersion.min = semver_each("lt", data.rubicVersion.min, data.rubicVersion.last, newVer);
+                data.rubicVersion.max = semver_each("gt", data.rubicVersion.max, data.rubicVersion.last, newVer);
+                data.rubicVersion.last = newVer;
+
+                return CJSON.stringify(data, null, 4);
+            })
+        ).then(() => {
+            this._pending = null;
+        });
+    }
+
+    /**
+     * Get current data
+     * @param keyPath Full path of key
+     * @param defaultValue Default value
+     */
+    private _get<T>(keyPath: string, defaultValue?: T): T {
+        let keys = keyPath.split(".");
+        let lastKey = keys.pop();
+        let parent = this._data || {};
+        for (let key of keys) {
+            parent = parent[key] || {};
+        }
+        if (parent[lastKey] != null) {
+            return parent[lastKey];
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Set write pending data
+     * @param keyPath Full path of key
+     * @param value Value
+     */
+    private _set<T>(keyPath: string, value: T): void {
+        let keys = keyPath.split(".");
+        let lastKey = keys.pop();
+        let parent = this._pending;
+        if (parent == null) {
+            parent = this._pending = <any>{};
+        }
+        for (let key of keys) {
+            let newParent = parent[key];
+            if (newParent == null) {
+                newParent = parent[key] = {};
             }
-        } else if (semver.gt(this._data.rubicVersion, RubicProcess.self.version)) {
-            if (this._data.maxRubicVersion == null) {
-                this._data.maxRubicVersion = this._data.rubicVersion;
-            }
+            parent = newParent;
         }
-        for (let key in obj) {
-            this._data[key] = obj[key];
-        }
-        await pify(fse.ensureDir)(path.dirname(this._rubicFile));
-        await pify(fse.writeFile)(this._rubicFile, CJSON.stringify(this._data, null, 4), SKETCH_ENCODING);
+        parent[lastKey] = value;
     }
 
-    private _get(key: string, def?: any): any {
-        if (this._data.hasOwnProperty(key)) {
-            return this._data[key];            
+    /**
+     * Migrate from VSCode Rubic
+     */
+    private _migrateFromVSCode(data: any): V1_0_x.Top {
+        // v0.99.0x -> v1.0.x
+        let v1_0_x: V1_0_x.Top = data;
+        if (typeof(v1_0_x.rubicVersion) === "string") {
+            let v0_99_x: V0_99_0x.Top = data;
+            v1_0_x = {
+                hardware: {
+                    boardClass: v0_99_x.boardClass,
+                    repositoryUuid: v0_99_x.repositoryUuid,
+                    releaseTag: v0_99_x.releaseTag,
+                    variationPath: v0_99_x.variationPath,
+                    boardPath: v0_99_x.boardPath,
+                },
+                transfer: {
+                    include: v0_99_x["transfer.include"],
+                    exclude: v0_99_x["transfer.exclude"],
+                },
+                rubicVersion: {
+                    last: v0_99_x.rubicVersion,
+                    min: v0_99_x.minRubicVersion,
+                    max: v0_99_x.maxRubicVersion,
+                }
+            };
         }
-        return def;
+
+        // Latest
+        return v1_0_x;
     }
 
     /**

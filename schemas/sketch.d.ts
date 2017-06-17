@@ -1,7 +1,7 @@
 declare namespace V1_0_x {
     interface Top {
         /** Hardware configuration */
-        hardwareConfiguration: {
+        hardware: {
             /** USE RUBIC CATALOG TO CHANGE THIS VALUE: The name of board class */
             boardClass: string;
             /** USE RUBIC CATALOG TO CHANGE THIS VALUE: UUID of repository */
@@ -11,7 +11,7 @@ declare namespace V1_0_x {
             /** USE RUBIC CATALOG TO CHANGE THIS VALUE: The path name of variation */
             variationPath: string;
             /** The port name or path which is connected to the board */
-            boardPath: string;
+            boardPath?: string;
             /** Board data override */
             boardData?: any;
         };
