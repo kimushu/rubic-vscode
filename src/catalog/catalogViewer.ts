@@ -181,20 +181,14 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 this._currentPanel = "details";
                 break;
         }
-        if (1) {
-            this._triggerUpdate();
-            return;
-        }
-
-        Promise.resolve()
-        .then(() => {
-            if (this._currentSelection.variationPath == null) { return; }
-
-            // Download release assets
+        if (this._currentSelection.variationPath != null) {
+            // Download release assets (background)
             let { catalogData, sketch } = RubicProcess.self;
-            let prepare = catalogData.prepareCacheDir(
-                this._currentSelection.repositoryUuid, this._currentSelection.releaseTag
-            ).then(() => {});
+            catalogData.prepareCacheDir(
+                this._currentSelection.repositoryUuid,
+                this._currentSelection.releaseTag
+            );
+            /*
             let confirm: Promise<void>;
             if ((this._currentSelection.boardClass === sketch.boardClass) &&
                 (this._currentSelection.repositoryUuid === sketch.repositoryUuid) &&
@@ -224,13 +218,11 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             })
             .then(() => {
                 return prepare;
-            });
-        })
-        .then(() => {
-            // Update page
-            this._currentPanel = null;
-            this._triggerUpdate();
-        });
+            });*/
+        }
+
+        // Update page
+        this._triggerUpdate();
     }
 
     /**

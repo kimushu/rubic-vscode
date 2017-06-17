@@ -108,12 +108,40 @@ export class CatalogData implements vscode.Disposable {
         return CacheStorage.exists(path.join(dirPath, RELEASE_JSON)).then((exists) => {
             if (exists) { return dirPath; }
             if (!download) { return null; }
-            return Promise.resolve(
-            ).then(() => {
-                return pify(request)({url: rel.url, encoding: null});
-            }).then((resp) => {
-                return decompress(resp.body, CacheStorage.getFullPath(dirPath));
-            }).then(() => {
+            return new Promise<void>((resolve, reject) => {
+                RubicProcess.self.withProgress({
+                    location: {Window: true},
+                    title: localize("download-firm", "Downloading firmware"),
+                }, (progress) => {
+                    return new Promise<request.RequestResponse>((resolve, reject) => {
+                        let ended: number = 0;
+                        let total: number = NaN;
+                        let req = request({uri: rel.url, encoding: null}, (err, resp) => {
+                            if (err != null) {
+                                return reject(err);
+                            }
+                            return resolve(resp);
+                        });
+                        req.on("response", (resp) => {
+                            total = parseInt(resp.headers["content-length"]);
+                        });
+                        req.on("data", (chunk) => {
+                            ended += chunk.length;
+
+                            let message = `${(ended / 1024).toFixed()}`;
+                            if (!isNaN(total)) {
+                                message += `/${(total / 1024).toFixed()}`;
+                            }
+                            message += "kB";
+                            progress.report({message});
+                        });
+                    }).then((resp) => {
+                        progress.report({message: localize("decompress-firm", "Decompressing firmware")});
+                        return decompress(resp.body, CacheStorage.getFullPath(dirPath));
+                    }).then(resolve, reject);
+                });
+            })
+            .then(() => {
                 return dirPath;
             });
         });
@@ -161,7 +189,18 @@ export class CatalogData implements vscode.Disposable {
             return OFFICIAL_CATALOG_REPO;
         })
         .then((repo) => {
-            return readGithubFile(repo, CATALOG_JSON, CATALOG_ENCODING);
+            return new Promise((resolve, reject) => {
+                RubicProcess.self.withProgress(
+                    {
+                        location: {Window: true},
+                        title: localize("download-catalog", "Downloading catalog")
+                    },
+                    () => {
+                        return readGithubFile(repo, CATALOG_JSON, CATALOG_ENCODING)
+                        .then(resolve, reject);
+                    }
+                );
+            });
         }).then((jsonText: string) => {
             return JSON.parse(jsonText);
         }).then((root: RubicCatalog.Root) => {
