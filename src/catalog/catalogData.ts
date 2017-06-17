@@ -136,7 +136,7 @@ export class CatalogData implements vscode.Disposable {
                             progress.report({message});
                         });
                     }).then((resp) => {
-                        progress.report({message: localize("decompress-firm", "Decompressing firmware")});
+                        progress.report({message: localize("decompressing", "Decompressing")});
                         return decompress(resp.body, CacheStorage.getFullPath(dirPath));
                     }).then(resolve, reject);
                 });

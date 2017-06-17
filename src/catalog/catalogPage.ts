@@ -50,6 +50,11 @@ const sendCommand = (() => {
             panels.forEach((aPanel: HTMLDivElement) => {
                 aPanel.classList.toggle("catalog-panel-opened", panel === aPanel);
             });
+
+            // Save current panel
+            if (!panel.classList.contains("catalog-panel-loading")) {
+                sendCommand({panelId: panel.dataset.panelId});
+            }
         };
 
         let panelSelection = panel.getElementsByClassName("catalog-header-selection")[0];
@@ -80,14 +85,25 @@ const sendCommand = (() => {
                     // Update panel state
                     let changed = (panel.dataset.initialItemId !== itemId);
                     panel.classList.toggle("catalog-panel-changed", panel.dataset.savedItemId !== itemId);
+                    panel.classList.remove("catalog-panel-not-selected");
                     if (nextPanels.length > 0) {
                         nextPanels[0].classList.toggle("catalog-panel-loading", changed);
+                        nextPanels[0].classList.toggle("catalog-panel-disabled", !changed);
                         nextPanels.forEach((panel) => updatePanelState(panel));
                     }
 
                     // Request update
                     if (changed) {
                         requesting = true;
+                        if (nextPanels.length > 0) {
+                            new (<any>window).Spinner({
+                                lines: 11,
+                                length: 4,
+                                width: 5,
+                                radius: 15,
+                                color: "#888"
+                            }).spin(nextPanels[0].getElementsByClassName("catalog-content-loading")[0]);
+                        }
                         setTimeout(() => {
                             sendCommand({
                                 panelId: panel.dataset.panelId,

@@ -1,12 +1,14 @@
 {
     "messages": [
         "ファームウェアをダウンロード中",
-        "ファームウェアを展開中",
+        "展開中",
+        "カタログをダウンロード中",
         "現在お使いのRubicのバージョンは古くなっています。Rubic拡張機能をバージョンアップしてください。"
     ],
     "keys": [
         "download-firm",
-        "decompress-firm",
+        "decompressing",
+        "download-catalog",
         "rubic-is-too-old"
     ]
 }

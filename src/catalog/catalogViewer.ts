@@ -53,7 +53,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
     private _sbiPort: StatusBarItem;
     private _sbiBoard: StatusBarItem;
     private _currentSelection: CatalogSelection;
-    private _currentPanel: string;
+    private _currentPanel: "board" | "repository" | "release" | "variation" | "details";
     private _onDidChange = new EventEmitter<Uri>();
     get onDidChange() { return this._onDidChange.event; }
 
@@ -156,8 +156,12 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
      */
     private _updateCatalogView(params: any) {
         // Update provisional selections
-        let { itemId } = params;
-        switch (params.panelId) {
+        let { panelId, itemId } = params;
+        if (itemId == null) {
+            this._currentPanel = panelId;
+            return;
+        }
+        switch (panelId) {
             case "board":
                 this._currentSelection.boardClass = itemId;
                 this._currentSelection.repositoryUuid = null;
@@ -439,6 +443,19 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 pages: [],
             }]
         };
+        if (this._currentPanel == null) {
+            if (this._currentSelection.boardClass == null) {
+                this._currentPanel = "board";
+            } else if (this._currentSelection.repositoryUuid == null) {
+                this._currentPanel = "repository";
+            } else if (this._currentSelection.releaseTag == null) {
+                this._currentPanel = "release";
+            } else if (this._currentSelection.variationPath == null) {
+                this._currentPanel = "variation";
+            } else {
+                this._currentPanel = "details";
+            }
+        }
         let currentPanel = vars.panels.find((panel) => panel.id === this._currentPanel);
         if (currentPanel == null) {
             currentPanel = vars.panels[0];
@@ -448,7 +465,6 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         .then(() => {
             return RubicProcess.self.getRubicSetting(CFG_SHOW_PREVIEW)
             .then((result: boolean) => {
-                console.log("showPreview:" + result);
                 vars.showPreview = result;
             });
         })
@@ -655,6 +671,11 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         return Promise.resolve(selectedVariation);
     }
 
+    /**
+     * Provide detail page
+     * @param panel Panel variables for handlebars rendering
+     * @param variation Selected variation
+     */
     private _provideDetails(panel: CatalogTemplatePanel, variation: RubicCatalog.Variation): Promise<void> {
         if (variation == null) {
             return Promise.resolve(null);
@@ -692,6 +713,10 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         });
     }
 
+    /**
+     * Render connection page for details
+     * @param v Selected variation
+     */
     private _renderConnPage(v: RubicCatalog.Variation): Promise<string> {
         let { catalogData, sketch } = RubicProcess.self;
         return Promise.resolve()
@@ -723,6 +748,10 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         });
     }
 
+    /**
+     * Render runtime page for details
+     * @param v Selected variation
+     */
     private _renderRuntimePage(v: RubicCatalog.Variation): Promise<string> {
         let result: string[] = [];
         let sver = localize("version", "Version");
