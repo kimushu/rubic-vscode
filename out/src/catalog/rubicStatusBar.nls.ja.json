@@ -1,0 +1,18 @@
+{
+    "messages": [
+        "ここをクリックするとRubicボードカタログを開きます",
+        "ここをクリックすると接続先を選択できます",
+        "Rubic設定が不正です",
+        "ボード未選択",
+        "カタログデータ無し",
+        "接続先未選択"
+    ],
+    "keys": [
+        "click-to-show-catalog",
+        "click-to-select-port",
+        "invalid-sketch",
+        "no-board",
+        "no-catalog",
+        "no-port"
+    ]
+}

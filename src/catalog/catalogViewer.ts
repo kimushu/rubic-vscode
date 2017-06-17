@@ -512,6 +512,11 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 })),
             });
         }
+        if (selectedBoard == null) {
+            window.showWarningMessage(localize("board-x-not-found",
+                "No board named '{0}'", this._currentSelection.boardClass
+            ));
+        }
         return Promise.resolve(selectedBoard);
     }
 
@@ -543,6 +548,11 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 description: toLocalizedString(repo.cache.description),
                 details: repo.owner
             });
+        }
+        if (selectedRepo == null) {
+            window.showWarningMessage(localize("repo-x-not-found",
+                "No repository named '{0}'", this._currentSelection.repositoryUuid
+            ));
         }
         return Promise.resolve(selectedRepo);
     }
@@ -586,6 +596,11 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             });
         }, Promise.resolve())
         .then(() => {
+            if (selectedRelease == null) {
+                window.showWarningMessage(localize("release-x-not-found",
+                    "No release named '{0}'", this._currentSelection.releaseTag
+                ));
+            }
             return selectedRelease;
         });
     }
@@ -640,6 +655,11 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 topics
             });
         }
+        if (selectedVariation == null) {
+            window.showWarningMessage(localize("variation-x-not-found",
+                "No variation named '{0}'", this._currentSelection.variationPath
+            ));
+        }
         return Promise.resolve(selectedVariation);
     }
 
@@ -680,166 +700,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         });
     }
 
-/*
-    FIXME_hoge () {
-        if (!this._currentSelection) {
-            this._currentSelection = <any>{};
-        }
-        let favoriteBoards = RubicProcess.self.getMementoValue("favoriteBoards", []); // FIXME
-        let [pb, pr, pe, pv, pd] = vars.panels;
-        let sb: RubicCatalog.Board;
-        let sr: RubicCatalog.RepositorySummary;
-        let se: RubicCatalog.ReleaseSummary;
-        let sv: RubicCatalog.Variation;
-
-        // List boards
-        pb.not_selected = (this._currentSelection.boardClass == null);
-        pb.changed = !pb.not_selected && (this._currentSelection.boardClass !== sketch.boardClass);
-        catalogData.boards.forEach((board) => {
-            if (board.disabled) { return board.disabled; }
-            let title = toLocalizedString(board.name);
-            let settled = !pb.not_selected && (board.class === this._currentSelection.boardClass);
-            pb.items.push({
-                id: board.class,
-                icon: board.icon,
-                title: title,
-                description: toLocalizedString(board.description),
-                author: toLocalizedString(board.author),
-                website: toLocalizedString(board.website),
-                preview: !!board.preview,
-                favorite: (/*favoriteBoards FIXME!*-/[].indexOf(board.class) >= 0),
-                settled: settled,
-                _index: pb.items.length
-            });
-            if (settled) {
-                pb.decision = title;
-                sb = board;
-                defaultPanel = 1;
-            }
-        });
-        pb.items.sort((a, b) => {
-            if (a.favorite && !b.favorite) { return -1; }
-            if (b.favorite && !a.favorite) { return +1; }
-            return a._index - b._index;
-        });
-
-        // List repositories (If board is selected)
-        if (sb) {
-            pr.disabled = false;
-            pr.not_selected = (this._currentSelection.repositoryUuid == null);
-            pr.changed = !pr.not_selected && (this._currentSelection.repositoryUuid !== sketch.repositoryUuid);
-            sb.repositories.forEach((firm) => {
-                if (firm.disabled) { return; }
-                if (!firm.cache) { return; }
-                let title = toLocalizedString(firm.cache.name);
-                let settled = !pr.not_selected && (firm.uuid === this._currentSelection.repositoryUuid);
-                pr.items.push({
-                    id: firm.uuid,
-                    title: title,
-                    description: toLocalizedString(firm.cache.description),
-                    author: firm.owner,
-                    website: makeGithubURL(firm.owner, firm.repo, firm.branch),
-                    official: !!firm.official,
-                    preview: !!firm.cache.preview,
-                    settled: settled,
-                    _index: pr.items.length
-                });
-                if (settled) {
-                    pr.decision = title;
-                    sr = firm;
-                    defaultPanel = 2;
-                }
-            });
-        }
-
-        // List repositories (If repository is selected)
-        if (sr) {
-            pe.disabled = false;
-            pe.not_selected = (this._currentSelection.releaseTag == null);
-            pe.changed = !pe.not_selected && (this._currentSelection.releaseTag !== sketch.releaseTag);
-            for (let i = 0; i < sr.cache.releases.length; ++i) {
-                let rel = sr.cache.releases[i];
-                if (!rel.cache) { return; }
-                let title = toLocalizedString(rel.cache.name || {en: rel.name});
-                let settled = !pe.not_selected && (rel.tag === this._currentSelection.releaseTag);
-                let cacheDir = await catalogData.prepareCacheDir(this._currentSelection.repositoryUuid, rel.tag, false);
-                pe.items.push({
-                    id: rel.tag,
-                    title: title,
-                    description: toLocalizedString(rel.cache.description || {en: rel.description}),
-                    author: `${localize("tag", "Tag")} : ${rel.tag} / ${
-                        localize("release-date", "Release date")
-                        } : ${new Date(rel.published_at).toLocaleDateString()}${
-                        cacheDir ? " (" + localize("downloaded", "Downloaded") + ")" : ""}`,
-                    preview: !!rel.preview,
-                    settled: settled,
-                    _index: pe.items.length
-                });
-                if (settled) {
-                    pe.decision = title;
-                    se = rel;
-                    defaultPanel = 3;
-                }
-            }
-        }
-
-        // List variations (If release is selected)
-        if (se) {
-            pv.disabled = false;
-            pv.not_selected = (this._currentSelection.variationPath == null);
-            pv.changed = !pv.not_selected && (this._currentSelection.variationPath !== sketch.variationPath);
-            se.cache.variations.forEach((vary) => {
-                let title = toLocalizedString(vary.name);
-                let settled = !pv.not_selected && (vary.path === this._currentSelection.variationPath);
-                pv.items.push({
-                    id: vary.path,
-                    title: title,
-                    description: toLocalizedString(vary.description),
-                    topics: [],
-                    settled: settled
-                });
-                if (settled) {
-                    pv.decision = title;
-                    sv = vary;
-                    defaultPanel = 4;
-                }
-            });
-        }
-
-        // Make detail pages
-        if (sv) {
-            let md = new MarkdownIt(<any>{html: true});
-            pd.disabled = false;
-        }
-
-        if (!sb && this._currentSelection.boardClass != null) {
-            window.showWarningMessage(localize("board-x-not-found",
-                "No board named '{0}'", this._currentSelection.boardClass
-            ));
-        } else if (!sr && this._currentSelection.repositoryUuid != null) {
-            window.showWarningMessage(localize("repo-x-not-found",
-                "No repository named '{0}'", this._currentSelection.repositoryUuid
-            ));
-        } else if (!se && this._currentSelection.releaseTag != null) {
-            window.showWarningMessage(localize("release-x-not-found",
-                "No release named '{0}'", this._currentSelection.releaseTag
-            ));
-        } else if (!sv && this._currentSelection.variationPath != null) {
-            window.showWarningMessage(localize("variation-x-not-found",
-                "No variation named '{0}'", this._currentSelection.variationPath
-            ));
-        }
-
-        if (this._currentPanel == null) {
-            this._currentPanel = defaultPanel;
-        }
-        vars.panels[this._currentPanel].opened = true;
-
-        // Generate HTML
-        return template(vars);
-    }*/
-
-    private async _renderConnPage(v: RubicCatalog.Variation): Promise<string> {
+    private _renderConnPage(v: RubicCatalog.Variation): Promise<string> {
         let { catalogData, sketch } = RubicProcess.self;
         return Promise.resolve()
         .then(() => {
