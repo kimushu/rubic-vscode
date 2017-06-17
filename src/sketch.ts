@@ -283,16 +283,16 @@ export class Sketch extends EventEmitter {
         if (typeof(v1_0_x.rubicVersion) === "string") {
             let v0_99_x: V0_99_0x.Top = data;
             v1_0_x = {
+                transfer: {
+                    include: v0_99_x["transfer.include"],
+                    exclude: v0_99_x["transfer.exclude"],
+                },
                 hardware: {
                     boardClass: v0_99_x.boardClass,
                     repositoryUuid: v0_99_x.repositoryUuid,
                     releaseTag: v0_99_x.releaseTag,
                     variationPath: v0_99_x.variationPath,
                     boardPath: v0_99_x.boardPath,
-                },
-                transfer: {
-                    include: v0_99_x["transfer.include"],
-                    exclude: v0_99_x["transfer.exclude"],
                 },
                 rubicVersion: {
                     last: v0_99_x.rubicVersion,
