@@ -512,7 +512,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 })),
             });
         }
-        if (selectedBoard == null) {
+        if ((boardClass != null) && (selectedBoard == null)) {
             window.showWarningMessage(localize("board-x-not-found",
                 "No board named '{0}'", this._currentSelection.boardClass
             ));
@@ -549,7 +549,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 details: repo.owner
             });
         }
-        if (selectedRepo == null) {
+        if ((repositoryUuid != null) && (selectedRepo == null)) {
             window.showWarningMessage(localize("repo-x-not-found",
                 "No repository named '{0}'", this._currentSelection.repositoryUuid
             ));
@@ -596,7 +596,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             });
         }, Promise.resolve())
         .then(() => {
-            if (selectedRelease == null) {
+            if ((releaseTag != null) && (selectedRelease == null)) {
                 window.showWarningMessage(localize("release-x-not-found",
                     "No release named '{0}'", this._currentSelection.releaseTag
                 ));
@@ -655,7 +655,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 topics
             });
         }
-        if (selectedVariation == null) {
+        if ((variationPath != null) && (selectedVariation == null)) {
             window.showWarningMessage(localize("variation-x-not-found",
                 "No variation named '{0}'", this._currentSelection.variationPath
             ));

@@ -67,26 +67,22 @@ const sendCommand = (() => {
                 if (requesting) {
                     return;
                 }
-                let prevPanel = <PanelElement>getPrevElement(panel, "catalog-panel");
                 let nextPanels = <PanelElement[]>getNextElements(panel, "catalog-panel");
 
                 if (panel.dataset.selectedItemId !== itemId) {
                     // Select item
                     panelSelection.innerHTML = itemTitle.innerHTML;
                     panel.dataset.selectedItemId = itemId;
-                    updatePanelState(panel);
                     items.forEach((anItem: HTMLDivElement) => {
                         anItem.classList.toggle("catalog-item-settled", anItem.dataset.itemId === itemId);
                     });
 
-                    // Update succession panels
+                    // Update panel state
                     let changed = (panel.dataset.initialItemId !== itemId);
-                    if (nextPanels.length >= 1) {
+                    panel.classList.toggle("catalog-panel-changed", panel.dataset.savedItemId !== itemId);
+                    if (nextPanels.length > 0) {
                         nextPanels[0].classList.toggle("catalog-panel-loading", changed);
-                        nextPanels[0].classList.remove("catalog-panel-not-selected");
-                        nextPanels.slice(1).forEach((aPanel) => {
-                            aPanel.classList.toggle("catalog-panel-disabled", changed);
-                        });
+                        nextPanels.forEach((panel) => updatePanelState(panel));
                     }
 
                     // Request update
@@ -110,17 +106,24 @@ const sendCommand = (() => {
     });
     function updatePanelState(panel: PanelElement) {
         let prev = <PanelElement>getPrevElement(panel, "catalog-panel");
-        let changed: boolean;
+        let loading = panel.classList.contains("catalog-panel-loading");
         if ((prev == null) || (!prev.classList.contains("catalog-panel-changed"))) {
-            changed = (panel.dataset.selectedItemId !== panel.dataset.savedItemId);
+            let changed = (panel.dataset.selectedItemId !== panel.dataset.savedItemId) && !loading;
             panel.classList.toggle("catalog-panel-changed", changed);
             panel.classList.toggle("catalog-panel-not-selected",
                 panel.dataset.selectedItemId === ""
             );
         } else {
-            changed = (panel.dataset.selectedItemId !== "");
+            let changed = (panel.dataset.selectedItemId !== "") && !loading;
             panel.classList.toggle("catalog-panel-changed", changed);
             panel.classList.toggle("catalog-panel-not-selected", !changed);
+        }
+        if (prev != null) {
+            panel.classList.toggle("catalog-panel-disabled",
+                prev.classList.contains("catalog-panel-not-selected") ||
+                prev.classList.contains("catalog-panel-disabled") ||
+                prev.classList.contains("catalog-panel-loading")
+            );
         }
     }
     function _getElement(baseElement: HTMLElement, className: string, prop: string): HTMLElement {
