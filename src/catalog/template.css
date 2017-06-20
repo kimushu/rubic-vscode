@@ -123,7 +123,7 @@ body {
     display: block;
     padding: 4px 8px;
     margin-top: 4px;
-    border-left: 4px rgba(0,0,0,.0) solid;
+    border-left: 6px rgba(0,0,0,.0) solid;
     cursor: pointer;
 }
 .catalog-hide-previews .catalog-item-preview:not(.catalog-item-settled) {
@@ -131,10 +131,10 @@ body {
 }
 .vscode-dark .catalog-item-settled,
 .vscode-high-contrast .catalog-item-settled {
-    border-left: 4px #9f3 solid;
+    border-left: 6px #9f3 solid;
 }
 .vscode-light .catalog-item-settled {
-    border-left: 4px #4c2 solid;
+    border-left: 6px #4c2 solid;
 }
 .catalog-item:last-child {
     margin-bottom: 4px;
