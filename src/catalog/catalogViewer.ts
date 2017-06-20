@@ -440,7 +440,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         }
 
         let vars: CatalogTemplateRoot = {
-            extensionPath: RubicProcess.self.extensionRoot,
+            extensionPath: Uri.file(RubicProcess.self.extensionRoot).toString(),
             commandEntry: CMD_SHOW_CATALOG,
             showPreview: null,
             unofficial: catalogData.custom,
