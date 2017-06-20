@@ -16,9 +16,9 @@ interface ItemElement extends HTMLDivElement {
 // Define utility function for sending message to extension
 const sendCommand = (() => {
     let element = <HTMLAnchorElement>document.getElementById("sendCommand");
-    let base = element.href;
-    return (param: any): false => {
-        element.href = base + encodeURI(JSON.stringify(param));
+    let defaultCommand = element.href.match(/^command:([\w.]+)\?/)[1];
+    return (param: any, command: string = defaultCommand): false => {
+        element.href = `command:${command}?${encodeURI(JSON.stringify(param))}`;
         element.click();
         return false;
     };
@@ -184,4 +184,16 @@ const sendCommand = (() => {
             link.blur();
         });
     }    
+})();
+
+// Register event handler for page buttons
+(() => {
+    for (let button of <HTMLButtonElement[]>Array.from(document.getElementsByClassName("catalog-page-button"))) {
+        let { command } = button.dataset;
+        if (command != null) {
+            button.onclick = () => {
+                sendCommand(null, command);
+            };
+        }
+    }
 })();

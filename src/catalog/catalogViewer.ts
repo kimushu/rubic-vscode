@@ -245,18 +245,21 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 isCloseAffordance: true
             }];
 
+            this._pendingSave = true;
             RubicProcess.self.showInformationMessage(
                 localize("hw-changed", "Hardware configuration has been changed. Are you sure to save?"),
                 ...items
             ).then((item) => {
                 if (item === items[0]) {
+                    this._pendingSave = false;
                     sketch.boardClass = this._currentSelection.boardClass;
                     sketch.repositoryUuid = this._currentSelection.repositoryUuid;
                     sketch.releaseTag = this._currentSelection.releaseTag;
                     sketch.variationPath = this._currentSelection.variationPath;
-                    return sketch.store();
-                } else {
-                    this._pendingSave = true;
+                    return sketch.store()
+                    .then(() => {
+                        this._triggerUpdate();
+                    });
                 }
             });
         }
@@ -767,17 +770,33 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             } else {
                 sizeText = `${size} bytes`;
             }
+            let btn_attr: string = "";
+            let warn_msg: string = "";
+            if (this._pendingSave) {
+                btn_attr = " disabled";
+                warn_msg = ` (${localize("save-to-use", "Save configuration before using this")})`;
+            }
             return dedent`
             ## ${localize("connection", "Connection")}
-            * <a href="command:${CMD_SELECT_PORT}" class="catalog-page-button catalog-page-button-dropdown">${
+            * <button data-command="${CMD_SELECT_PORT}" class="${[
+                "catalog-page-button",
+                "catalog-page-button-green",
+                "catalog-page-button-dropdown",
+            ].join(" ")}"${btn_attr}>${
                 sketch.boardPath || localize("no-port", "No port selected")
-            }</a><a href="command:${CMD_TEST_CONNECTION}" class="catalog-page-button">${
+            }</button><button data-command="${CMD_TEST_CONNECTION}" class="${[
+                "catalog-page-button",
+                "catalog-page-button-blue",
+            ].join(" ")}"${btn_attr}>${
                 localize("test-connection", "Test connection")
-            }</a>
+            }</button>${warn_msg}
             ## ${localize("firmware", "Firmware")}
-            * ${v.path} (${sizeText})<br><a href="command:${CMD_WRITE_FIRMWARE}" class="catalog-page-button">${
+            * ${v.path} (${sizeText})<br><button data-command="${CMD_WRITE_FIRMWARE}" class="${[
+                "catalog-page-button",
+                "catalog-page-button-blue",
+            ].join(" ")}"${btn_attr}>${
                 localize("write-firmware", "Write firmware to board")
-            }</a>
+            }</button>${warn_msg}
             `;
         });
     }
