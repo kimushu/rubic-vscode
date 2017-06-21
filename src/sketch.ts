@@ -75,18 +75,15 @@ export class Sketch extends EventEmitter {
             this._data = this._migrateFromVSCode(data);
             this._invalid = false;
             this.emit("load");
-            if (this._watcher == null) {
-                this._watcher = chokidar.watch(this._rubicFile).on("change", () => {
-                    this.emit("reload");
-                    this.load();
-                });
-            }
+            this._startWatcher();
             return result;
         }, (reason) => {
             /* rubic.json is not found / rubic.json is invalid */
             this._data = null;
             this._invalid = true;
             if (reason instanceof SyntaxError) {
+                this.emit("invalid");
+                this._startWatcher();
                 throw reason;
             }
             if (!convert) {
@@ -118,6 +115,7 @@ export class Sketch extends EventEmitter {
     /** Dispose this instance */
     dispose() {
         this.unload();
+        this.removeAllListeners();
     }
 
     /** Path of workspace */
@@ -232,6 +230,53 @@ export class Sketch extends EventEmitter {
         ).then(() => {
             this._pending = null;
         });
+    }
+
+    /**
+     * Execute connection test
+     */
+    testConnection(): Promise<boolean> {
+        if (!this.loaded) {
+            return Promise.reject(new Error("No sketch loaded"));
+        }
+        if (this.boardClass == null) {
+            return Promise.reject(new Error("No board class specified"));
+        }
+        if (this.boardPath == null) {
+            return Promise.reject(new Error("No board path specified"));
+        }
+        return Promise.resolve(RubicProcess.self.startDebugProcess({}))
+        .then((debuggerId) => {
+            return false;
+        });/*
+        try {
+            let result: BoardInformation = await soloInteractiveDebugRequest("getInfo", {
+                boardClass: boardClass,
+                boardPath: boardPath,
+                printOutput: true
+            });
+            window.showInformationMessage(localize(
+                "conn-test-success",
+                "Connection test succeeded (See 'Debug console' for details)"
+            ));
+        } catch (error) {
+            window.showErrorMessage(localize(
+                "conn-test-failed",
+                "Connection test failed (See 'Debug console' for details)"
+            ));
+        }*/
+    }
+
+    /**
+     * Start watcher for sketch file
+     */
+    private _startWatcher(): void {
+        if (this._watcher == null) {
+            this._watcher = chokidar.watch(this._rubicFile).on("change", () => {
+                this.emit("reload");
+                this.load();
+            });
+        }
     }
 
     /**

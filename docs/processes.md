@@ -66,11 +66,12 @@ class RubicDebugProcess extends RubicProcess {}
 |`catalogData`|Yes|---|カタログ情報(キャッシュ)|
 |`debugConfiguration`|---|Yes|デバッグ開始時に引き渡されたオブジェクト|
 |`startDebugProcess()`|Yes|---|デバッグプロセスを生成する|
-|`stopDebugProcess()`|Yes|---|デバッグプロセスを終了する|
+|`sendDebugRequest()`|Yes|---|デバッグプロセスへ要求を送信する|
+|`stopDebugProcess()`|Yes|---|デバッグプロセスを強制終了する|
 |`getRubicSetting()`|Yes|Yes|Rubicの設定項目を取得|
 |`getMementoValue()`|Yes|---|Mementoストレージの値を取得|
 |`setMementoValue()`|Yes|---|Mementoストレージの値を設定|
-|`readTextFile()`|Yes|---|テキストファイルの内容を取得する|
+|`readTextFile()`|Yes|Yes|テキストファイルの内容を取得する|
 |`updateTextFile()`|Yes|---|テキストファイルを内容を更新する|
 |`showInformationMessage()`<sup>*1</sup>|Yes|Yes|情報レベルのメッセージ(+選択肢)を表示し、ユーザーの応答を待つ|
 |`showWarningMessage()`<sup>*1</sup>|Yes|Yes|警告レベルのメッセージ(+選択肢)を表示し、ユーザーの応答を待つ|

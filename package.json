@@ -139,7 +139,7 @@
       {
         "type": "rubic",
         "label": "%debug.rubic.label%",
-        "program": "./out/src/rubicDebugSession.js",
+        "program": "./out/src/debug/rubicDebugSession.js",
         "runtime": "node",
         "startSessionCommand": "extension.rubic.startDebugSession",
         "configurationAttributes": {

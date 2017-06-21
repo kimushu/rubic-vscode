@@ -13,6 +13,16 @@ import { CatalogData } from "./catalog/catalogData";
 
 const localize = nls.loadMessageBundle(__filename);
 
+interface DebugRequest {
+    request_id: string;
+    resolve: Function;
+    reject: Function;
+}
+
+interface DebugRequestSet {
+    [request_id: string]: DebugRequest;
+}
+
 interface DebugProcessReference {
     debugger_id: string;
     socket?: any;
@@ -20,6 +30,7 @@ interface DebugProcessReference {
     startReject: (reason: any) => void;
     stopResolve?: () => void;
     stopReject?: (reason: any) => void;
+    debugRequests: DebugRequestSet;
 }
 
 interface DebugProcessReferenceSet {
@@ -81,7 +92,7 @@ export class RubicHostProcess extends RubicProcess {
         return window.withProgress(options, task);
     };
     private _withProgressStart(options: RubicProgressOptions): Thenable<string> {
-        let progress_id = `rubic-p-${Math.random().toString(36).substr(2)}`;
+        let progress_id = this.getUniqueId("p");
         let ctx = <ProgressContext>{ progress_id };
         ctx.thenable = this.withProgress(options, (progress) => {
             return new Promise<void>((resolve) => {
@@ -132,35 +143,57 @@ export class RubicHostProcess extends RubicProcess {
     readonly startDebugProcess = function(this: RubicHostProcess, configuration: any): Thenable<string> {
         return this._serverSetup.then(() => {
             let host_id = ipc.config.id;
-            let debugger_id = `rubic-d-${Math.random().toString(36).substr(2)}`;
+            let debugger_id = this.getUniqueId("d");
             let { workspaceRoot, extensionRoot } = this;
-            let config = Object.assign({}, configuration);
+            let config = Object.assign({
+                type: "rubic",
+                request: "attach",
+                debugServer: process.env["DEBUG_SERVER_PORT"],
+            }, configuration);
             config.__private = { host_id, debugger_id, workspaceRoot, extensionRoot };
             return new Promise<void>((startResolve, startReject) => {
                 this._debuggers[debugger_id] = {
-                    debugger_id, startResolve, startReject
+                    debugger_id, startResolve, startReject, debugRequests: {}
                 };
+                commands.executeCommand("vscode.startDebug", config);
             })
             .then(() => {
                 return debugger_id;
             });
         });
     };
+    readonly sendDebugRequest = function(this: RubicHostProcess, debugger_id: string, request: string, args: any): Thenable<any> {
+        return this._getDebuggerRef(debugger_id)
+        .then((ref) => {
+            return new Promise((resolve, reject) => {
+                let request_id = this.getUniqueId("dr");
+                ref.debugRequests[request_id] = { request_id, resolve, reject };
+                ipc.server.emit(ref.socket, "app.debug-request", { request_id, request, args });
+            });
+        });
+    };
     readonly stopDebugProcess = function(this: RubicHostProcess, debugger_id: string): Thenable<void> {
-        return this._serverSetup.then(() => {
+        return this._getDebuggerRef(debugger_id)
+        .then((ref) => {
+            return new Promise<void>((resolve, reject) => {
+                ipc.server.emit(ref.socket, "app.terminate", {});
+                ref.stopResolve = resolve;
+                ref.stopReject = reject;
+            });
+        });
+    };
+    private _getDebuggerRef(debugger_id: string): Thenable<DebugProcessReference> {
+        return this._serverSetup
+        .then(() => {
             let ref = this._debuggers[debugger_id];
             if (ref == null) {
                 throw new Error(
                     `Cannot find debugger process named ${debugger_id}`
                 );
             }
-            return new Promise<void>((resolve, reject) => {
-                ipc.server.emit(ref.socket, "terminate", {});
-                ref.stopResolve = resolve;
-                ref.stopReject = reject;
-            });
+            return ref;
         });
-    };
+    }
 
     /* Settings */
     readonly getRubicSetting = function(this: RubicHostProcess, path: string): Thenable<any> {
@@ -175,24 +208,6 @@ export class RubicHostProcess extends RubicProcess {
     };
 
     /* File access */
-    readonly readTextFile = function(this: RubicHostProcess, fullPath: string, json?: boolean, defaultValue?: string | any, encoding?: string): Thenable<string | any> {
-        if (!fs.existsSync(fullPath)) {
-            if (defaultValue == null) {
-                return Promise.reject(
-                    new Error(`File "${fullPath} not found`)
-                );
-            }
-            return Promise.resolve(defaultValue);
-        }
-        return Promise.resolve()
-        .then(() => {
-            let value = fs.readFileSync(fullPath, encoding || "utf8");
-            if (json) {
-                value = CJSON.parse(value);
-            }
-            return value;
-        });
-    };
     readonly updateTextFile = function(this: RubicHostProcess, fullPath: string, updater: any, defaultOrRemover?: any, encoding?: string): Thenable<void> {
         let relPath = path.relative(fullPath, this.workspaceRoot);
         let editor = window.visibleTextEditors.find((editor) => {
@@ -257,11 +272,12 @@ export class RubicHostProcess extends RubicProcess {
         }
         this._catalogData = new CatalogData();
         this._serverSetup = new Promise<void>((resolve) => {
-            ipc.config.id = `rubic-h-${Math.random().toString(36).substr(2)}`;
+            ipc.config.id = this.getUniqueId("h");
             ipc.serve(resolve);
+            ipc.server.start();
         })
         .then(() => {
-            ipc.server.on("initialized", (data, socket) => {
+            ipc.server.on("app.initialized", (data, socket) => {
                 let { debugger_id } = data;
                 let ref = this._debuggers[debugger_id];
                 if (ref == null) {
@@ -271,22 +287,41 @@ export class RubicHostProcess extends RubicProcess {
                 ref.socket = socket;
                 ref.startResolve();
             });
-            ipc.server.on("request", (data, socket) => {
+            ipc.server.on("app.host-request", (data, socket) => {
                 let { type, id, } = data;
                 Promise.resolve()
                 .then(() => {
                     return this._processRequest(type, data.args || {});
                 })
                 .then((result: any) => {
-                    ipc.server.emit(socket, "response", {
+                    ipc.server.emit(socket, "app.host-response", {
                         id, result: (result == null) ? null : result
                     });
                 })
                 .catch((reason: any) => {
-                    ipc.server.emit(socket, "response", {
+                    ipc.server.emit(socket, "app.host-response", {
                         id, reason: (reason == null) ? null : reason
                     });
                 });
+            });
+            ipc.server.on("app.debug-response", (data, socket) => {
+                let { debugger_id, request_id } = data;
+                let ref = this._debuggers[debugger_id];
+                if (ref == null) {
+                    console.warn(`debug-response from unknown debugger: ${debugger_id}`);
+                    return;
+                }
+                let req = ref.debugRequests[request_id];
+                if (req == null) {
+                    console.warn(`debug-response with unknown request id: ${request_id}`);
+                    return;
+                }
+                delete ref.debugRequests[request_id];
+                if (data.reason !== undefined) {
+                    req.reject(data.reason);
+                } else {
+                    req.resolve(data.result);
+                }
             });
             ipc.server.on("socket.disconnected", (socket, destroyedSocketID) => {
                 // FIXME

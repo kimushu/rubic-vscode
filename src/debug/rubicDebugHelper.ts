@@ -1,10 +1,11 @@
 import { Disposable, commands, OutputChannel, window, workspace, ExtensionContext } from "vscode";
-import { Sketch, generateDebugConfiguration } from "./sketch";
+import { Sketch, generateDebugConfiguration } from "../sketch";
 import * as path from "path";
 
 import * as nls from "vscode-nls";
-import { compileMrubySources } from "./util/mrubyCompiler";
-import { RubicExtension } from "./extension";
+import { compileMrubySources } from "../util/mrubyCompiler";
+import { RubicExtension } from "../extension";
+import { RubicProcess } from "../rubicProcess";
 const localize = nls.loadMessageBundle(__filename);
 
 interface StartSessionResult {
@@ -16,7 +17,30 @@ const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
 const CMD_PROVIDE_INIT_CFG = "extension.rubic.provideInitialConfigurations";
 const CMD_GUESS_PROGRAM_NAME = "extension.rubic.guessProgramName";
 
-export class DebugHelper {
+export class RubicDebugHelper implements Disposable {
+    constructor(context: ExtensionContext) {
+        context.subscriptions.push(
+            commands.registerCommand(
+                CMD_START_DEBUG_SESSION,
+                (config) => this._startDebugSession(config)
+            )
+        );
+    }
+
+    dispose() {
+    }
+
+    /**
+     * Debug session hook for type:rubic
+     * @param config Debug configuration
+     */
+    private _startDebugSession(config: any): Promise<void> {
+        RubicProcess.self.startDebugProcess(config);
+        return Promise.resolve();
+    }
+}
+
+class DebugHelper {
     private static _instance: DebugHelper;
     public static get instance(): DebugHelper {
         return this._instance;

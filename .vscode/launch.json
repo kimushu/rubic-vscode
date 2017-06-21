@@ -43,7 +43,7 @@
             "type": "node",
             "request": "launch",
             "cwd": "${workspaceRoot}",
-            "program": "${workspaceRoot}/out/src/rubicDebugSession.js",
+            "program": "${workspaceRoot}/out/src/debug/rubicDebugSession.js",
             "args": ["--server=4711"],
             "sourceMaps": true,
             "outFiles": ["${workspaceRoot}/out/**/*.js"],

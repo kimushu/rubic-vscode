@@ -1,6 +1,5 @@
 import { EventEmitter } from "events";
 import * as stream from "stream";
-import { InteractiveDebugSession } from "../interactiveDebugSession";
 
 export interface BoardCandidate {
     /** Board class name */
@@ -101,6 +100,25 @@ export class Board extends EventEmitter {
     }
 
     /**
+     * Get localizes board name (instance method version)
+     * @return Board name
+     */
+    getBoardName(): string {
+        return (<BoardConstructor>this.constructor).getBoardName();
+    }
+
+    /**
+     * Dispose object
+     */
+    dispose() {
+        return this.disconnect()
+        .catch(() => {})
+        .then(() => {
+            this.removeAllListeners();
+        });
+    }
+
+    /**
      * Connect to board
      * @param path Path of the board
      */
@@ -157,7 +175,7 @@ export class Board extends EventEmitter {
     /**
      * Program firmware
      */
-    writeFirmware(debugSession: InteractiveDebugSession, filename: string): Promise<void> {
+    writeFirmware(filename: string, reporter: (message: string) => void): Promise<void> {
         return Promise.reject(new Error("Not supported"));
     }
 

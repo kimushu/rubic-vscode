@@ -1,4 +1,7 @@
 import * as path from "path";
+import * as fs from "fs";
+import * as pify from "pify";
+import * as CJSON from "comment-json";
 
 // Import declaration only
 import vscode = require("vscode");
@@ -138,6 +141,12 @@ export class RubicProcess {
     readonly startDebugProcess: (configuration: any) => Thenable<string>;
 
     /**
+     * Send Rubic custom request to existing debug process (for host-side only)
+     * @param debugger_id The ID of the debugger process to wait
+     */
+    readonly sendDebugRequest: (debugger_id: string, request: string, args: any) => Thenable<any>;
+
+    /**
      * Stop existing debug process (for host-side only)
      * @param debugger_id The ID of the debugger process to stop
      */
@@ -162,7 +171,24 @@ export class RubicProcess {
     /**
      * Read text file
      */
-    readonly readTextFile: (fullPath: string, json?: boolean, defaultValue?: string | any, encoding?: string) => Thenable<string | any>;
+    readonly readTextFile = function(this: RubicProcess, fullPath: string, json?: boolean, defaultValue?: string | any, encoding?: string): Thenable<string | any> {
+        if (!fs.existsSync(fullPath)) {
+            if (defaultValue == null) {
+                return Promise.reject(
+                    new Error(`File "${fullPath} not found`)
+                );
+            }
+            return Promise.resolve(defaultValue);
+        }
+        return Promise.resolve()
+        .then(() => {
+            let value = fs.readFileSync(fullPath, encoding || "utf8");
+            if (json) {
+                value = CJSON.parse(value);
+            }
+            return value;
+        });
+    };
 
     /**
      * Update text file
@@ -221,13 +247,22 @@ export class RubicProcess {
     /** The instance of current process */
     static get self() { return this._self; }
 
+    /**
+     * Get unique ID
+     * @param prefix Prefix string
+     */
+    protected getUniqueId(prefix: string): string {
+        return `rubic-${prefix}-${Math.random().toString(36).substr(2)}`;
+    }
+
     private static _self: RubicProcess;
 
     /**
      * Construct
+     * @param force Allow multiple initialization (For debugging adapter side)
      */
-    protected constructor() {
-        if (RubicProcess._self != null) {
+    protected constructor(force?: boolean) {
+        if (!force && (RubicProcess._self != null)) {
             throw new Error("RubicProcess must be instantiated once");
         }
         RubicProcess._self = this;

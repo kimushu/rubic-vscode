@@ -5,16 +5,21 @@ import {
 } from "./rubicProcess";
 import { DebugSession, TerminatedEvent } from "vscode-debugadapter";
 import * as ipc from "node-ipc";
+import { Sketch } from "./sketch";
 
-interface Request {
+interface HostRequest {
     request_id: string;
     type: string;
     resolve: (result: any) => void;
     reject: (reason: any) => void;
 }
 
-interface RequestSet {
-    [request_id: string]: Request;
+interface HostRequestSet {
+    [request_id: string]: HostRequest;
+}
+
+interface RubicDebugSession extends DebugSession {
+    rubicDebugRequest(request: string, args: any): Thenable<any>;
 }
 
 export class RubicDebugProcess extends RubicProcess {
@@ -23,6 +28,7 @@ export class RubicDebugProcess extends RubicProcess {
     get isDebug() { return true; }
     get workspaceRoot() { return this._privateData.workspaceRoot; }
     get extensionRoot() { return this._privateData.extensionRoot; }
+    get sketch() { return this._sketch; }
     get debugConfiguration() { return this._debugConfiguration; }
 
     /* UI functions */
@@ -90,6 +96,9 @@ export class RubicDebugProcess extends RubicProcess {
     readonly startDebugProcess = function (): any {
         return Promise.reject(new Error("startDebugProcess() is not available in debug process"));
     };
+    readonly sendDebugRequest = function (): any {
+        return Promise.reject(new Error("sendDebugRequest() is not available in debug process"));
+    };
     readonly stopDebugProcess = function (): any {
         return Promise.reject(new Error("stopDebugProcess() is not available in debug process"));
     };
@@ -106,9 +115,6 @@ export class RubicDebugProcess extends RubicProcess {
     };
 
     /* File access */
-    readonly readTextFile = function(this: RubicDebugProcess, fullPath: string, json?: boolean, defaultValue?: string | any, encoding?: string): Thenable<string | any> {
-        return Promise.reject(new Error("readTextFile() is not available in debug process"));
-    };
     readonly updateTextFile = function(this: RubicDebugProcess, fullPath: string, updater: any, remover?: any): Thenable<void> {
         return Promise.reject(new Error("updateTextFile() is not available in debug process"));
     };
@@ -116,10 +122,11 @@ export class RubicDebugProcess extends RubicProcess {
     /* Construct and dispose */
 
     /**
-     * Construct abstraction laer for Debug Adapter process
+     * Construct abstraction layer for Debug Adapter process
      */
-    constructor(private _debugSession: DebugSession, configuration: any) {
-        super();
+    constructor(private _debugSession: RubicDebugSession, configuration: any) {
+        // Initialize members
+        super(true);
         this._debugConfiguration = Object.assign({}, configuration);
         this._privateData = this._debugConfiguration.__private;
         if (this._privateData == null) {
@@ -127,28 +134,48 @@ export class RubicDebugProcess extends RubicProcess {
         }
         delete this._debugConfiguration.__private;
 
+        // Construct sketch
+        this._sketch = new Sketch(this.workspaceRoot);
+
+        // Setup IPC
         let { host_id, debugger_id } = this._privateData;
-        ipc.connectTo(host_id, () => {
-            let client = ipc.of[host_id];
-            client.on("connect", () => {
-                client.emit("initialized", { debugger_id });
-                client.on("terminate", (data, socket) => {
-                    this._debugSession.sendEvent(
-                        new TerminatedEvent(false)
-                    );
-                });
-                client.on("response", (data, socket) => {
-                    let req = this._requests[data.id];
-                    if (req == null) {
-                        console.warn(`response event with unknown request id: ${data.id}`);
-                        return;
-                    }
-                    delete this._requests[data.id];
-                    if (data.reason !== undefined) {
-                        req.reject(data.reason);
-                    } else {
-                        req.resolve(data.result);
-                    }
+        this._clientSetup = new Promise((resolve) => {
+            ipc.connectTo(host_id, () => {
+                let client = ipc.of[host_id];
+                client.on("connect", () => {
+                    client.emit("app.initialized", { debugger_id });
+                    client.on("app.terminate", (data, socket) => {
+                        this._debugSession.sendEvent(
+                            new TerminatedEvent(false)
+                        );
+                    });
+                    client.on("app.host-response", (data, socket) => {
+                        let req = this._requests[data.id];
+                        if (req == null) {
+                            console.warn(`host-response event with unknown request id: ${data.id}`);
+                            return;
+                        }
+                        delete this._requests[data.id];
+                        if (data.reason !== undefined) {
+                            req.reject(data.reason);
+                        } else {
+                            req.resolve(data.result);
+                        }
+                    });
+                    client.on("app.debug-request", (data, socket) => {
+                        let { request_id, request, args } = data;
+                        _debugSession.rubicDebugRequest(request, args)
+                        .then((result) => {
+                            client.emit("app.debug-response", {
+                                debugger_id, request_id, result
+                            });
+                        }, (reason = null) => {
+                            client.emit("app.debug-response", {
+                                debugger_id, request_id, reason
+                            });
+                        });
+                    });
+                    resolve(client);
                 });
             });
         });
@@ -160,11 +187,15 @@ export class RubicDebugProcess extends RubicProcess {
 
     /** Requester */
     private _request(type: string, args: any): Promise<any> {
-        return new Promise((resolve, reject) => {
-            let request_id = `rubic-r-${Math.random().toString(36).substr(2)}`;
-            this._requests[request_id] = {
-                request_id, type, resolve, reject
-            };
+        return this._clientSetup
+        .then((client) => {
+            return new Promise((resolve, reject) => {
+                let id = this.getUniqueId("hr");
+                this._requests[id] = {
+                    request_id: id, type, resolve, reject
+                };
+                client.emit("app.host-request", {type, id, args});
+            });
         });
     }
 
@@ -179,10 +210,13 @@ export class RubicDebugProcess extends RubicProcess {
     /** Debug configuration data */
     private _debugConfiguration: any;
 
+    /** Sketch instance */
+    private _sketch: Sketch;
+
     /** Client setup */
-    private readonly _clientSetup: Promise<void>;
+    private readonly _clientSetup: Promise<any>;
 
     /** Set of pending requests */
-    private _requests: RequestSet = {};
+    private _requests: HostRequestSet = {};
 
 }

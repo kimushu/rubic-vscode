@@ -5,7 +5,6 @@ import * as nls from "vscode-nls";
 import * as fse from "fs-extra";
 import * as pify from "pify";
 import * as path from "path";
-import { InteractiveDebugSession } from "../interactiveDebugSession";
 import { enumerateRemovableDisks } from "../util/diskEnumerator";
 import { exec } from "child_process";
 import { RubicProcess } from "../rubicProcess";
@@ -73,7 +72,7 @@ export class WakayamaRbBoard extends Board {
                     vendorId: vid,
                     productId: pid
                 };
-                if (!entry) {
+                if (entry) {
                     board.name = this.getBoardName();
                 } else {
                     board.unsupported = true;
@@ -101,7 +100,8 @@ export class WakayamaRbBoard extends Board {
         });
     }
 
-    connect(): Promise<void> {
+    connect(path: string): Promise<void> {
+        this._path = path;
         return this._portCall("open");
     }
 
@@ -110,12 +110,6 @@ export class WakayamaRbBoard extends Board {
             return this._portCall("close");
         }
         return Promise.resolve();
-    }
-
-    dispose(): void {
-        if (this._port) {
-            this._port.close();
-        }
     }
 
     getInfo(): Promise<BoardInformation> {
@@ -237,24 +231,22 @@ export class WakayamaRbBoard extends Board {
         }); // return Promise.resolve().then()...
     }
 
-    async writeFirmware(debugSession: InteractiveDebugSession, filename: string): Promise<void> {
+    async writeFirmware(filename: string, reporter: (message: string) => void): Promise<void> {
         let boardName = (<BoardConstructor>this.constructor).getBoardName();
-        await debugSession.showProgressMessage(
+        reporter(
             `${localize(
                 "follow-inst",
                 "Please follow instructions showed on the top of window"
             )} $(arrow-up)`
         );
-        if (await debugSession.showInformationMessage(
+        if (await RubicProcess.self.showInformationMessage(
             localize("push-reset-button-x", "Push reset button on {0}", boardName),
             {title: localize("push-done", "Pushed")}
         ) != null) {
-            await debugSession.showProgressMessage(
-                localize("searching-x", "Searching {0}...", boardName)
-            );
+            reporter(localize("searching-x", "Searching {0}...", boardName));
             let basePath = await this._searchUsbMassStorage();
 
-            await debugSession.showProgressMessage(
+            reporter(
                 localize(
                     "writing-firmware-x",
                     "Writing firmware ... $(stop)Please wait! Do not disconnect {0}",
@@ -265,7 +257,7 @@ export class WakayamaRbBoard extends Board {
             let copy_cmd = (process.platform === "win32") ? "copy" : "cp";
             await pify(exec)(`${copy_cmd} "${filename}" "${destPath}"`);
             await delay(WRBB_PROG_DELAY_MS);
-            await debugSession.showInformationMessage(localize(
+            await RubicProcess.self.showInformationMessage(localize(
                 "wait-led-nonblink-x",
                 "Wait until LED on {0} stops blinking",
                 boardName

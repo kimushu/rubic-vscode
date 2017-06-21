@@ -5,7 +5,7 @@ import * as nls from "vscode-nls";
 import * as path from "path";
 import * as fs from "fs";
 import * as pify from "pify";
-import { InteractiveDebugSession } from "../interactiveDebugSession";
+import { RubicProcess } from "../rubicProcess";
 const localize = nls.loadMessageBundle(__filename);
 
 const WRITER_RBF_PATH = path.join(__dirname, "..", "..", "lib", "peridot_classic_writer.rbf");
@@ -58,10 +58,6 @@ export class PeridotClassicBoard extends Board {
         return this._canarium.close();
     }
 
-    dispose(): void {
-        this._canarium.close().catch(() => null);
-    }
-
     getInfo(): Promise<BoardInformation> {
         return this._canarium.getinfo().then((info) => {
             return {
@@ -112,12 +108,12 @@ export class PeridotClassicBoard extends Board {
         });
     }
 
-    async writeFirmware(debugSession: InteractiveDebugSession, filename: string): Promise<void> {
+    async writeFirmware(filename: string, reporter: (message: string) => void): Promise<void> {
         let writerRbf: Buffer = await pify(fs.readFile)(WRITER_RBF_PATH);
         let firmRbf: Buffer = await pify(fs.readFile)(filename);
         let canarium = this._canarium;
 
-        if (await debugSession.showInformationMessage(
+        if (await RubicProcess.self.showInformationMessage(
             localize("switch_to_ps", "Change switch to PS mode")
         ) != null) {
             // Connect to board

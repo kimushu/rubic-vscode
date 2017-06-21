@@ -17,7 +17,6 @@ import { FSWatcher, readFileSync, watch } from "fs";
 import { SketchLoadResult } from "../sketch";
 import * as MarkdownIt from "markdown-it";
 import { GitHubRepository } from "../util/githubFetcher";
-import { interactiveDebugRequest, soloInteractiveDebugRequest } from "../interactiveRequester";
 import { RubicProcess, RubicMessageItem } from "../rubicProcess";
 
 const Handlebars = require("./handlebars");
@@ -849,7 +848,8 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 return;
             }
         }
-
+        return sketch.testConnection().then(() => {});
+/*
         try {
             let result: BoardInformation = await soloInteractiveDebugRequest("getInfo", {
                 boardClass: boardClass,
@@ -865,7 +865,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 "conn-test-failed",
                 "Connection test failed (See 'Debug console' for details)"
             ));
-        }
+        }*/
     }
 
     /**
@@ -884,7 +884,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         ) == null) {
             return;
         }
-
+/*
         // Request firmware write
         await soloInteractiveDebugRequest("writeFirmware", {
             boardClass: sketch.boardClass,
@@ -897,6 +897,6 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             await window.showInformationMessage(
                 localize("finished-write-firmware", "Firmware has been successfully updated.")
             );
-        }
+        }*/
     }
 }

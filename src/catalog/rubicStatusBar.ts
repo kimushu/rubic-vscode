@@ -28,6 +28,7 @@ export class RubicStatusBar implements Disposable {
         let { sketch } = RubicProcess.self;
         sketch.on("load", () => this._update());
         sketch.on("unload", () => this._update());
+        sketch.on("invalid", () => this._update());
     }
 
     dispose() {
@@ -35,7 +36,7 @@ export class RubicStatusBar implements Disposable {
 
     private _update() {
         let { sketch } = RubicProcess.self;
-        if (sketch == null || !sketch.loaded) {
+        if (sketch == null || (!sketch.loaded && !sketch.invalid)) {
             // No sketch (Rubic is disabled)
             this._sbiBoard.hide();
             this._sbiPort.hide();

@@ -6,7 +6,7 @@ import { ExtensionContext, window, workspace } from "vscode";
 import { commands, ProgressOptions, ProgressLocation, Progress } from "vscode";
 import { Sketch, SketchLoadResult } from "./sketch";
 import { CatalogViewer } from "./catalog/catalogViewer";
-import { DebugHelper } from "./debugHelper";
+import { RubicDebugHelper } from "./debug/rubicDebugHelper";
 import * as path from "path";
 import { CatalogData } from "./catalog/catalogData";
 import { RubicHostProcess } from "./rubicHostProcess";
@@ -30,12 +30,6 @@ export class RubicExtension {
      */
     get catalogViewer() { return this._catalogViewer; }
     private _catalogViewer: CatalogViewer;
-
-    /**
-     * DebugHelper instance
-     */
-    get debugHelper() { return this._debugHelper; }
-    private _debugHelper: DebugHelper;
 
     /**
      * Sketch instance
@@ -62,7 +56,6 @@ export class RubicExtension {
             return;
         }
 
-        this._debugHelper = new DebugHelper(_context);
         this._sketch = new Sketch(workspace.rootPath, window);
         this._catalogData = new CatalogData();
         _context.subscriptions.push(this._sketch, this._catalogData);
@@ -100,6 +93,7 @@ export function activate(context: ExtensionContext): any {
     context.subscriptions.push(new RubicHostProcess(context));
     context.subscriptions.push(new CatalogViewer(context));
     context.subscriptions.push(new RubicStatusBar(context));
+    context.subscriptions.push(new RubicDebugHelper(context));
 }
 
 /**
