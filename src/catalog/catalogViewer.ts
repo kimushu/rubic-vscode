@@ -848,24 +848,20 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 return;
             }
         }
-        return sketch.testConnection().then(() => {});
-/*
-        try {
-            let result: BoardInformation = await soloInteractiveDebugRequest("getInfo", {
-                boardClass: boardClass,
-                boardPath: boardPath,
-                printOutput: true
-            });
-            window.showInformationMessage(localize(
-                "conn-test-success",
-                "Connection test succeeded (See 'Debug console' for details)"
-            ));
-        } catch (error) {
-            window.showErrorMessage(localize(
-                "conn-test-failed",
-                "Connection test failed (See 'Debug console' for details)"
-            ));
-        }*/
+        return sketch.testConnection()
+        .then((success) => {
+            if (success) {
+                RubicProcess.self.showInformationMessage(localize(
+                    "conn-test-success",
+                    "Connection test succeeded (See 'Debug console' for details)"
+                ));
+            } else {
+                RubicProcess.self.showErrorMessage(localize(
+                    "conn-test-failed",
+                    "Connection test failed (See 'Debug console' for details)"
+                ));
+            }
+        });
     }
 
     /**

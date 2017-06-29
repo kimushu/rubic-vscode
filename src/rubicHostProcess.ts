@@ -1,4 +1,4 @@
-import { RubicProcess, RubicProgress, RubicProgressOptions } from "./rubicProcess";
+import { RubicProcess, RubicProgress, RubicProgressOptions, RubicDebugRequestArguments, RubicDebugHook } from "./rubicProcess";
 import {
     ExtensionContext, OutputChannel, ProgressLocation, ProgressOptions,
     commands, window, workspace
@@ -10,8 +10,11 @@ import * as fs from "fs";
 import { Sketch } from "./sketch";
 import * as CJSON from "comment-json";
 import { CatalogData } from "./catalog/catalogData";
+import { RubicDebugHelper } from "./debug/rubicDebugHelper";
 
 const localize = nls.loadMessageBundle(__filename);
+
+const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
 
 interface DebugRequest {
     request_id: string;
@@ -140,12 +143,17 @@ export class RubicHostProcess extends RubicProcess {
     };
 
     /* Debug process management */
+    readonly registerDebugHook = function(this: RubicHostProcess, listener: RubicDebugHook): void {
+        if (this._debugHooks.indexOf(listener) < 0) {
+            this._debugHooks.unshift(listener);
+        }
+    };
     readonly startDebugProcess = function(this: RubicHostProcess, configuration: any): Thenable<string> {
         return this._serverSetup.then(() => {
             let host_id = ipc.config.id;
             let debugger_id = this.getUniqueId("d");
             let { workspaceRoot, extensionRoot } = this;
-            let config = Object.assign({
+            let config: RubicDebugRequestArguments = Object.assign({
                 type: "rubic",
                 request: "attach",
                 debugServer: process.env["DEBUG_SERVER_PORT"],
@@ -260,6 +268,12 @@ export class RubicHostProcess extends RubicProcess {
      */
     constructor(private _context: ExtensionContext) {
         super();
+        _context.subscriptions.push(
+            commands.registerCommand(
+                CMD_START_DEBUG_SESSION,
+                (config) => this._startDebugSession(config)
+            )
+        );
         if (this.workspaceRoot != null) {
             this._sketch = new Sketch(this.workspaceRoot);
             _context.subscriptions.push(this._sketch);
@@ -324,7 +338,20 @@ export class RubicHostProcess extends RubicProcess {
                 }
             });
             ipc.server.on("socket.disconnected", (socket, destroyedSocketID) => {
-                // FIXME
+                let ref: DebugProcessReference;
+                for (let id of Object.keys(this._debuggers)) {
+                    let refTemp = this._debuggers[id];
+                    if (refTemp.socket === socket) {
+                        ref = refTemp;
+                        break;
+                    }
+                }
+                if (ref != null) {
+                    if (ref.stopResolve != null) {
+                        ref.stopResolve();
+                    }
+                    delete this._debuggers[ref.debugger_id];
+                }
             });
         });
     }
@@ -368,11 +395,32 @@ export class RubicHostProcess extends RubicProcess {
         );
     }
 
+    /**
+     * Start debug session
+     * @param configuration Debug configuration
+     */
+    private _startDebugSession(configuration: any): void {
+        this._debugHooks.reduce((promise, hook) => {
+            return promise
+            .then((continueDebug) => {
+                return hook.onDebugStart(configuration);
+            });
+        }, Promise.resolve(true))
+        .then((continueDebug) => {
+            if (continueDebug) {
+                return this.startDebugProcess(configuration);
+            }
+        });
+    }
+
     /** Sketch instance */
     private readonly _sketch: Sketch;
 
     /** CatalogData instance */
     private readonly _catalogData: CatalogData;
+
+    /** Debug hooks */
+    private readonly _debugHooks: RubicDebugHook[] = [];
 
     /** Server setup */
     private readonly _serverSetup: Promise<void>;

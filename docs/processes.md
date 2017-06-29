@@ -65,6 +65,7 @@ class RubicDebugProcess extends RubicProcess {}
 |`sketch`|Yes|Yes|スケッチのインスタンス|
 |`catalogData`|Yes|---|カタログ情報(キャッシュ)|
 |`debugConfiguration`|---|Yes|デバッグ開始時に引き渡されたオブジェクト|
+|`registerDebugHook()`|Yes|---|デバッグ開始時のフックを登録する|
 |`startDebugProcess()`|Yes|---|デバッグプロセスを生成する|
 |`sendDebugRequest()`|Yes|---|デバッグプロセスへ要求を送信する|
 |`stopDebugProcess()`|Yes|---|デバッグプロセスを強制終了する|

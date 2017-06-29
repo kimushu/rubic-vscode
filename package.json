@@ -210,6 +210,10 @@
       {
         "fileMatch": "rubic.json",
         "url": "./schemas/sketch.schema.json"
+      },
+      {
+        "fileMatch": "mrbconfig.json",
+        "url": "./schemas/mrbconfig.schema.json"
       }
     ]
   },
@@ -293,7 +297,8 @@
     "clean": "rimraf out/src/*.js out/src/*.js.map out/src/*.nls.json node_modules/serialport/build",
     "package": "vsce package",
     "schema": "npm-run-all -p schema:*",
-    "schema:sketch": "typescript-json-schema --noExtraProps --required ./schemas/sketch.d.ts V1_0_x.Top -o ./schemas/sketch.schema.json"
+    "schema:sketch": "typescript-json-schema --noExtraProps --required ./schemas/sketch.d.ts V1_0_x.Top -o ./schemas/sketch.schema.json",
+    "schema:mrbconfig": "typescript-json-schema --noExtraProps --required ./schemas/mrbconfig.d.ts MrbConfig -o ./schemas/mrbconfig.schema.json"
   },
   "icon": "images/rubic_cube2x2.svg",
   "repository": {

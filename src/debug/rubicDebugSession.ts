@@ -80,6 +80,7 @@ class RubicDebugSession extends DebugSession {
         .then(() => {
             this.sendResponse(response);
         }, (reason) => {
+            this._report(`${reason}`);
             this.sendErrorResponse(response, 1001, `Failed to launch debugger: ${reason}`);
         });
     }
@@ -124,7 +125,9 @@ class RubicDebugSession extends DebugSession {
      */
     shutdown() {
         // Dispose of subscribed objects
-        return this.subscriptions.reduce((promise, obj) => {
+        let { subscriptions } = this;
+        this.subscriptions = null;
+        return (subscriptions || []).reduce((promise, obj) => {
             return promise
             .then(() => {
                 return obj.dispose();
@@ -132,7 +135,6 @@ class RubicDebugSession extends DebugSession {
             .catch(() => {});
         }, Promise.resolve())
         .then(() => {
-            this.subscriptions = null;
             return DebugSession.prototype.shutdown.call(this);
         });
     }
@@ -342,7 +344,7 @@ class RubicDebugSession extends DebugSession {
             if (info.firmwareId != null) {
                 this._report(`${localize("firm-id", "ID of firmware")} : ${info.firmwareId}`);
             }
-            return this._board.disconnect()
+            return this._disconnectBoard()
             .then(() => info);
         });
     }

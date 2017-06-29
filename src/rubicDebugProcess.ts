@@ -175,6 +175,7 @@ export class RubicDebugProcess extends RubicProcess {
                             });
                         });
                     });
+                    client.destroy = () => ipc.disconnect(host_id);
                     resolve(client);
                 });
             });
@@ -182,7 +183,10 @@ export class RubicDebugProcess extends RubicProcess {
     }
 
     readonly dispose = function(this: RubicDebugProcess): Thenable<void> {
-        return Promise.resolve();
+        return this._clientSetup
+        .then((client) => {
+            client.destroy();
+        });
     };
 
     /** Requester */

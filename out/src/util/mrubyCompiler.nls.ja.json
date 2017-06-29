@@ -1,0 +1,12 @@
+{
+    "messages": [
+        "コンパイルを開始します...",
+        "コンパイルが終了しました",
+        "コンパイルを中断しました"
+    ],
+    "keys": [
+        "start-compile",
+        "finish-compile",
+        "abort-compile"
+    ]
+}

@@ -11,11 +11,14 @@ import { RubicProcess } from "./rubicProcess";
 
 // Declaration only
 import vscode = require("vscode");
+import { BoardInformation } from "./boards/board";
 
 const RUBIC_JSON  = "rubic.json";
 const SKETCH_ENCODING = "utf8";
 const LAUNCH_JSON = "launch.json";
 const LAUNCH_ENCODING = "utf8";
+const CONN_TEST_TIMEOUT_MS = 10000;
+
 const localize = nls.loadMessageBundle(__filename);
 
 export enum SketchLoadResult {
@@ -28,7 +31,7 @@ export enum SketchLoadResult {
 /**
  * Generate debug configuration
  */
-export async function generateDebugConfiguration(workspaceRoot: string): Promise<any> {
+export function generateDebugConfiguration(workspaceRoot: string): any {
     return {
         type: "rubic",
         request: "launch",
@@ -236,6 +239,7 @@ export class Sketch extends EventEmitter {
      * Execute connection test
      */
     testConnection(): Promise<boolean> {
+        let rprocess = RubicProcess.self;
         if (!this.loaded) {
             return Promise.reject(new Error("No sketch loaded"));
         }
@@ -245,26 +249,37 @@ export class Sketch extends EventEmitter {
         if (this.boardPath == null) {
             return Promise.reject(new Error("No board path specified"));
         }
-        return Promise.resolve(RubicProcess.self.startDebugProcess({}))
+        return Promise.resolve(rprocess.startDebugProcess({
+            type: "rubic",
+            request: "attach"
+        }))
         .then((debuggerId) => {
-            return false;
-        });/*
-        try {
-            let result: BoardInformation = await soloInteractiveDebugRequest("getInfo", {
-                boardClass: boardClass,
-                boardPath: boardPath,
-                printOutput: true
+            return Promise.race([
+                rprocess.sendDebugRequest(
+                    debuggerId,
+                    "board.getInfo",
+                    {
+                        boardClass: this.boardClass,
+                        boardPath: this.boardPath
+                    }
+                ),/*
+                new Promise((resolve, reject) => {
+                    setTimeout(
+                        reject, CONN_TEST_TIMEOUT_MS,
+                        new Error("Timed out")
+                    );
+                })*/
+            ])
+            .then((result: BoardInformation) => {
+                return true;
+            }, (reason) => {
+                return false;
+            })
+            .then((success) => {
+                return rprocess.stopDebugProcess(debuggerId)
+                .then(() => success, () => success);
             });
-            window.showInformationMessage(localize(
-                "conn-test-success",
-                "Connection test succeeded (See 'Debug console' for details)"
-            ));
-        } catch (error) {
-            window.showErrorMessage(localize(
-                "conn-test-failed",
-                "Connection test failed (See 'Debug console' for details)"
-            ));
-        }*/
+        });
     }
 
     /**

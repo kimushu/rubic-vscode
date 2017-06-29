@@ -51,6 +51,8 @@
         "mruby (軽量Ruby)",
         "搭載しているmrbgem",
         "使用可能言語",
+        "接続テストに成功しました (詳細は「デバッグ コンソール」を確認してください)",
+        "接続テストに失敗しました (詳細は「デバッグ コンソール」を確認してください)",
         "ボードにファームウェアを書き込んでよろしいですか？",
         "続行"
     ],
@@ -106,6 +108,8 @@
         "mruby-desc",
         "included-mrbgems",
         "support-langs",
+        "conn-test-success",
+        "conn-test-failed",
         "confirm-write-firmware",
         "continue"
     ]

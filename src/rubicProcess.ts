@@ -1,6 +1,5 @@
 import * as path from "path";
 import * as fs from "fs";
-import * as pify from "pify";
 import * as CJSON from "comment-json";
 
 // Import declaration only
@@ -100,9 +99,17 @@ interface RubicTextUpdaterFunction {
 /**
  * Arguments for launch/attach by Rubic
  */
-interface RubicDebugRequestArguments extends vsdp.DebugProtocol.AttachRequestArguments, vsdp.DebugProtocol.LaunchRequestArguments {
+export interface RubicDebugRequestArguments extends vsdp.DebugProtocol.AttachRequestArguments, vsdp.DebugProtocol.LaunchRequestArguments {
     type: "rubic";
     request: "launch" | "attach";
+    [key: string]: any;
+}
+
+/**
+ * Interface for debug hooks
+ */
+export interface RubicDebugHook {
+    onDebugStart(config: any): boolean | Thenable<boolean>;
 }
 
 /**
@@ -132,6 +139,11 @@ export class RubicProcess {
 
     /** Version */
     readonly version: string;
+
+    /**
+     * Register hook for starting debug
+     */
+    readonly registerDebugHook: (listener: RubicDebugHook) => void;
 
     /**
      * Start a new debug process (for host-side only)
