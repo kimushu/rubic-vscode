@@ -474,47 +474,19 @@ export class Sketch extends EventEmitter {
         return SketchLoadResult.LOAD_MIGRATED;
     }
 
-    private async _mergeLaunchConfig(): Promise<void> {
-        await this._ensureSaved(this._launchFile);
-        let jsonText;
-        try {
-            jsonText = await pify(fse.readFile)(this._launchFile, LAUNCH_ENCODING);
-        } catch (error) {
-            // Ignore error here
-            jsonText = "{\"version\":\"0.2.0\",\"configurations\":[]}";
-        }
-        let obj = CJSON.parse(jsonText);
-        let cfg = obj.configurations || (obj.configurations = []);
-        cfg.push(await generateDebugConfiguration(this._workspaceRoot));
-
-        await pify(fse.ensureDir)(path.dirname(this._launchFile));
-        await pify(fse.writeFile)(this._launchFile, CJSON.stringify(obj, null, 4), LAUNCH_ENCODING);
-    }
-
-    private async _ensureSaved(fileName: string, confirm: boolean = true): Promise<void> {
-        let name = path.relative(fileName, this._workspaceRoot);
-        let editor = this._window.visibleTextEditors.find((editor) => {
-            return path.relative(editor.document.fileName, fileName) === "";
-        });
-        if (!editor || !editor.document.isDirty) {
-            return;
-        }
-        if (!confirm) {
-            throw Error(
-                localize(
-                    "file-x-not-saved",
-                    "File \"{0}\" is modified and not saved",
-                    name
-                )
-            );
-        }
-        await this._window.showInformationMessage(
-            localize(
-                "save-close-x-to-continue",
-                "Save or close editor of \"{0}\" to continue",
-                name
+    private _mergeLaunchConfig(): Promise<void> {
+        return Promise.resolve(
+            RubicProcess.self.updateTextFile(
+                this._launchFile,
+                (jsonText) => {
+                    let obj = CJSON.parse(jsonText);
+                    let cfg = obj.configurations || (obj.configurations = []);
+                    cfg.push(generateDebugConfiguration(this._workspaceRoot));
+                    return CJSON.stringify(obj, null, 4);
+                },
+                "{\"version\":\"0.2.0\",\"configurations\":[]}",
+                LAUNCH_ENCODING
             )
         );
-        return this._ensureSaved(fileName, false);
     }
 }
