@@ -73,7 +73,7 @@ function checkInvalidNlsJson(file1, src1, file2, src2) {
             console.log(`The number of messages of ${file2} is invalid`);
             ++errors;
         } else {
-            for (let i of key1) {
+            for (let i in key1) {
                 if (key2[i] !== key1[i]) {
                     console.log(`Key "${key2[i]}" at ${i} is different`);
                     ++errors;
