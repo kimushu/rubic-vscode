@@ -262,13 +262,13 @@ export class Sketch extends EventEmitter {
                         boardClass: this.boardClass,
                         boardPath: this.boardPath
                     }
-                ),/*
+                ),
                 new Promise((resolve, reject) => {
                     setTimeout(
                         reject, CONN_TEST_TIMEOUT_MS,
                         new Error("Timed out")
                     );
-                })*/
+                })
             ])
             .then((result: BoardInformation) => {
                 return true;
