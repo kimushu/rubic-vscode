@@ -6,7 +6,7 @@ import {
 import * as ipc from "node-ipc";
 import * as path from "path";
 import * as nls from "vscode-nls";
-import * as fs from "fs";
+import * as fse from "fs-extra";
 import { Sketch } from "./sketch";
 import * as CJSON from "comment-json";
 import { CatalogData } from "./catalog/catalogData";
@@ -231,7 +231,8 @@ export class RubicHostProcess extends RubicProcess {
                     return updater(oldValue);
                 })
                 .then((newValue) => {
-                    fs.writeFileSync(fullPath, newValue, encoding || "utf8");
+                    fse.ensureDirSync(path.dirname(fullPath));
+                    fse.writeFileSync(fullPath, newValue, encoding || "utf8");
                 });
             } else {
                 return this.readTextFile(fullPath, true, {}, encoding)
@@ -255,7 +256,8 @@ export class RubicHostProcess extends RubicProcess {
                     };
                     remove(obj, defaultOrRemover);
 
-                    fs.writeFileSync(fullPath, CJSON.stringify(obj, null, 4));
+                    fse.ensureDirSync(path.dirname(fullPath));
+                    fse.writeFileSync(fullPath, CJSON.stringify(obj, null, 4));
                 });
             }
         }
