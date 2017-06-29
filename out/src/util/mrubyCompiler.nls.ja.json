@@ -1,10 +1,12 @@
 {
     "messages": [
+        "mrubyのコンパイルに失敗しました。詳しくは「{0}」出力を確認してください。",
         "コンパイルを開始します...",
         "コンパイルが終了しました",
         "コンパイルを中断しました"
     ],
     "keys": [
+        "check-output-x",
         "start-compile",
         "finish-compile",
         "abort-compile"

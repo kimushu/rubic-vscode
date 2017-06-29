@@ -5,9 +5,7 @@
         "いいえ (古い設定を残す)",
         "このスケッチは古いバージョンのRubicで作成されています。新バージョン用に変換しますか？",
         "古いバージョン用の設定を削除しますか？ (元に戻せません)",
-        "不明なボード名です: {0}",
-        "ファイル \"{0}\" は変更されていますが、保存されていません。",
-        "続行するには、\"{0}\"を保存するかエディタを閉じてください。"
+        "不明なボード名です: {0}"
     ],
     "keys": [
         "cancel",
@@ -15,8 +13,6 @@
         "no-keep",
         "convert-sketch-confirm",
         "convertion-warning",
-        "unknown-board-x",
-        "file-x-not-saved",
-        "save-close-x-to-continue"
+        "unknown-board-x"
     ]
 }

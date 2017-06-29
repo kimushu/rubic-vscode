@@ -415,6 +415,10 @@ export class RubicHostProcess extends RubicProcess {
             if (continueDebug) {
                 return this.startDebugProcess(configuration);
             }
+        }, (reason) => {
+            this.showErrorMessage(
+                `${localize("cannot-start-debug", "Cannot start debug session")}: ${reason}`
+            );
         });
     }
 

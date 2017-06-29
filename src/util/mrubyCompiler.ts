@@ -15,6 +15,7 @@ const MRBCONFIG_FILE = "mrbconfig.json";
 const MRBCONFIG_ENCODING = "utf8";
 const DUMP_EXT = ".dump";
 const DUMP_ENCODING = "utf8";
+const CHANNEL_NAME = "mruby (Rubic)";
 
 export class MrubyCompiler implements RubicDebugHook {
     private _channel: OutputChannel;
@@ -22,7 +23,7 @@ export class MrubyCompiler implements RubicDebugHook {
     private _watch: boolean;
     
     constructor(context: ExtensionContext) {
-        this._channel = window.createOutputChannel("mruby (Rubic)");
+        this._channel = window.createOutputChannel(CHANNEL_NAME);
         this._watch = true;
         RubicProcess.self.registerDebugHook(this);
     }
@@ -61,6 +62,12 @@ export class MrubyCompiler implements RubicDebugHook {
         })
         .then(() => {
             return true;
+        }, (reason) => {
+            RubicProcess.self.showErrorMessage(localize(
+                "check-output-x",
+                "mruby Compilation failed. Check \"{0}\" output for details",
+                CHANNEL_NAME)
+            );
         });
     }
 

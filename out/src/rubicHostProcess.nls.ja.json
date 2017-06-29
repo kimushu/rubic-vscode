@@ -1,10 +1,12 @@
 {
     "messages": [
         "ファイル {0} は編集中で保存されていません。",
-        "スケッチのロードに失敗しました: {0}"
+        "スケッチのロードに失敗しました: {0}",
+        "デバッグセッションを開始できません"
     ],
     "keys": [
         "file-x-dirty",
-        "sketch-load-failed-x"
+        "sketch-load-failed-x",
+        "cannot-start-debug"
     ]
 }
