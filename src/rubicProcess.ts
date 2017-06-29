@@ -150,7 +150,7 @@ export class RubicProcess {
      * @param configuration Configuration data to be passed to debug-adapter
      * @return Promise with process ID
      */
-    readonly startDebugProcess: (configuration: any) => Thenable<string>;
+    readonly startDebugProcess: (configuration: any, clearConsole?: boolean) => Thenable<string>;
 
     /**
      * Send Rubic custom request to existing debug process (for host-side only)

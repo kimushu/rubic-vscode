@@ -148,7 +148,7 @@ export class RubicHostProcess extends RubicProcess {
             this._debugHooks.unshift(listener);
         }
     };
-    readonly startDebugProcess = function(this: RubicHostProcess, configuration: any): Thenable<string> {
+    readonly startDebugProcess = function(this: RubicHostProcess, configuration: any, clearConsole?: boolean): Thenable<string> {
         return this._serverSetup.then(() => {
             let host_id = ipc.config.id;
             let debugger_id = this.getUniqueId("d");
@@ -163,6 +163,9 @@ export class RubicHostProcess extends RubicProcess {
                 this._debuggers[debugger_id] = {
                     debugger_id, startResolve, startReject, debugRequests: {}
                 };
+                if (clearConsole) {
+                    commands.executeCommand("workbench.debug.panel.action.clearReplAction");
+                }
                 commands.executeCommand("vscode.startDebug", config);
             })
             .then(() => {

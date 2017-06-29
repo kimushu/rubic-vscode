@@ -252,7 +252,7 @@ export class Sketch extends EventEmitter {
         return Promise.resolve(rprocess.startDebugProcess({
             type: "rubic",
             request: "attach"
-        }))
+        }, true))
         .then((debuggerId) => {
             return Promise.race([
                 rprocess.sendDebugRequest(
