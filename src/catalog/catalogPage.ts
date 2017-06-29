@@ -149,9 +149,11 @@ const sendCommand = (() => {
         }
         return newElement;
     }
+    /*
     function getParentElement(element: HTMLElement, className: string): HTMLElement {
         return _getElement(element, className, "parentElement");
     }
+    */
     function getNextElement(element: HTMLElement, className: string): HTMLElement {
         return _getElement(element, className, "nextElementSibling");
     }

@@ -4,7 +4,6 @@ import { readGithubFile, GitHubRepository } from "../util/githubFetcher";
 import * as semver from "semver";
 import * as nls from "vscode-nls";
 import * as path from "path";
-import * as pify from "pify";
 import * as request from "request";
 import * as decompress from "decompress";
 
