@@ -72,7 +72,7 @@ export class RubicDebugProcess extends RubicProcess {
         return this._request("withProgress.start", {options})
         .then((progress_id) => {
             return task({
-                report(value: { message?: string }) {
+                report: (value: { message?: string }) => {
                     this._request("withProgress.report", {progress_id, message: value.message});
                 }
             })

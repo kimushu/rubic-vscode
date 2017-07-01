@@ -101,6 +101,7 @@ export class RubicHostProcess extends RubicProcess {
             return new Promise<void>((resolve) => {
                 ctx.reporter = (value) => progress.report(value);
                 ctx.completer = resolve;
+                this._progressContexts[progress_id] = ctx;
             });
         });
         return Promise.resolve(progress_id);
