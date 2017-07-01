@@ -305,7 +305,7 @@ export class RubicProcess {
             throw new Error("RubicProcess must be instantiated once");
         }
         RubicProcess._self = this;
-        this.version = require(path.join(__dirname, "..", "..", "package.json")).version;
+        this.version = require(path.join(__dirname, "..", "..", "..", "package.json")).version;
     }
 }
 
