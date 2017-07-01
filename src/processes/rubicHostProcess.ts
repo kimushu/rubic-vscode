@@ -7,10 +7,9 @@ import * as ipc from "node-ipc";
 import * as path from "path";
 import * as nls from "vscode-nls";
 import * as fse from "fs-extra";
-import { Sketch } from "../sketch";
+import { Sketch, generateDebugConfiguration } from "../sketch";
 import * as CJSON from "comment-json";
 import { CatalogData } from "../catalog/catalogData";
-import { RubicDebugHelper } from "../debug/rubicDebugHelper";
 
 const localize = nls.loadMessageBundle(__filename);
 
@@ -18,6 +17,13 @@ const LOCALIZED_YES = localize("yes", "Yes");
 const LOCALIZED_NO = localize("no", "No");
 
 const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
+const CMD_PROVIDE_INIT_CFG = "extension.rubic.provideInitialConfigurations";
+const CMD_GUESS_PROGRAM_NAME = "extension.rubic.guessProgramName";
+
+interface StartSessionResult {
+    status: "ok" | "initialConfiguration" | "saveConfiguration";
+    content?: string;
+}
 
 interface DebugRequest {
     request_id: string;
@@ -304,6 +310,18 @@ export class RubicHostProcess extends RubicProcess {
                 (config) => this._startDebugSession(config)
             )
         );
+        _context.subscriptions.push(
+            commands.registerCommand(CMD_PROVIDE_INIT_CFG, () => {
+                return this._provideInitConfig();
+            })
+        );
+        _context.subscriptions.push(
+            commands.registerCommand(CMD_GUESS_PROGRAM_NAME, () => {
+                RubicProcess.self.showWarningMessage(
+                    "guessProgramName is obsolete! Please regenerate your launch.json"
+                );
+            })
+        );
         if (this.workspaceRoot != null) {
             this._sketch = new Sketch(this.workspaceRoot);
             _context.subscriptions.push(this._sketch);
@@ -433,8 +451,14 @@ export class RubicHostProcess extends RubicProcess {
      * Start debug session
      * @param configuration Debug configuration
      */
-    private _startDebugSession(configuration: any): void {
-        this._debugHooks.reduce((promise, hook) => {
+    private _startDebugSession(configuration: any): Promise<StartSessionResult> {
+        if (Object.keys(configuration).length === 0) {
+            return Promise.resolve<StartSessionResult>({
+                status: "saveConfiguration",
+                content: this._provideInitConfig()
+            });
+        }
+        return this._debugHooks.reduce((promise, hook) => {
             return promise
             .then((continueDebug) => {
                 return hook.onDebugStart(configuration);
@@ -448,7 +472,20 @@ export class RubicHostProcess extends RubicProcess {
             this.showErrorMessage(
                 `${localize("cannot-start-debug", "Cannot start debug session")}: ${reason}`
             );
+        })
+        .then(() => {
+            return { status: "ok" };
         });
+    }
+
+    /**
+     * Provide initial debug configuration
+     */
+    private _provideInitConfig(): string {
+        return JSON.stringify({
+            version: "0.2.0",
+            configurations: [ generateDebugConfiguration(workspace.rootPath) ]
+        }, null, 4);
     }
 
     /** Sketch instance */
