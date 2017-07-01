@@ -1,0 +1,91 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "additionalProperties": false,
+    "properties": {
+        "hardware": {
+            "additionalProperties": false,
+            "description": "ハードウェア構成",
+            "properties": {
+                "boardClass": {
+                    "description": "[変更するにはRubicボードカタログを使用してください]: ボードクラス名",
+                    "type": "string"
+                },
+                "boardData": {
+                    "description": "ボード固有の拡張用データ"
+                },
+                "boardPath": {
+                    "description": "ボード接続先のポート名やパス",
+                    "type": "string"
+                },
+                "releaseTag": {
+                    "description": "[変更するにはRubicボードカタログを使用してください]: リリースのタグ",
+                    "type": "string"
+                },
+                "repositoryUuid": {
+                    "description": "[変更するにはRubicボードカタログを使用してください]: リポジトリのUUID",
+                    "type": "string"
+                },
+                "variationPath": {
+                    "description": "[変更するにはRubicボードカタログを使用してください]: バリエーションのパス",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "boardClass",
+                "releaseTag",
+                "repositoryUuid",
+                "variationPath"
+            ],
+            "type": "object"
+        },
+        "rubicVersion": {
+            "additionalProperties": false,
+            "description": "[変更しないでください]: バージョン履歴",
+            "properties": {
+                "last": {
+                    "description": "[変更しないでください]: 最後にワークスペースを保存したRubicのバージョン",
+                    "type": "string"
+                },
+                "max": {
+                    "description": "[変更しないでください]: これまでにこのワークスペースを保存したRubicのバージョン(最大)",
+                    "type": "string"
+                },
+                "min": {
+                    "description": "[変更しないでください]: これまでにこのワークスペースを保存したRubicのバージョン(最小)",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "last"
+            ],
+            "type": "object"
+        },
+        "transfer": {
+            "additionalProperties": false,
+            "description": "ファイル転送の設定",
+            "properties": {
+                "exclude": {
+                    "description": "ボードに転送しないファイルの、ファイル名やglobパターンのリスト",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "include": {
+                    "description": "ボードに転送するファイルの、ファイル名やglobパターンのリスト",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "required": [
+        "hardware",
+        "rubicVersion"
+    ],
+    "type": "object"
+}
+

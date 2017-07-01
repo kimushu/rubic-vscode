@@ -18,5 +18,7 @@
   "debug.rubic.snippet.download.label": "Rubic: プログラムの書き込み",
   "debug.rubic.snippet.download.description": "プログラムをボードに書き込みますが、実行はしません。",
   "debug.rubic.snippet.download.name": "書き込み",
+  "jsonValidation.rubic.json": "./schemas/sketch.schema.ja.json",
+  "jsonValidation.mrbconfig.json": "./schemas/mrbconfig.schema.ja.json",
   "dummy": "dummy"
 }

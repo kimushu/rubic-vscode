@@ -1,0 +1,49 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "additionalProperties": false,
+    "properties": {
+        "compilerOptions": {
+            "additionalProperties": false,
+            "description": "mrubyコンパイラへの指定",
+            "properties": {
+                "check_syntax_only": {
+                    "description": "構文チェックのみを行い、.mrbファイルを生成しない",
+                    "type": "boolean"
+                },
+                "debug": {
+                    "description": "デバッグ情報を生成する",
+                    "type": "boolean"
+                },
+                "endian": {
+                    "description": "iseq情報のエンディアンを指定",
+                    "enum": [
+                        "big",
+                        "little"
+                    ],
+                    "type": "string"
+                },
+                "verbose": {
+                    "description": "詳細出力モードを有効にする(構文解析木と逆アセンブルを出力)",
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "exclude": {
+            "description": "コンパイル対象から除外するファイルの、ファイル名やglobパターンのリスト",
+            "items": {
+                "type": "string"
+            },
+            "type": "array"
+        },
+        "include": {
+            "description": "コンパイル対象に含めるファイルの、ファイル名やglobパターンのリスト",
+            "items": {
+                "type": "string"
+            },
+            "type": "array"
+        }
+    },
+    "type": "object"
+}
+

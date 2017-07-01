@@ -18,5 +18,7 @@
   "debug.rubic.snippet.download.label": "Rubic: Write Program",
   "debug.rubic.snippet.download.description": "Write program to the board (Do not launch)",
   "debug.rubic.snippet.download.name": "Write",
+  "jsonValidation.rubic.json": "./schemas/sketch.schema.json",
+  "jsonValidation.mrbconfig.json": "./schemas/mrbconfig.schema.json",
   "dummy": "dummy"
 }
