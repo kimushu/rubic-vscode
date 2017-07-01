@@ -425,6 +425,7 @@ export class Sketch extends EventEmitter {
             });
         }, Promise.resolve())
         .then(() => {
+            items.sort((a, b) => a.label.localeCompare(b.label));
             return RubicProcess.self.showQuickPick(
                 items, { placeHolder: localize("choose-run", "Choose file to run") }
             );
