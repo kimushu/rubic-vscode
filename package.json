@@ -304,7 +304,7 @@
     "schema:sketch": "typescript-json-schema --noExtraProps --required ./schemas/sketch.d.ts V1_0_x.Top -o ./schemas/sketch.schema.json",
     "schema:mrbconfig": "typescript-json-schema --noExtraProps --required ./schemas/mrbconfig.d.ts MrbConfig -o ./schemas/mrbconfig.schema.json"
   },
-  "icon": "images/rubic_cube2x2.svg",
+  "icon": "images/rubic_cube2x2.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/kimushu/rubic-vscode.git"
