@@ -18,7 +18,6 @@ export class DuktapeRuntime extends Runtime {
         ])
         .then(([jsList, tsList]) => {
             let list: ExecutableCandidate[] = [];
-            let jsWithTs = tsList.map((ts) => this.getExecutableFile(ts));
             tsList.forEach((ts) => {
                 let js = this.getExecutableFile(ts);
                 list.push({ relPath: js, relSource: ts });

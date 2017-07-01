@@ -62,7 +62,7 @@ export class Sketch extends EventEmitter {
      * @param _workspaceRoot Root path of workspace
      * @param _window vscode window module (for extension host process)
      */
-    constructor(private _workspaceRoot: string, private _window?: typeof vscode.window) {
+    constructor(private _workspaceRoot: string) {
         super();
         this._rubicFile = path.join(_workspaceRoot, ".vscode", RUBIC_JSON);
         this._launchFile = path.join(_workspaceRoot, ".vscode", LAUNCH_JSON);
@@ -306,7 +306,6 @@ export class Sketch extends EventEmitter {
         if (this.boardClass == null) {
             return Promise.reject(new Error("No board class specified"));
         }
-        let done;
         return Promise.resolve(rprocess.startDebugProcess({
             type: "rubic",
             request: "attach"

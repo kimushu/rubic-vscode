@@ -15,7 +15,6 @@ export class MrubyRuntime extends Runtime {
         ])
         .then(([mrbList, rbList]) => {
             let list: ExecutableCandidate[] = [];
-            let mrbWithRb = rbList.map((rb) => this.getExecutableFile(rb));
             rbList.forEach((rb) => {
                 let mrb = this.getExecutableFile(rb);
                 list.push({ relPath: mrb, relSource: rb });
