@@ -7,7 +7,7 @@ import * as pify from "pify";
 import * as path from "path";
 import { enumerateRemovableDisks } from "../util/diskEnumerator";
 import { exec } from "child_process";
-import { RubicProcess } from "../rubicProcess";
+import { RubicProcess } from "../processes/rubicProcess";
 import * as xml2js from "xml2js";
 
 const localize = nls.loadMessageBundle(__filename);

@@ -5,8 +5,8 @@ import * as CJSON from "comment-json";
 // Import declaration only
 import vscode = require("vscode");
 import vsdp = require("vscode-debugprotocol");
-import SketchModule = require("./sketch");
-import CatalogDataModule = require("./catalog/catalogData");
+import SketchModule = require("../sketch");
+import CatalogDataModule = require("../catalog/catalogData");
 
 interface RubicMessageFunction {
     /**

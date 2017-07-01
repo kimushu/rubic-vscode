@@ -7,7 +7,7 @@ import * as CJSON from "comment-json";
 import * as nls from "vscode-nls";
 import { window, OutputChannel, ExtensionContext } from "vscode";
 import { RubicDebugHelper } from "../debug/rubicDebugHelper";
-import { RubicProcess, RubicDebugHook } from "../rubicProcess";
+import { RubicProcess, RubicDebugHook } from "../processes/rubicProcess";
 
 const localize = nls.loadMessageBundle(__filename);
 

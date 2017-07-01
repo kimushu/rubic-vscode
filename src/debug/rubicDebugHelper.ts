@@ -2,7 +2,7 @@ import { Disposable, commands, OutputChannel, window, workspace, ExtensionContex
 import { Sketch, generateDebugConfiguration } from "../sketch";
 import * as path from "path";
 
-import { RubicProcess } from "../rubicProcess";
+import { RubicProcess } from "../processes/rubicProcess";
 
 interface StartSessionResult {
     status: "ok"|"initialConfiguration"|"saveConfiguration";

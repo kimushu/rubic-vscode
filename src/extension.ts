@@ -3,7 +3,7 @@ import * as nls from "vscode-nls";
 nls.config(process.env.VSCODE_NLS_CONFIG);
 
 import { ExtensionContext } from "vscode";
-import { RubicHostProcess } from "./rubicHostProcess";
+import { RubicHostProcess } from "./processes/rubicHostProcess";
 import { CatalogViewer } from "./catalog/catalogViewer";
 import { RubicStatusBar } from "./catalog/rubicStatusBar";
 import { RubicDebugHelper } from "./debug/rubicDebugHelper";

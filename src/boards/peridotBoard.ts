@@ -1,7 +1,7 @@
 import { Board, BoardInformation, BoardStdioStream, BoardDebugStream } from "./board";
 import { Canarium } from "canarium";
 import { Writable, Readable } from "stream";
-import { RubicProcess } from "../rubicProcess";
+import { RubicProcess } from "../processes/rubicProcess";
 import * as path from "path";
 
 const AGENT_PATH_DEFAULT = "/sys/rubic";

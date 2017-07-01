@@ -7,10 +7,10 @@ import * as ipc from "node-ipc";
 import * as path from "path";
 import * as nls from "vscode-nls";
 import * as fse from "fs-extra";
-import { Sketch } from "./sketch";
+import { Sketch } from "../sketch";
 import * as CJSON from "comment-json";
-import { CatalogData } from "./catalog/catalogData";
-import { RubicDebugHelper } from "./debug/rubicDebugHelper";
+import { CatalogData } from "../catalog/catalogData";
+import { RubicDebugHelper } from "../debug/rubicDebugHelper";
 
 const localize = nls.loadMessageBundle(__filename);
 

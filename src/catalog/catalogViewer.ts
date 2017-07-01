@@ -17,7 +17,7 @@ import { FSWatcher, readFileSync, watch } from "fs";
 import { SketchLoadResult } from "../sketch";
 import * as MarkdownIt from "markdown-it";
 import { GitHubRepository } from "../util/githubFetcher";
-import { RubicProcess, RubicMessageItem } from "../rubicProcess";
+import { RubicProcess, RubicMessageItem } from "../processes/rubicProcess";
 
 const Handlebars = require("./handlebars");
 require("./template");

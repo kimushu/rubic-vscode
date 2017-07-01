@@ -8,7 +8,7 @@ import * as request from "request";
 import * as decompress from "decompress";
 
 import vscode = require("vscode");
-import { RubicProcess } from "../rubicProcess";
+import { RubicProcess } from "../processes/rubicProcess";
 
 const localize = nls.loadMessageBundle(__filename);
 

@@ -5,7 +5,7 @@ import {
 } from "./rubicProcess";
 import { DebugSession, TerminatedEvent } from "vscode-debugadapter";
 import * as ipc from "node-ipc";
-import { Sketch } from "./sketch";
+import { Sketch } from "../sketch";
 
 interface HostRequest {
     request_id: string;

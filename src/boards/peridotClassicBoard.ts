@@ -5,7 +5,7 @@ import * as nls from "vscode-nls";
 import * as path from "path";
 import * as fs from "fs";
 import * as pify from "pify";
-import { RubicProcess } from "../rubicProcess";
+import { RubicProcess } from "../processes/rubicProcess";
 const localize = nls.loadMessageBundle(__filename);
 
 const WRITER_RBF_PATH = path.join(__dirname, "..", "..", "lib", "peridot_classic_writer.rbf");

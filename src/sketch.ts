@@ -7,7 +7,7 @@ import * as CJSON from "comment-json";
 import * as pify from "pify";
 import { EventEmitter } from "events";
 import * as chokidar from "chokidar";
-import { RubicProcess } from "./rubicProcess";
+import { RubicProcess } from "./processes/rubicProcess";
 require("promise.prototype.finally").shim();
 
 // Declaration only

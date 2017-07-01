@@ -4,9 +4,9 @@ const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
 import { DebugSession, OutputEvent, TerminatedEvent } from "vscode-debugadapter";
 import { DebugProtocol } from "vscode-debugprotocol";
-import { RubicDebugProcess } from "../rubicDebugProcess";
+import { RubicDebugProcess } from "../processes/rubicDebugProcess";
 import { SketchLoadResult } from "../sketch";
-import { RubicProcess } from "../rubicProcess";
+import { RubicProcess } from "../processes/rubicProcess";
 import { Board, BoardStdioStream, BoardInformation } from "../boards/board";
 import * as glob from "glob";
 import * as pify from "pify";

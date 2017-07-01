@@ -1,7 +1,7 @@
 import { Disposable, ExtensionContext, StatusBarAlignment, StatusBarItem, window } from "vscode";
 import * as nls from "vscode-nls";
 import { CMD_SHOW_CATALOG, CMD_SELECT_PORT } from "./catalogViewer";
-import { RubicProcess } from "../rubicProcess";
+import { RubicProcess } from "../processes/rubicProcess";
 import { Board } from "../boards/board";
 
 const localize = nls.loadMessageBundle(__filename);
