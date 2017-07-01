@@ -12,6 +12,8 @@ import { RubicProcess } from "../processes/rubicProcess";
 
 const localize = nls.loadMessageBundle(__filename);
 
+const UPDATE_PERIOD_MINUTES = 12 * 60;
+
 const CATALOG_JSON = "catalog.json";
 const CATALOG_ENCODING = "utf8";
 const RELEASE_JSON  = "release.json";
@@ -174,7 +176,47 @@ export class CatalogData implements vscode.Disposable {
     /**
      * Update catalog data
      */
-    fetch(): Promise<void> {
+    fetch(force: boolean = false): Promise<boolean> {
+        let nextFetch: number;
+        return Promise.resolve()
+        .then(() => {
+            return RubicProcess.self.getMementoValue("lastFetched", 0);
+        })
+        .then((lastFetched) => {
+            nextFetch = lastFetched + (UPDATE_PERIOD_MINUTES * 60 * 1000);
+            // Load cache
+            if (!this.loaded) {
+                return this.load();
+            }
+        })
+        .then(() => {
+            if (!force && Date.now() < nextFetch) {
+                // Skip update
+                console.log(`Rubic catalog update has been skipped (by ${new Date(nextFetch).toLocaleString()})`);
+                return false;
+            }
+            // Too old. Try update
+            throw null;
+        })
+        .catch((reason) => {
+            // Reject reason is one of them
+            //   1. Cache is not readable
+            //   2. Cache is not valid JSON
+            //   3. Cache is too old
+            return this._doFetch().then(() => {
+                return RubicProcess.self.setMementoValue("lastFetched", Date.now());
+            })
+            .then(() => {
+                console.log(`Rubic catalog has been updated (force=${force})`);
+                return true;
+            });
+        });
+    }
+
+    /**
+     * Update catalog data (inner)
+     */
+    private _doFetch(): Promise<void> {
         let isCustomRepo = false;
         return Promise.resolve()
         .then(() => {

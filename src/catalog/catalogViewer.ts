@@ -18,6 +18,7 @@ import { SketchLoadResult } from "../sketch";
 import * as MarkdownIt from "markdown-it";
 import { GitHubRepository } from "../util/githubFetcher";
 import { RubicProcess, RubicMessageItem } from "../processes/rubicProcess";
+import { Runtime } from "../runtimes/runtime";
 
 const Handlebars = require("./handlebars");
 require("./template");
@@ -33,8 +34,6 @@ const CMD_TEST_CONNECTION  = "extension.rubic.testConnection";
 const CMD_WRITE_FIRMWARE  = "extension.rubic.writeFirmware";
 
 const CFG_SHOW_PREVIEW = "catalog.showPreview";
-
-const UPDATE_PERIOD_MINUTES = 12 * 60;
 
 interface CatalogSelection {
     boardClass: string;
@@ -100,7 +99,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             workspace.registerTextDocumentContentProvider("rubic", this)
         );
 
-        this.loadCache()
+        RubicProcess.self.catalogData.fetch()
         .catch((reason) => {
             RubicProcess.self.showErrorMessage(
                 localize("failed-load-catalog-x", "Failed to load catalog: {0}", reason)
@@ -379,52 +378,6 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
     }
 
     /**
-     * Load cache
-     */
-    public loadCache(update: boolean = true, force: boolean = false): Promise<boolean> {
-        let {catalogData} = RubicProcess.self;
-        let nextFetch: number;
-        return Promise.resolve()
-        .then(() => {
-            return RubicProcess.self.getMementoValue("lastFetched", 0);
-        })
-        .then((lastFetched) => {
-            nextFetch = lastFetched + (UPDATE_PERIOD_MINUTES * 60 * 1000);
-            // Load cache
-            if (!catalogData.loaded) {
-                return catalogData.load();
-            }
-        })
-        .then(() => {
-            if (!update) {
-                // Do not update
-                return false;
-            }
-            if (!force && Date.now() < nextFetch) {
-                // Skip update
-                console.log(`Rubic catalog update has been skipped (by ${new Date(nextFetch).toLocaleString()})`);
-                return false;
-            }
-            // Too old. Try update
-            return <any>Promise.reject(null);
-        })
-        .catch((reason) => {
-            if (!update) { return Promise.reject(reason); }
-            // Reject reason is one of them
-            //   1. Cache is not readable
-            //   2. Cache is not valid JSON
-            //   3. Cache is too old
-            return catalogData.fetch().then(() => {
-                return RubicProcess.self.setMementoValue("lastFetched", Date.now());
-            })
-            .then(() => {
-                console.log(`Rubic catalog has been updated (force=${force})`);
-                return true;
-            });
-        });
-    }
-
-    /**
      * Provide HTML for Rubic board catalog
      */
     provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
@@ -662,25 +615,14 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             if (variation.path === variationPath) {
                 selectedVariation = variation;
             }
-            for (let rt of (variation.runtimes || [])) {
-                switch (rt.name) {
-                    case "mruby":
-                        topics.push({title: "mruby", color: "red"});
-                        for (let gem of ((<RubicCatalog.Runtime.Mruby>rt).mrbgems || [])) {
-                            topics.push({
-                                title: gem.name,
-                                color: "gray",
-                                tooltip: gem.description
-                            });
-                        }
-                        break;
-                    case "duktape":
-                        topics.push({title: "JavaScript (ES5)", color: "yellow"});
-                        topics.push({title: "TypeScript", color: "blue"});
-                        break;
-                    case "lua":
-                        topics.push({title: "Lua", color: "blue"});
-                        break;
+            for (let runtimeInfo of (variation.runtimes || [])) {
+                try {
+                    let runtime = Runtime.constructRuntime(runtimeInfo);
+                    if (runtime != null) {
+                        topics = runtime.getCatalogTopics();
+                    }
+                } catch (error) {
+                    // Ignore errors
                 }
             } 
             panel.items.push({
@@ -798,27 +740,12 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
      */
     private _renderRuntimePage(v: RubicCatalog.Variation): Promise<string> {
         let result: string[] = [];
-        let sver = localize("version", "Version");
-        for (let rt of v.runtimes) {
-            switch (rt.name) {
-                case "mruby":
-                    let rtm = <RubicCatalog.Runtime.Mruby>rt;
-                    result.push(`## ${localize("mruby-desc", "mruby (Lightweight Ruby)")}`);
-                    result.push(`* ${sver} : \`${rtm.version}\``);
-                    if (rtm.mrbgems) {
-                        result.push(`* ${localize("included-mrbgems", "Included mrbgems")} :`);
-                        for (let gem of rtm.mrbgems) {
-                            result.push(`  * \`${gem.name}\` : ${gem.description}`);
-                        }
-                    }
-                    break;
-                case "duktape":
-                    let rtd = <RubicCatalog.Runtime.Duktape>rt;
-                    result.push(`* ${sver} : \`${rtd.version}\``);
-                    result.push(`* ${localize("support-langs", "Supported languages")} : ` +
-                        "JavaScript(ES5) / TypeScript"
-                    );
-                    break;
+        for (let runtimeInfo of (v.runtimes || [])) {
+            try {
+                let runtime = Runtime.constructRuntime(runtimeInfo);
+                result.push(runtime.renderDetails());
+            } catch (error) {
+                // Ignore errors
             }
         }
         return Promise.resolve(result.join("\n"));

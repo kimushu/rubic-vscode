@@ -17,4 +17,6 @@ Rubicでは主にスクリプト言語のインタープリタまたはVMを想�
 |*constructor()*|Yes|Yes|インスタンスの生成|
 |initializeTasks()|Yes|---|VSCodeタスクの設定|
 |getExecutableFile()|Yes|---|実行可能ファイルパスの取得|
+|getCatalogTopics()|Yes|---|カタログ用トピックを取得|
+|renderDetails()|Yes|---|カタログ用ランタイム情報をMarkdownで出力|
 |build()|Yes|---|ビルドの実行|

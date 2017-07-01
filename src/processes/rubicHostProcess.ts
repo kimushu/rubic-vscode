@@ -5,7 +5,7 @@ import {
 } from "./rubicProcess";
 import {
     ExtensionContext, OutputChannel, ProgressLocation, ProgressOptions,
-    commands, window, workspace
+    commands, window, workspace, TextEditor
 } from "vscode";
 import * as ipc from "node-ipc";
 import * as path from "path";
@@ -62,6 +62,56 @@ interface ProgressContext {
 
 interface ProgressContextSet {
     [progress_id: string]: ProgressContext;
+}
+
+/**
+ * Substitute variables for VSCode
+ * @param input Input string
+ */
+function substituteVariables(input: string): string {
+    let editor = window.activeTextEditor;
+    let fileName = (editor != null) ? editor.document.fileName : null;
+    return input.replace(/\$\{(\w+)\}/g, (match, name) => {
+        switch (name) {
+            case "workspaceRoot":
+                return workspace.rootPath;
+            case "workspaceRootFolderName":
+                return path.basename(workspace.rootPath);
+            case "file":
+                if (fileName != null) {
+                    return fileName;
+                }
+                break;
+            case "relativeFile":
+                if (fileName != null) {
+                    return path.relative(workspace.rootPath, fileName);
+                }
+                break;
+            case "fileBasename":
+                if (fileName != null) {
+                    return path.basename(fileName);
+                }
+                break;
+            case "fileBasenameNoExtension":
+                if (fileName != null) {
+                    return path.basename(fileName, ".*");
+                }
+                break;
+            case "fileDirname":
+                if (fileName != null) {
+                    return path.dirname(fileName);
+                }
+                break;
+            case "fileExtname":
+                if (fileName != null) {
+                    return path.extname(fileName);
+                }
+                break;
+            default:
+                return "${" + name + "}";
+        }
+        return "";
+    });
 }
 
 /**
@@ -455,22 +505,23 @@ export class RubicHostProcess extends RubicProcess {
      * Start debug session
      * @param configuration Debug configuration
      */
-    private _startDebugSession(configuration: any): Promise<StartSessionResult> {
-        if (Object.keys(configuration).length === 0) {
+    private _startDebugSession(config: any): Promise<StartSessionResult> {
+        if (Object.keys(config).length === 0) {
             return Promise.resolve<StartSessionResult>({
                 status: "saveConfiguration",
                 content: this._provideInitConfig()
             });
         }
+        config.program = substituteVariables(config.program);
         return this._debugHooks.reduce((promise, hook) => {
             return promise
             .then((continueDebug) => {
-                return hook.onDebugStart(configuration);
+                return hook.onDebugStart(config);
             });
         }, Promise.resolve(true))
         .then((continueDebug) => {
             if (continueDebug) {
-                return this.startDebugProcess(configuration);
+                return this.startDebugProcess(config);
             }
         }, (reason) => {
             this.showErrorMessage(

@@ -24,11 +24,11 @@ declare namespace V1_0_x {
         }
         /** DO NOT EDIT: Version history */
         rubicVersion: {
-            /** DO NOT EDIT: The version of Rubic which is used to save this sketch latest */
+            /** DO NOT EDIT: The version of Rubic which is used to save this workspace latest */
             last: string;
-            /** DO NOT EDIT: The minimum version of Rubic which is used to save this sketch */
+            /** DO NOT EDIT: The minimum version of Rubic which is used to save this workspace */
             min?: string;
-            /** DO NOT EDIT: The maximum version of Rubic which is used to save this sketch */
+            /** DO NOT EDIT: The maximum version of Rubic which is used to save this workspace */
             max?: string;
         }
     }

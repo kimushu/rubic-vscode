@@ -1,0 +1,10 @@
+{
+    "messages": [
+        "mruby (軽量Ruby)",
+        "搭載しているmrbgem"
+    ],
+    "keys": [
+        "mruby-desc",
+        "included-mrbgems"
+    ]
+}

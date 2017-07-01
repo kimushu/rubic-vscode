@@ -7,12 +7,13 @@ import * as CJSON from "comment-json";
 import * as pify from "pify";
 import { EventEmitter } from "events";
 import * as chokidar from "chokidar";
-import { RubicProcess } from "./processes/rubicProcess";
+import { RubicProcess, RubicQuickPickItem } from "./processes/rubicProcess";
+import { BoardInformation } from "./boards/board";
+import { Runtime } from "./runtimes/runtime";
 require("promise.prototype.finally").shim();
 
 // Declaration only
 import vscode = require("vscode");
-import { BoardInformation } from "./boards/board";
 
 const RUBIC_JSON  = "rubic.json";
 const SKETCH_ENCODING = "utf8";
@@ -54,6 +55,7 @@ export class Sketch extends EventEmitter {
     private _data: V1_0_x.Top;
     private _pending: V1_0_x.Top;
     private _invalid: boolean;
+    private _runtimes: Runtime[];
 
     /**
      * Construct sketch instance
@@ -64,6 +66,9 @@ export class Sketch extends EventEmitter {
         super();
         this._rubicFile = path.join(_workspaceRoot, ".vscode", RUBIC_JSON);
         this._launchFile = path.join(_workspaceRoot, ".vscode", LAUNCH_JSON);
+        if (RubicProcess.self.isHost) {
+            RubicProcess.self.registerDebugHook(this);
+        }
     }
 
     /**
@@ -106,6 +111,7 @@ export class Sketch extends EventEmitter {
 
     /** Unload sketch */
     unload() {
+        this._runtimes = null;
         if (this._watcher) {
             this._watcher.close();
             this._watcher = null;
@@ -139,25 +145,25 @@ export class Sketch extends EventEmitter {
     get boardClass() { return this._get<string>("hardware.boardClass"); }
 
     /** Set board class for write pending */
-    set boardClass(value: string) { this._set("hardware.boardClass", value); }
+    set boardClass(value: string) { this._set("hardware.boardClass", value, true); }
 
     /** Get repository UUID */
     get repositoryUuid() { return this._get<string>("hardware.repositoryUuid"); }
 
     /** Set repository UUID for write pending */
-    set repositoryUuid(value: string) { this._set("hardware.repositoryUuid", value); }
+    set repositoryUuid(value: string) { this._set("hardware.repositoryUuid", value, true); }
 
     /** Get release tag */
     get releaseTag() { return this._get<string>("hardware.releaseTag"); }
 
     /** Set release tag for write pending */
-    set releaseTag(value: string) { this._set("hardware.releaseTag", value); }
+    set releaseTag(value: string) { this._set("hardware.releaseTag", value, true); }
 
     /** Get variation path */
     get variationPath() { return this._get<string>("hardware.variationPath"); }
 
     /** Set variation path for write pending */
-    set variationPath(value: string) { this._set("hardware.variationPath", value); }
+    set variationPath(value: string) { this._set("hardware.variationPath", value, true); }
 
     /** Get board path */
     get boardPath() { return this._get<string>("hardware.boardPath"); }
@@ -330,6 +336,105 @@ export class Sketch extends EventEmitter {
     }
 
     /**
+     * Get runtimes for current hardware configuration
+     */
+    getRuntimes(): Promise<Runtime[]> {
+        if (this._runtimes) {
+            // Already cached
+            return Promise.resolve(this._runtimes);
+        }
+        let { catalogData } = RubicProcess.self;
+        let tryConstruct = () => {
+            let variation = catalogData.getVariation(this.repositoryUuid, this.releaseTag, this.variationPath);
+            if (variation == null) {
+                return Promise.reject(new Error(
+                    `No variation data for (${this.repositoryUuid}, ${this.releaseTag}, ${this.variationPath})`
+                ));
+            }
+            let cache = (variation.runtimes || []).map((info) => Runtime.constructRuntime(info));
+            this._runtimes = cache;
+            return Promise.resolve(cache);
+        };
+        return Promise.resolve()
+        .then(() => {
+            if (!catalogData.loaded) {
+                return catalogData.load();
+            }
+        })
+        .then(() => {
+            return tryConstruct()
+            .catch(() => {
+                return catalogData.fetch(true)
+                .then(() => {
+                    return tryConstruct();
+                });
+            });
+        });
+    }
+
+    /**
+     * Update debug configuration
+     * @param config Debug configuration
+     */
+    onDebugStart(config: any): boolean | Thenable<boolean> {
+        let sourceFile: string = config.program;
+        return this.getRuntimes()
+        .then((runtimes) => {
+            let execFile: string;
+            if (sourceFile != null) {
+                for (let runtime of runtimes) {
+                    execFile = runtime.getExecutableFile(sourceFile);
+                    if (execFile != null) {
+                        break;
+                    }
+                }
+            }
+            if (execFile != null) {
+                return execFile;
+            }
+            return this._askDebugTarget(runtimes);
+        })
+        .then((execFile) => {
+            if (execFile == null) {
+                return false;
+            }
+            config.program = execFile;
+            return true;
+        });
+    }
+
+    private _askDebugTarget(runtimes: Runtime[]): Promise<string> {
+        let { workspaceRoot } = RubicProcess.self;
+        let items: RubicQuickPickItem[] = [];
+        return runtimes.reduce((promise, runtime) => {
+            return promise
+            .then(() => {
+                return runtime.enumerateExecutables(workspaceRoot);
+            })
+            .then((candidates) => {
+                for (let cand of candidates) {
+                    let item: RubicQuickPickItem = {
+                        label: cand.relPath,
+                        description: `(${runtime.name})`,
+                    };
+                    if (cand.relSource != null) {
+                        item.detail = localize("compiled-from-x", "Compiled from {0}", cand.relSource);
+                    }
+                    items.push(item);
+                }
+            });
+        }, Promise.resolve())
+        .then(() => {
+            return RubicProcess.self.showQuickPick(
+                items, { placeHolder: localize("choose-run", "Choose file to run") }
+            );
+        })
+        .then((item) => {
+            return (item != null) ? path.join(workspaceRoot, item.label) : null;
+        });
+    }
+
+    /**
      * Start watcher for sketch file
      */
     private _startWatcher(): void {
@@ -364,7 +469,10 @@ export class Sketch extends EventEmitter {
      * @param keyPath Full path of key
      * @param value Value
      */
-    private _set<T>(keyPath: string, value: T): void {
+    private _set<T>(keyPath: string, value: T, clearCache?: boolean): void {
+        if (clearCache) {
+            this._runtimes = null;
+        }
         let keys = keyPath.split(".");
         let lastKey = keys.pop();
         let parent = this._pending;

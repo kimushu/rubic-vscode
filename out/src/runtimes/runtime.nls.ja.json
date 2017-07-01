@@ -1,0 +1,10 @@
+{
+    "messages": [
+        "バージョン",
+        "使用可能言語"
+    ],
+    "keys": [
+        "version",
+        "support-langs"
+    ]
+}
