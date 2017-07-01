@@ -44,6 +44,18 @@ interface RubicMessageFunction {
     <T extends RubicMessageItem>(message: string, options: RubicMessageOptions, ...items: T[]): Thenable<T | undefined>;
 }
 
+interface RubicConfirmFunction {
+    /**
+     * Show confirmation message
+     */
+    (message: string): Thenable<boolean>;
+
+    /**
+     * Show confirmation message with options
+     */
+    (message: string, options: RubicConfirmOptions): Thenable<boolean>;
+}
+
 interface RubicQuickPickFunction {
     /**
      * Show selection list with simple items
@@ -59,7 +71,7 @@ interface RubicQuickPickFunction {
      * @param options Options of behavior
      * @return Promise which resolves to a selected item or `undefined`
      */
-    <T extends RubicQuickPickItem>(items: T[] | Thenable<T[]>, options?: RubicQuickPickOptions): Thenable<string | undefined>;
+    <T extends RubicQuickPickItem>(items: T[] | Thenable<T[]>, options?: RubicQuickPickOptions): Thenable<T | undefined>;
 }
 
 interface RubicInputBoxFunction {
@@ -242,6 +254,21 @@ export class RubicProcess {
     readonly withProgress: (options: RubicProgressOptions, task: (progress: RubicProgress<{ message?: string }>) => Thenable<void>) => Thenable<void>;
 
     /**
+     * Show information confirmation
+     */
+    readonly showInformationConfirm: RubicConfirmFunction;
+
+    /**
+     * Show warning confirmation
+     */
+    readonly showWarningConfirm: RubicConfirmFunction;
+
+    /**
+     * Show error confirmation
+     */
+    readonly showErrorConfirm: RubicConfirmFunction;
+
+    /**
      * Print text to Rubic output
      */
     readonly printOutput: (text: string, preserveFocus?: boolean) => Thenable<void>;
@@ -286,5 +313,6 @@ export type RubicQuickPickItem = vscode.QuickPickItem;
 export type RubicQuickPickOptions = vscode.QuickPickOptions;
 export type RubicMessageItem = vscode.MessageItem;
 export type RubicMessageOptions = vscode.MessageOptions;
+export type RubicConfirmOptions = RubicMessageOptions;
 export type RubicInputBoxOptions = vscode.InputBoxOptions;
 export type RubicProgress<T> = vscode.Progress<T>;

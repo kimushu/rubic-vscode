@@ -1,4 +1,4 @@
-import { RubicProcess, RubicProgress, RubicProgressOptions, RubicDebugRequestArguments, RubicDebugHook } from "./rubicProcess";
+import { RubicProcess, RubicProgress, RubicProgressOptions, RubicDebugRequestArguments, RubicDebugHook, RubicConfirmOptions, RubicMessageItem } from "./rubicProcess";
 import {
     ExtensionContext, OutputChannel, ProgressLocation, ProgressOptions,
     commands, window, workspace
@@ -13,6 +13,9 @@ import { CatalogData } from "./catalog/catalogData";
 import { RubicDebugHelper } from "./debug/rubicDebugHelper";
 
 const localize = nls.loadMessageBundle(__filename);
+
+const LOCALIZED_YES = localize("yes", "Yes");
+const LOCALIZED_NO = localize("no", "No");
 
 const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
 
@@ -76,6 +79,27 @@ export class RubicHostProcess extends RubicProcess {
     readonly showErrorMessage = function (this: RubicHostProcess, message: string, ...args): any {
         return window.showErrorMessage(message, ...args);
     };
+    readonly showInformationConfirm = function (this: RubicHostProcess, message: string, options?: RubicConfirmOptions): Thenable<boolean> {
+        return this._showConfirm("Information", message, options);
+    };
+    readonly showWarningConfirm = function (this: RubicHostProcess, message: string, options?: RubicConfirmOptions): Thenable<boolean> {
+        return this._showConfirm("Warning", message, options);
+    };
+    readonly showErrorConfirm = function (this: RubicHostProcess, message: string, options?: RubicConfirmOptions): Thenable<boolean> {
+        return this._showConfirm("Error", message, options);
+    };
+    private _showConfirm(level: string, message: string, options: RubicConfirmOptions): Thenable<boolean> {
+        let items: RubicMessageItem[] = [{
+            title: LOCALIZED_YES
+        },{
+            title: LOCALIZED_NO,
+            isCloseAffordance: true
+        }];
+        return this[`show${level}Message`](message, options, ...items)
+        .then((item) => {
+            return item === items[0];
+        });
+    }
     readonly showQuickPick = function (this: RubicHostProcess, items: any, options?: any): any {
         return window.showQuickPick(items, options);
     };
@@ -378,6 +402,10 @@ export class RubicHostProcess extends RubicProcess {
                 .then((item) => {
                     return args.items.indexOf(item);
                 });
+            case "showInformationConfirm":
+            case "showWarningConfirm":
+            case "showErrorConfirm":
+                return this[type](args.message, args.options);
             case "showQuickPick":
                 return this.showQuickPick(args.items, args.options)
                 .then((item) => {

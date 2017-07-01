@@ -1,7 +1,7 @@
 import {
     RubicProcess, RubicMessageOptions, RubicQuickPickOptions,
     RubicInputBoxOptions, RubicMessageItem, RubicQuickPickItem,
-    RubicProgress, RubicProgressOptions
+    RubicProgress, RubicProgressOptions, RubicConfirmOptions
 } from "./rubicProcess";
 import { DebugSession, TerminatedEvent } from "vscode-debugadapter";
 import * as ipc from "node-ipc";
@@ -41,7 +41,7 @@ export class RubicDebugProcess extends RubicProcess {
     readonly showErrorMessage = function (this: RubicDebugProcess, message: string, ...args: any[]): any {
         return this._showMessage("Error", message, ...args);
     };
-    private _showMessage(level: string, message: string, ...originalItems: any[]): Promise<any> {
+    private _showMessage(level: string, message: string, ...originalItems: any[]): Thenable<any> {
         let options: RubicMessageOptions;
         let firstItem = originalItems[0];
         if (firstItem != null) {
@@ -57,7 +57,16 @@ export class RubicDebugProcess extends RubicProcess {
             return originalItems[index];
         });
     }
-    readonly showQuickPick = function (this: RubicDebugProcess, originalItems: any[], options?: RubicQuickPickOptions): Promise<any> {
+    readonly showInformationConfirm = function (this: RubicDebugProcess, message: string, options?: RubicConfirmOptions): Thenable<boolean> {
+        return this._request("showInformationConfirm", {message, options});
+    };
+    readonly showWarningConfirm = function (this: RubicDebugProcess, message: string, options?: RubicConfirmOptions): Thenable<boolean> {
+        return this._request("showWarningConfirm", {message, options});
+    };
+    readonly showErrorConfirm = function (this: RubicDebugProcess, message: string, options?: RubicConfirmOptions): Thenable<boolean> {
+        return this._request("showErrorConfirm", {message, options});
+    };
+    readonly showQuickPick = function (this: RubicDebugProcess, originalItems: any[], options?: RubicQuickPickOptions): Thenable<any> {
         let byString = (typeof(originalItems[0]) === "string");
         let items = byString ? originalItems.map((item) => ({label: item, detail: ""})): originalItems;
         return this._request("showQuickPick", {items, options})
@@ -190,7 +199,7 @@ export class RubicDebugProcess extends RubicProcess {
     };
 
     /** Requester */
-    private _request(type: string, args: any): Promise<any> {
+    private _request(type: string, args: any): Thenable<any> {
         return this._clientSetup
         .then((client) => {
             return new Promise((resolve, reject) => {

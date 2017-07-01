@@ -77,6 +77,9 @@ class RubicDebugProcess extends RubicProcess {}
 |`showInformationMessage()`<sup>*1</sup>|Yes|Yes|情報レベルのメッセージ(+選択肢)を表示し、ユーザーの応答を待つ|
 |`showWarningMessage()`<sup>*1</sup>|Yes|Yes|警告レベルのメッセージ(+選択肢)を表示し、ユーザーの応答を待つ|
 |`showErrorMessage()`<sup>*1</sup>|Yes|Yes|エラーレベルのメッセージ(+選択肢)を表示し、ユーザーの応答を待つ|
+|`showInformationConfirm()`|Yes|Yes|情報レベルのメッセージとYes/Noの選択肢を表示し、ユーザーの応答を待つ|
+|`showWarningConfirm()`|Yes|Yes|警告レベルのメッセージとYes/Noの選択肢を表示し、ユーザーの応答を待つ|
+|`showErrorConfirm()`|Yes|Yes|エラーレベルのメッセージとYes/Noの選択肢を表示し、ユーザーの応答を待つ|
 |`showQuickPick()`<sup>*1</sup>|Yes|Yes|選択肢を表示し、ユーザーの応答を待つ|
 |`showInputBox()`<sup>*1</sup>|Yes|Yes|テキスト入力欄を表示し、ユーザーの応答を待つ|
 |`withProgress()`<sup>*2</sup>|Yes|Yes|進行中メッセージを表示する|
