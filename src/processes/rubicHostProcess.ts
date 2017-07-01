@@ -20,6 +20,7 @@ const localize = nls.loadMessageBundle(__filename);
 const LOCALIZED_YES = localize("yes", "Yes");
 const LOCALIZED_NO = localize("no", "No");
 
+const RUBIC_DEBUG_SERVER_PORT = process.env["RUBIC_DEBUG_SERVER_PORT"];
 const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
 const CMD_PROVIDE_INIT_CFG = "extension.rubic.provideInitialConfigurations";
 const CMD_GUESS_PROGRAM_NAME = "extension.rubic.guessProgramName";
@@ -241,7 +242,7 @@ export class RubicHostProcess extends RubicProcess {
             let config: RubicDebugRequestArguments = Object.assign({
                 type: "rubic",
                 request: "attach",
-                debugServer: process.env["DEBUG_SERVER_PORT"],
+                debugServer: RUBIC_DEBUG_SERVER_PORT,
             }, configuration);
             config.__private = { host_id, debugger_id, workspaceRoot, extensionRoot };
             return new Promise<void>((startResolve, startReject) => {
@@ -389,7 +390,7 @@ export class RubicHostProcess extends RubicProcess {
         this._catalogData = new CatalogData();
         this._serverSetup = new Promise<void>((resolve) => {
             ipc.config.id = this.getUniqueId("h");
-            if (process.env["DEBUG_SERVER_PORT"] == null) {
+            if (RUBIC_DEBUG_SERVER_PORT == null) {
                 ipc.config.silent = true;
             }
             ipc.serve(resolve);
