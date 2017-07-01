@@ -1,4 +1,8 @@
-import { RubicProcess, RubicProgress, RubicProgressOptions, RubicDebugRequestArguments, RubicDebugHook, RubicConfirmOptions, RubicMessageItem } from "./rubicProcess";
+import {
+    RubicProcess, RubicProgress, RubicProgressOptions,
+    RubicDebugRequestArguments, RubicDebugHook,
+    RubicConfirmOptions, RubicMessageItem
+} from "./rubicProcess";
 import {
     ExtensionContext, OutputChannel, ProgressLocation, ProgressOptions,
     commands, window, workspace
