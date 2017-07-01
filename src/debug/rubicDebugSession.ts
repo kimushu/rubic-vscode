@@ -358,7 +358,7 @@ class RubicDebugSession extends DebugSession {
         return new Promise<boolean>((resolve, reject) => {
             RubicProcess.self.withProgress({
                 location: { Window: true },
-                title: localize("writing-firmware", "Writing firmware")
+                title: localize("firmware-update", "Firmware update")
             }, (progress) => {
                 return Promise.resolve()
                 .then(() => {
