@@ -108,38 +108,73 @@ export class PeridotClassicBoard extends Board {
         });
     }
 
-    async writeFirmware(filename: string, reporter: (message: string) => void): Promise<void> {
-        let writerRbf: Buffer = await pify(fs.readFile)(WRITER_RBF_PATH);
-        let firmRbf: Buffer = await pify(fs.readFile)(filename);
+    writeFirmware(filename: string, reporter: (message: string) => void): Promise<boolean> {
+        let writerRbf: Buffer;
+        let firmRbf: Buffer;
         let canarium = this._canarium;
 
-        if (await RubicProcess.self.showInformationMessage(
-            localize("switch_to_ps", "Change switch to PS mode")
-        ) != null) {
-            // Connect to board
-            await canarium.open(this._path);
-
-            // Write RBF
-            await canarium.config(null, writerRbf);
-
-            let tsLimit = Date.now() + WRITER_BOOT_TIMEOUT_MS;
-            let file;
-
-            while (Date.now() < tsLimit) {
-                try {
-                    // Wait for RPC server starts
-                    let file = await canarium.openRemoteFile(WRITER_SPI_PATH, {O_RDWR: true});
-                    file.write(firmRbf);
-                } catch (error) {
-                    // Ignore error
+        return Promise.all([
+            pify(fs.readFile)(WRITER_RBF_PATH),
+            pify(fs.readFile)(filename),
+        ])
+        .then((buffers) => {
+            [ writerRbf, firmRbf ] = buffers;
+        })
+        .then(() => {
+            return RubicProcess.self.showInformationMessage(
+                localize("switch_to_ps", "Change switch to PS mode"),
+                { title: localize("change-done", "OK, changed") }
+            )
+            .then((item) => item != null);
+        })
+        .then((yes) => {
+            if (!yes) {
+                return false;
+            }
+            return Promise.resolve()
+            .then(() => {
+                // Connect to board
+                return canarium.open(this._path);
+            })
+            .then(() => {
+                // Write RBF
+                return canarium.config(null, writerRbf);
+            })
+            .then(() => {
+                // Open a special file for SPI flash update
+                let tsLimit = Date.now() + WRITER_BOOT_TIMEOUT_MS;
+                function tryOpen(): Promise<Canarium.RemoteFile> {
+                    return canarium.openRemoteFile(WRITER_SPI_PATH, {O_RDWR: true})
+                    .catch((reason) => {
+                        // Retry if error
+                        if (Date.now() < tsLimit) {
+                            return tryOpen();
+                        }
+                        throw reason;
+                    });
                 }
-            }
-
-            if (file) {
-                file.write();
-            }
-        }
-        throw new Error(localize("canceled", "Operation canceled"));
+                return tryOpen();
+            })
+            .then((file) => {
+                // Write SPI flash
+                return file.write(firmRbf)
+                .then(() => {
+                    return file.close();
+                }, (reason) => {
+                    return file.close()
+                    .catch(() => {})
+                    .then(() => { throw reason; });
+                });
+            })
+            .then(() => {
+                return RubicProcess.self.showInformationMessage(
+                    localize("switch_to_as", "Change switch back to AS mode")
+                );
+            })
+            .then(() => {
+                return true;
+            });
+        });
     }
 
     formatStorage(): Promise<void> {

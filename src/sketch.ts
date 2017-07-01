@@ -8,6 +8,7 @@ import * as pify from "pify";
 import { EventEmitter } from "events";
 import * as chokidar from "chokidar";
 import { RubicProcess } from "./rubicProcess";
+require("promise.prototype.finally").shim();
 
 // Declaration only
 import vscode = require("vscode");
@@ -18,6 +19,7 @@ const SKETCH_ENCODING = "utf8";
 const LAUNCH_JSON = "launch.json";
 const LAUNCH_ENCODING = "utf8";
 const CONN_TEST_TIMEOUT_MS = 10000;
+const FW_WRITE_TIMEOUT_MS = 60000;
 
 const localize = nls.loadMessageBundle(__filename);
 
@@ -270,14 +272,53 @@ export class Sketch extends EventEmitter {
                     );
                 })
             ])
+            .finally(() => {
+                return Promise.resolve(rprocess.stopDebugProcess(debuggerId));
+            })
             .then((result: BoardInformation) => {
                 return true;
             }, (reason) => {
                 return false;
-            })
-            .then((success) => {
-                return rprocess.stopDebugProcess(debuggerId)
-                .then(() => success, () => success);
+            });
+        });
+    }
+
+    /**
+     * Execute connection test
+     */
+    writeFirmware(fullPath: string): Promise<boolean> {
+        let rprocess = RubicProcess.self;
+        if (!this.loaded) {
+            return Promise.reject(new Error("No sketch loaded"));
+        }
+        if (this.boardClass == null) {
+            return Promise.reject(new Error("No board class specified"));
+        }
+        let done;
+        return Promise.resolve(rprocess.startDebugProcess({
+            type: "rubic",
+            request: "attach"
+        }, true))
+        .then((debuggerId) => {
+            return Promise.race([
+                rprocess.sendDebugRequest(
+                    debuggerId,
+                    "board.writeFirmware",
+                    {
+                        boardClass: this.boardClass,
+                        boardPath: this.boardPath,
+                        fullPath
+                    }
+                ),
+                new Promise((resolve, reject) => {
+                    setTimeout(
+                        reject, FW_WRITE_TIMEOUT_MS,
+                        new Error("Timed out")
+                    );
+                })
+            ])
+            .finally(() => {
+                return Promise.resolve(rprocess.stopDebugProcess(debuggerId));
             });
         });
     }
@@ -409,7 +450,7 @@ export class Sketch extends EventEmitter {
         let item: vscode.MessageItem;
 
         // Confirm to user
-        item = await this._window.showInformationMessage(
+        item = await RubicProcess.self.showInformationMessage(
             localize(
                 "convert-sketch-confirm",
                 "This sketch was created by old version of Rubic. Are you sure to convert?"
@@ -421,7 +462,7 @@ export class Sketch extends EventEmitter {
         }
 
         // Confirm that the old files to be preserved?
-        item = await this._window.showWarningMessage(
+        item = await RubicProcess.self.showWarningMessage(
             localize(
                 "convertion-warning",
                 "Are you sure to delete old settings? (This cannot be undone)"

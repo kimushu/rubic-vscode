@@ -1,10 +1,12 @@
 {
     "messages": [
         "スイッチをPS側へ切り替えてください",
-        "操作がキャンセルされました"
+        "はい、切り換えました。",
+        "スイッチをAS側へ戻してください"
     ],
     "keys": [
         "switch_to_ps",
-        "canceled"
+        "change-done",
+        "switch_to_as"
     ]
 }

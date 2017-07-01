@@ -231,45 +231,56 @@ export class WakayamaRbBoard extends Board {
         }); // return Promise.resolve().then()...
     }
 
-    async writeFirmware(filename: string, reporter: (message: string) => void): Promise<void> {
+    writeFirmware(filename: string, reporter: (message: string) => void): Promise<boolean> {
         let boardName = (<BoardConstructor>this.constructor).getBoardName();
+        const warn = ` $(stop)${localize(
+            "warn-x",
+            "Please wait! Do not disconnect {0}",
+            boardName
+        )} `;
         reporter(
             `${localize(
                 "follow-inst",
                 "Please follow instructions showed on the top of window"
             )} $(arrow-up)`
         );
-        if (await RubicProcess.self.showInformationMessage(
-            localize("push-reset-button-x", "Push reset button on {0}", boardName),
-            {title: localize("push-done", "Pushed")}
-        ) != null) {
-            reporter(localize("searching-x", "Searching {0}...", boardName));
-            let basePath = await this._searchUsbMassStorage();
-
-            reporter(
-                localize(
-                    "writing-firmware-x",
-                    "Writing firmware ... $(stop)Please wait! Do not disconnect {0}",
-                    boardName
-                ) + " "
+        return Promise.resolve()
+        .then(() => {
+            return RubicProcess.self.showInformationMessage(
+                localize("push-reset-button-x", "Push reset button on {0}", boardName),
+                {title: localize("push-done", "OK, pushed")}
             );
-            let destPath = path.join(basePath, path.basename(filename));
-            let copy_cmd = (process.platform === "win32") ? "copy" : "cp";
-            await pify(exec)(`${copy_cmd} "${filename}" "${destPath}"`);
-            await delay(WRBB_PROG_DELAY_MS);
-            await RubicProcess.self.showInformationMessage(localize(
-                "wait-led-nonblink-x",
-                "Wait until LED on {0} stops blinking",
-                boardName
-            ), {
-                title: localize("confirm-done", "Confirmed"),
-                isCloseAffordance: true
+        })
+        .then((select) => {
+            if (select == null) {
+                return false;
+            }
+            reporter(localize("searching-x", "Searching {0}...", boardName));
+            return this._searchUsbMassStorage()
+            .then((basePath) => {
+                reporter(localize("sending-data", "Sending data") + warn);
+                let destPath = path.join(basePath, path.basename(filename));
+                let copy_cmd = (process.platform === "win32") ? "copy" : "cp";
+                return pify(exec)(`${copy_cmd} "${filename}" "${destPath}"`);
+            })
+            .then(() => {
+                reporter(localize("updating-flash", "Updating flash") + warn);
+                return delay(WRBB_PROG_DELAY_MS);
+            })
+            .then(() => {
+                return RubicProcess.self.showInformationMessage(localize(
+                    "wait-led-nonblink-x",
+                    "Wait until LED on {0} stops blinking",
+                    boardName
+                ), {
+                    title: localize("confirm-done", "OK, confirmed"),
+                    isCloseAffordance: true
+                });
+            })
+            .then(() => {
+                return true;
             });
-            return;
-        }
-        return Promise.reject(
-            Error(localize("canceled", "Operation canceled"))
-        );
+        });
     }
 
     formatStorage(): Promise<void> {
@@ -357,21 +368,28 @@ export class WakayamaRbBoard extends Board {
         ));
     }
 
-    private async _searchUsbMassStorage(): Promise<string> {
-        for (let retry = 0; retry < WRBB_RESET_MAX_RETRIES; ++retry) {
-            await delay(WRBB_RESET_DELAY_MS);
-            let disks = await enumerateRemovableDisks(1, WRBB_MSD_MAX_CAPACITY);
-            for (let index = 0; index < disks.length; ++index) {
-                let disk = disks[index];
-                if (fse.existsSync(path.join(disk.path, CITRUS_MSD_FILE)) ||
-                    fse.existsSync(path.join(disk.path, SAKURA_MSD_FILE))) {
-                    return disk.path;
+    private _searchUsbMassStorage(): Promise<string> {
+        let tryEnumerate = (retry: number): Promise<string> => {
+            return delay(WRBB_RESET_DELAY_MS)
+            .then(() => {
+                return enumerateRemovableDisks(1, WRBB_MSD_MAX_CAPACITY);
+            })
+            .then((disks) => {
+                for (let disk of disks) {
+                    if (fse.existsSync(path.join(disk.path, CITRUS_MSD_FILE)) ||
+                        fse.existsSync(path.join(disk.path, SAKURA_MSD_FILE))) {
+                        return disk.path;
+                    }
                 }
-            }
-        }
-        return Promise.reject(
-            Error(localize("board-not-found-x", "{0} is not found"))
-        );
+                if (retry < WRBB_RESET_MAX_RETRIES) {
+                    return tryEnumerate(retry + 1);
+                }
+                throw new Error(
+                    localize("board-not-found-x", "{0} is not found", this.getBoardName())
+                );
+            });
+        };
+        return tryEnumerate(0);
     }
 
     private _flush(): Promise<void> {

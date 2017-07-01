@@ -350,8 +350,12 @@ class RubicDebugSession extends DebugSession {
         });
     }
 
-    private _writeFirmware(args: WriteFirmwareArguments): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
+    /**
+     * Write firmware
+     * @param args Arguments passed by custom request
+     */
+    private _writeFirmware(args: WriteFirmwareArguments): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
             RubicProcess.self.withProgress({
                 location: { Window: true },
                 title: localize("writing-firmware", "Writing firmware")

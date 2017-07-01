@@ -175,7 +175,7 @@ export class Board extends EventEmitter {
     /**
      * Program firmware
      */
-    writeFirmware(filename: string, reporter: (message: string) => void): Promise<void> {
+    writeFirmware(filename: string, reporter: (message: string) => void): Promise<boolean> {
         return Promise.reject(new Error("Not supported"));
     }
 

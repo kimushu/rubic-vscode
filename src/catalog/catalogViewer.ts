@@ -65,7 +65,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         if (RubicProcess.self.workspaceRoot == null) {
             context.subscriptions.push(
                 commands.registerCommand(CMD_SHOW_CATALOG, () => {
-                    return window.showInformationMessage(localize(
+                    return RubicProcess.self.showInformationMessage(localize(
                         "open-folder-before",
                         "Open a folder to place your files before opening Rubic board catalog"
                     ));
@@ -102,7 +102,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
 
         this.loadCache()
         .catch((reason) => {
-            window.showErrorMessage(
+            RubicProcess.self.showErrorMessage(
                 localize("failed-load-catalog-x", "Failed to load catalog: {0}", reason)
             );
         });
@@ -144,7 +144,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         let { sketch } = RubicProcess.self;
         if (sketch.invalid) {
             commands.executeCommand("vscode.open", Uri.file(sketch.filename)).then(() => {
-                return window.showWarningMessage(
+                return RubicProcess.self.showWarningMessage(
                     localize("syntax-error-f", "Syntax error detected in {0}. Please correct manually", path.basename(sketch.filename))
                 );
             });
@@ -237,19 +237,11 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             (this._currentSelection.releaseTag !== sketch.releaseTag) ||
             (this._currentSelection.variationPath !== sketch.variationPath)) {
 
-            let items: RubicMessageItem[] = [{
-                title: localize("yes", "Yes")
-            },{
-                title: localize("no", "No"),
-                isCloseAffordance: true
-            }];
-
             this._pendingSave = true;
-            RubicProcess.self.showInformationMessage(
+            RubicProcess.self.showInformationConfirm(
                 localize("hw-changed", "Hardware configuration has been changed. Are you sure to save?"),
-                ...items
-            ).then((item) => {
-                if (item === items[0]) {
+            ).then((yes) => {
+                if (yes) {
                     this._pendingSave = false;
                     sketch.boardClass = this._currentSelection.boardClass;
                     sketch.repositoryUuid = this._currentSelection.repositoryUuid;
@@ -365,7 +357,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 if (board != null) {
                     boardName = toLocalizedString(board.name);
                 }
-                return window.showQuickPick(items, {
+                return RubicProcess.self.showQuickPick(items, {
                     placeHolder: localize("select-port-msg", "Which {0} do you use?", boardName)
                 }).then((item) => {
                     if (item == null) { return null; }
@@ -557,7 +549,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             });
         }
         if ((boardClass != null) && (selectedBoard == null)) {
-            window.showWarningMessage(localize("board-x-not-found",
+            RubicProcess.self.showWarningMessage(localize("board-x-not-found",
                 "No board named '{0}'", this._currentSelection.boardClass
             ));
         }
@@ -594,7 +586,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             });
         }
         if ((repositoryUuid != null) && (selectedRepo == null)) {
-            window.showWarningMessage(localize("repo-x-not-found",
+            RubicProcess.self.showWarningMessage(localize("repo-x-not-found",
                 "No repository named '{0}'", this._currentSelection.repositoryUuid
             ));
         }
@@ -641,7 +633,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         }, Promise.resolve())
         .then(() => {
             if ((releaseTag != null) && (selectedRelease == null)) {
-                window.showWarningMessage(localize("release-x-not-found",
+                RubicProcess.self.showWarningMessage(localize("release-x-not-found",
                     "No release named '{0}'", this._currentSelection.releaseTag
                 ));
             }
@@ -700,7 +692,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             });
         }
         if ((variationPath != null) && (selectedVariation == null)) {
-            window.showWarningMessage(localize("variation-x-not-found",
+            RubicProcess.self.showWarningMessage(localize("variation-x-not-found",
                 "No variation named '{0}'", this._currentSelection.variationPath
             ));
         }
@@ -867,32 +859,48 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
     /**
      * Write firmware to the board
      */
-    private async _writeFirmware(silent: boolean = false): Promise<void> {
+    private _writeFirmware(silent: boolean = false): Promise<void> {
         let { catalogData, sketch } = RubicProcess.self;
-
-        // Get firmware data
-        let cacheDir = await catalogData.prepareCacheDir(sketch.repositoryUuid, sketch.releaseTag);
-
-        // Confirm to user
-        if (!silent && await window.showInformationMessage(
-            localize("confirm-write-firmware", "Are you sure to write firmware to the board?"),
-            { title: localize("continue", "Continue") }
-        ) == null) {
-            return;
-        }
-/*
-        // Request firmware write
-        await soloInteractiveDebugRequest("writeFirmware", {
-            boardClass: sketch.boardClass,
-            boardPath: sketch.boardPath,
-            filename: CacheStorage.getFullPath(path.join(cacheDir, sketch.variationPath))
-        });
-
-        // Inform to user
-        if (!silent) {
-            await window.showInformationMessage(
-                localize("finished-write-firmware", "Firmware has been successfully updated.")
+        let fullPath: string;
+        return Promise.resolve()
+        .then(() => {
+            if (sketch.repositoryUuid == null || sketch.releaseTag == null || sketch.variationPath == null) {
+                throw new Error("Firmware is not selected");
+            }
+            // Get firmware data
+            return catalogData.prepareCacheDir(sketch.repositoryUuid, sketch.releaseTag);
+        })
+        .then((cacheDir) => {
+            // Confirm to user
+            fullPath = path.join(CacheStorage.getFullPath(cacheDir), sketch.variationPath);
+            if (silent) {
+                return true;
+            }
+            return RubicProcess.self.showInformationConfirm(
+                localize("confirm-write-firmware", "Are you sure to write firmware to the board?")
             );
-        }*/
+        })
+        .then((yes) => {
+            if (!yes) {
+                // Cancelled
+                return;
+            }
+            return sketch.writeFirmware(fullPath)
+            .then((result) => {
+                if (!result) {
+                    // Cancelled
+                    return;
+                }
+                if (!silent) {
+                    RubicProcess.self.showInformationMessage(
+                        localize("finished-write-firmware", "Firmware has been successfully updated.")
+                    );
+                }
+            }, (reason) => {
+                RubicProcess.self.showErrorMessage(
+                    `${localize("failed-write-firmware", "Failed to write firmware")}: ${reason}`
+                );
+            });
+        });
     }
 }

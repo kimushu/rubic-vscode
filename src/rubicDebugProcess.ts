@@ -178,9 +178,9 @@ export class RubicDebugProcess extends RubicProcess {
                             client.emit("app.debug-response", {
                                 debugger_id, request_id, result
                             });
-                        }, (reason = null) => {
+                        }, (reason) => {
                             client.emit("app.debug-response", {
-                                debugger_id, request_id, reason
+                                debugger_id, request_id, reason: `${reason}`
                             });
                         });
                     });

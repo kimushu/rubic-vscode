@@ -6,8 +6,6 @@
         "新しいハードウェア構成は保存されていません",
         "{0} に構文エラーがあります。手動で修正してください。",
         "Rubicボードカタログ",
-        "はい",
-        "いいえ",
         "ハードウェア構成が変更されました。保存しますか？",
         "カタログが更新されました (最終変更日時: {0})",
         "カタログは既に最新版です",
@@ -54,7 +52,8 @@
         "接続テストに成功しました (詳細は「デバッグ コンソール」を確認してください)",
         "接続テストに失敗しました (詳細は「デバッグ コンソール」を確認してください)",
         "ボードにファームウェアを書き込んでよろしいですか？",
-        "続行"
+        "ファームウェアの書き込みが完了しました",
+        "ファームウェアの書き込みに失敗しました"
     ],
     "keys": [
         "open-folder-before",
@@ -63,8 +62,6 @@
         "hw-config-not-saved",
         "syntax-error-f",
         "catalog-title",
-        "yes",
-        "no",
         "hw-changed",
         "catalog-updated-d",
         "catalog-not-updated",
@@ -111,6 +108,7 @@
         "conn-test-success",
         "conn-test-failed",
         "confirm-write-firmware",
-        "continue"
+        "finished-write-firmware",
+        "failed-write-firmware"
     ]
 }
