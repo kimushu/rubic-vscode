@@ -78,7 +78,7 @@ export class Sketch extends EventEmitter {
         let result = defaultResult;
         this.unload();
         return Promise.resolve(
-            RubicProcess.self.readTextFile(this._rubicFile, true, {}, SKETCH_ENCODING)
+            RubicProcess.self.readTextFile(this._rubicFile, true, null, SKETCH_ENCODING)
         )
         .then((data) => {
             /* rubic.json found */
@@ -90,12 +90,13 @@ export class Sketch extends EventEmitter {
         }, (reason) => {
             /* rubic.json is not found / rubic.json is invalid */
             this._data = null;
-            this._invalid = true;
             if (reason instanceof SyntaxError) {
+                this._invalid = true;
                 this.emit("invalid");
                 this._startWatcher();
                 throw reason;
             }
+            this._invalid = false;
             if (!convert) {
                 return SketchLoadResult.NO_SKETCH;
             }
@@ -232,6 +233,9 @@ export class Sketch extends EventEmitter {
                     return versions.reduce((a, b) => semver[method](a, b) ? a : b);
                 }
                 let newVer = RubicProcess.self.version;
+                if (data.rubicVersion == null) {
+                    data.rubicVersion = <any>{};
+                }
                 data.rubicVersion.min = semver_each("lt", data.rubicVersion.min, data.rubicVersion.last, newVer);
                 if (data.rubicVersion.min === newVer) {
                     delete data.rubicVersion.min;
@@ -243,9 +247,10 @@ export class Sketch extends EventEmitter {
                 data.rubicVersion.last = newVer;
 
                 return CJSON.stringify(data, null, 4);
-            })
+            }, "{}")
         ).then(() => {
             this._pending = null;
+            this._startWatcher(true);
         });
     }
 
@@ -437,12 +442,16 @@ export class Sketch extends EventEmitter {
     /**
      * Start watcher for sketch file
      */
-    private _startWatcher(): void {
+    private _startWatcher(atSave?: boolean): void {
         if (this._watcher == null) {
-            this._watcher = chokidar.watch(this._rubicFile).on("change", () => {
+            let listener = () => {
                 this.emit("reload");
                 this.load();
-            });
+            };
+            this._watcher = chokidar.watch(this._rubicFile).on("change", listener);
+            if (atSave) {
+                listener();
+            }
         }
     }
 
