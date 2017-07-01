@@ -389,6 +389,9 @@ export class RubicHostProcess extends RubicProcess {
         this._catalogData = new CatalogData();
         this._serverSetup = new Promise<void>((resolve) => {
             ipc.config.id = this.getUniqueId("h");
+            if (process.env["DEBUG_SERVER_PORT"] == null) {
+                ipc.config.silent = true;
+            }
             ipc.serve(resolve);
             ipc.server.start();
         })
