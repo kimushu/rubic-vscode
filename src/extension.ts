@@ -1,4 +1,4 @@
-// Import this first to configure vscode-nls
+// vscode-nls should be configured before loading all other modules
 import * as nls from "vscode-nls";
 nls.config(process.env.VSCODE_NLS_CONFIG);
 

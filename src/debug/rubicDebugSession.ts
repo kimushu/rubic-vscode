@@ -1,16 +1,17 @@
+// vscode-nls should be configured before loading all other modules
+import * as nls from "vscode-nls";
+const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+
 import { DebugSession, OutputEvent, TerminatedEvent } from "vscode-debugadapter";
 import { DebugProtocol } from "vscode-debugprotocol";
 import { RubicDebugProcess } from "../rubicDebugProcess";
 import { SketchLoadResult } from "../sketch";
 import { RubicProcess } from "../rubicProcess";
 import { Board, BoardStdioStream, BoardInformation } from "../boards/board";
-import * as nls from "vscode-nls";
 import * as glob from "glob";
 import * as pify from "pify";
 import * as fs from "fs";
 import * as path from "path";
-
-const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
 const SEPARATOR_RUN  = `${"-".repeat(64)}`;
 const SEPARATOR_STOP = `${"-".repeat(64)}`;
