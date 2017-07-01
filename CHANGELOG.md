@@ -1,11 +1,13 @@
-- [English](#change-log-en)
-- [日本語](#%E5%A4%89%E6%9B%B4%E3%83%AD%E3%82%B0-ja)
+- [English](#en)
+- [日本語](#ja)
 
-# Change Log (en)
+# <a id="en"></a>Change Log (en)
 
-## 0.99.9
+## 0.99.10
 
 * Add runtime information for each firmware
+* Change behavior of debug start ([#14](https://github.com/kimushu/rubic-vscode/issues/14))
+* Change format of rubic.json (Rubic converts automatically to new version)
 
 ## 0.99.8
 
@@ -51,11 +53,13 @@
 
 ----
 
-# 変更ログ (ja)
+# <a id="ja"></a>変更ログ (ja)
 
-## 0.99.0
+## 0.99.10
 
 * ファームウェアにランタイムの情報表示を追加
+* デバッグ対象ファイルの振る舞いを変更 ([#14](https://github.com/kimushu/rubic-vscode/issues/14))
+* rubic.jsonのフォーマットを変更(旧バージョンから新バージョンへは自動変換されます)
 
 ## 0.99.8
 

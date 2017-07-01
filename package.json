@@ -1,6 +1,6 @@
 {
   "name": "rubic",
-  "version": "0.99.8",
+  "version": "0.99.10",
   "publisher": "kimushu",
   "engines": {
     "vscode": "^1.12.0"
