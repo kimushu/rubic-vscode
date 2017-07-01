@@ -227,7 +227,13 @@ export class Sketch extends EventEmitter {
                 }
                 let newVer = RubicProcess.self.version;
                 data.rubicVersion.min = semver_each("lt", data.rubicVersion.min, data.rubicVersion.last, newVer);
+                if (data.rubicVersion.min === newVer) {
+                    delete data.rubicVersion.min;
+                }
                 data.rubicVersion.max = semver_each("gt", data.rubicVersion.max, data.rubicVersion.last, newVer);
+                if (data.rubicVersion.max === newVer) {
+                    delete data.rubicVersion.max;
+                }
                 data.rubicVersion.last = newVer;
 
                 return CJSON.stringify(data, null, 4);
