@@ -9,6 +9,7 @@
 * Change behavior of debug start ([#14](https://github.com/kimushu/rubic-vscode/issues/14))
 * Move mruby-specific options to `mrbconfig.json`
 * Add localized message for JSON schema (`rubic.json` and `mrbconfig.json`)
+* Improve catalog design (colors and configuration save messages)
 * Change format of `rubic.json` (Rubic converts automatically to new version)
 
 ## 0.99.8
@@ -63,6 +64,7 @@
 * デバッグ対象ファイルの振る舞いを変更 ([#14](https://github.com/kimushu/rubic-vscode/issues/14))
 * mruby関連のオプションを `mrbconfig.json` ファイルに移動
 * JSONスキーマの翻訳メッセージを追加 (`rubic.json` および `mrbconfig.json`)
+* カタログのデザインを改良 (配色と構成保存メッセージ)
 * rubic.jsonのフォーマットを変更(旧バージョンから新バージョンへは自動変換されます)
 
 ## 0.99.8
