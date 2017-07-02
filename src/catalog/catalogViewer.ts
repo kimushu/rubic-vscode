@@ -19,6 +19,7 @@ import * as MarkdownIt from "markdown-it";
 import { GitHubRepository } from "../util/githubFetcher";
 import { RubicProcess, RubicMessageItem } from "../processes/rubicProcess";
 import { Runtime } from "../runtimes/runtime";
+require("promise.prototype.finally").shim();
 
 const Handlebars = require("./handlebars");
 require("./template");
@@ -48,11 +49,10 @@ function makeGithubURL(owner: string, repo: string, branch?: string): string {
 }
 
 export class CatalogViewer implements TextDocumentContentProvider, Disposable {
-    private _sbiPort: StatusBarItem;
-    private _sbiBoard: StatusBarItem;
     private _currentSelection: CatalogSelection;
     private _currentPanel: "board" | "repository" | "release" | "variation" | "details";
     private _pendingSave: boolean;
+    private _pendingCache: boolean;
     private _onDidChange = new EventEmitter<Uri>();
     get onDidChange() { return this._onDidChange.event; }
 
@@ -106,6 +106,18 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             );
         });
 
+        let { sketch } = RubicProcess.self;
+        sketch.on("load", () => {
+            this._currentSelection = {
+                boardClass: sketch.boardClass,
+                repositoryUuid: sketch.repositoryUuid,
+                releaseTag: sketch.releaseTag,
+                variationPath: sketch.variationPath
+            };
+            this._pendingSave = false;
+            this._triggerUpdate();
+        });
+
         // Register event handler for closing
         context.subscriptions.push(
             workspace.onDidCloseTextDocument((document) => {
@@ -120,7 +132,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                         )
                         .then((item) => {
                             if (item === items[0]) {
-                                this._updateCatalogView({panelId: "details"});
+                                this._showCatalogView();
                             }
                         });
                     }
@@ -157,18 +169,17 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         })
         .then((result) => {
             if (result === SketchLoadResult.LOAD_CANCELED) { return; }
-            this._currentSelection = {
-                boardClass: sketch.boardClass,
-                repositoryUuid: sketch.repositoryUuid,
-                releaseTag: sketch.releaseTag,
-                variationPath: sketch.variationPath
-            };
             let active = window.activeTextEditor;
             return commands.executeCommand("vscode.previewHtml",
                 URI_CATALOG,
                 (active ? active.viewColumn : ViewColumn.One),
                 localize("catalog-title", "Rubic board catalog")
             );
+        })
+        .then(() => {
+            if (this._currentPanel === "details") {
+                this._showSaveMessage();
+            }
         });
     }
 
@@ -212,11 +223,17 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         if (this._currentSelection.variationPath != null) {
             // Download release assets (background)
             let { catalogData } = RubicProcess.self;
+            this._pendingCache = true;
             catalogData.prepareCacheDir(
                 this._currentSelection.repositoryUuid,
                 this._currentSelection.releaseTag
-            );
-            this._showSaveMessage();
+            )
+            .then(() => {
+                this._showSaveMessage();
+            })
+            .finally(() => {
+                this._pendingCache = false;
+            });
         }
         // Update page
         this._triggerUpdate();
@@ -239,17 +256,15 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             this._pendingSave = true;
             RubicProcess.self.showInformationConfirm(
                 localize("hw-changed", "Hardware configuration has been changed. Are you sure to save?"),
-            ).then((yes) => {
+            )
+            .then((yes) => {
                 if (yes) {
                     this._pendingSave = false;
                     sketch.boardClass = this._currentSelection.boardClass;
                     sketch.repositoryUuid = this._currentSelection.repositoryUuid;
                     sketch.releaseTag = this._currentSelection.releaseTag;
                     sketch.variationPath = this._currentSelection.variationPath;
-                    return sketch.store()
-                    .then(() => {
-                        this._triggerUpdate();
-                    });
+                    return sketch.store();
                 }
             });
         }
@@ -436,6 +451,9 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             } else {
                 this._currentPanel = "details";
             }
+        }
+        if ((this._currentPanel === "details") && (!this._pendingCache)) {
+            this._showSaveMessage();
         }
         let currentPanel = vars.panels.find((panel) => panel.id === this._currentPanel);
         if (currentPanel == null) {
