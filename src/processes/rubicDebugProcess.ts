@@ -149,6 +149,7 @@ export class RubicDebugProcess extends RubicProcess {
         // Setup IPC
         let { host_id, debugger_id } = this._privateData;
         this._clientSetup = new Promise((resolve) => {
+            ipc.config.silent = true;
             ipc.connectTo(host_id, () => {
                 let client = ipc.of[host_id];
                 client.on("connect", () => {
