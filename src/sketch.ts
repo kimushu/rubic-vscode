@@ -577,14 +577,12 @@ export class Sketch extends EventEmitter {
         let item: vscode.MessageItem;
 
         // Confirm to user
-        item = await RubicProcess.self.showInformationMessage(
+        if(!await RubicProcess.self.showInformationConfirm(
             localize(
                 "convert-sketch-confirm",
                 "This sketch was created by old version of Rubic. Are you sure to convert?"
             ),
-            items.yes, items.cancel
-        );
-        if (item.isCloseAffordance) {
+        )) {
             return SketchLoadResult.LOAD_CANCELED;
         }
 
