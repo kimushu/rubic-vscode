@@ -612,14 +612,14 @@ export class Sketch extends EventEmitter {
             case "GrCitrusBoard":
                 top.boardClass = "GrCitrusBoard";
                 top.repositoryUuid = "809d1206-8cd8-46f6-a657-2f60c050d7c9";
-                top.releaseTag = "v2.12";
+                top.releaseTag = "v2.19";
                 top.variationPath = "citrus_sketch.bin";
                 break;
             case "WakayamaRbBoard":
                 top.boardClass = "WakayamaRbBoard";
                 top.repositoryUuid = "1ac3a112-1640-482f-8ca3-cf5afc181fe6";
-                // top.releaseTag = "";
-                // top.variationPath = "";
+                top.releaseTag = "v2.30";
+                top.variationPath = "wrbb_sketch_128K.bin";
                 break;
             default:
                 throw Error(
