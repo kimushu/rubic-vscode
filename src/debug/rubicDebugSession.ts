@@ -124,20 +124,18 @@ class RubicDebugSession extends DebugSession {
     /**
      * Shutdown debug session
      */
-    shutdown() {
+    shutdown(): void {
         // Dispose of subscribed objects
         let { subscriptions } = this;
         this.subscriptions = null;
-        return (subscriptions || []).reduce((promise, obj) => {
+        (subscriptions || []).reduce((promise, obj) => {
             return promise
             .then(() => {
                 return obj.dispose();
             })
             .catch(() => {});
-        }, Promise.resolve())
-        .then(() => {
-            return DebugSession.prototype.shutdown.call(this);
-        });
+        }, Promise.resolve());
+        return DebugSession.prototype.shutdown.call(this);
     }
 
     /**
@@ -355,23 +353,20 @@ class RubicDebugSession extends DebugSession {
      * @param args Arguments passed by custom request
      */
     private _writeFirmware(args: WriteFirmwareArguments): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            RubicProcess.self.withProgress({
-                location: { Window: true },
-                title: localize("firmware-update", "Firmware update")
-            }, (progress) => {
-                return Promise.resolve()
-                .then(() => {
-                    return this._constructBoard(args);
-                })
-                .then(() => {
-                    return this._board.writeFirmware(args.fullPath, (message: string) => {
-                        progress.report({ message });
-                    });
-                })
-                .then(resolve, reject);
+        return Promise.resolve(RubicProcess.self.withProgress({
+            location: { Window: true },
+            title: localize("firmware-update", "Firmware update")
+        }, (progress) => {
+            return Promise.resolve()
+            .then(() => {
+                return this._constructBoard(args);
+            })
+            .then(() => {
+                return this._board.writeFirmware(args.fullPath, (message: string) => {
+                    progress.report({ message });
+                });
             });
-        });
+        }));
     }
 }
 
