@@ -6,6 +6,7 @@ import {
 import { DebugSession, TerminatedEvent } from "vscode-debugadapter";
 import * as ipc from "node-ipc";
 import { Sketch } from "../sketch";
+require("promise.prototype.finally").shim();
 
 interface HostRequest {
     request_id: string;
@@ -77,20 +78,16 @@ export class RubicDebugProcess extends RubicProcess {
     readonly showInputBox = function (this: RubicDebugProcess, options?: RubicInputBoxOptions): Thenable<any> {
         return this._request("showInputBox", {options});
     };
-    readonly withProgress = function (this: RubicDebugProcess, options: RubicProgressOptions, task: (progress: RubicProgress<{ message?: string }>) => Thenable<void>): Thenable<void> {
+    readonly withProgress = function<T> (this: RubicDebugProcess, options: RubicProgressOptions, task: (progress: RubicProgress<{ message?: string }>) => Thenable<T>): Thenable<T> {
         return this._request("withProgress.start", {options})
         .then((progress_id) => {
-            return task({
+            return Promise.resolve(task({
                 report: (value: { message?: string }) => {
                     this._request("withProgress.report", {progress_id, message: value.message});
                 }
-            })
-            .then(() => {
+            }))
+            .finally(() => {
                 return this._request("withProgress.end", {progress_id});
-            }, (reason) => {
-                let result = Promise.reject(reason);
-                return this._request("withProgress.end", {progress_id})
-                .then(() => result, () => result);
             });
         });
     };

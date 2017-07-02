@@ -167,7 +167,7 @@ export class RubicHostProcess extends RubicProcess {
     readonly showInputBox = function (this: RubicHostProcess, options?: any): any {
         return window.showInputBox(options);
     };
-    readonly withProgress = function (this: RubicHostProcess, origOptions: RubicProgressOptions, task: (progress: RubicProgress<{ message?: string }>) => Thenable<void>): Thenable<void> {
+    readonly withProgress = function<T> (this: RubicHostProcess, origOptions: RubicProgressOptions, task: (progress: RubicProgress<{ message?: string }>) => Thenable<T>): Thenable<T> {
         let options: ProgressOptions;
         if (typeof(origOptions.location) === "number") {
             options = <ProgressOptions>origOptions;
@@ -273,9 +273,9 @@ export class RubicHostProcess extends RubicProcess {
         return this._getDebuggerRef(debugger_id)
         .then((ref) => {
             return new Promise<void>((resolve, reject) => {
-                ipc.server.emit(ref.socket, "app.terminate", {});
                 ref.stopResolve = resolve;
                 ref.stopReject = reject;
+                ipc.server.emit(ref.socket, "app.terminate", {});
             });
         });
     };

@@ -251,7 +251,7 @@ export class RubicProcess {
      * @param options Options of behavior
      * @param task Progress task
      */
-    readonly withProgress: (options: RubicProgressOptions, task: (progress: RubicProgress<{ message?: string }>) => Thenable<void>) => Thenable<void>;
+    readonly withProgress: <T>(options: RubicProgressOptions, task: (progress: RubicProgress<{ message?: string }>) => Thenable<T>) => Thenable<T>;
 
     /**
      * Show information confirmation
