@@ -7,7 +7,9 @@
 
 * Add runtime information for each firmware
 * Change behavior of debug start ([#14](https://github.com/kimushu/rubic-vscode/issues/14))
-* Change format of rubic.json (Rubic converts automatically to new version)
+* Move mruby-specific options to `mrbconfig.json`
+* Add localized message for JSON schema (`rubic.json` and `mrbconfig.json`)
+* Change format of `rubic.json` (Rubic converts automatically to new version)
 
 ## 0.99.8
 
@@ -59,6 +61,8 @@
 
 * ファームウェアにランタイムの情報表示を追加
 * デバッグ対象ファイルの振る舞いを変更 ([#14](https://github.com/kimushu/rubic-vscode/issues/14))
+* mruby関連のオプションを `mrbconfig.json` ファイルに移動
+* JSONスキーマの翻訳メッセージを追加 (`rubic.json` および `mrbconfig.json`)
 * rubic.jsonのフォーマットを変更(旧バージョンから新バージョンへは自動変換されます)
 
 ## 0.99.8
