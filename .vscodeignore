@@ -10,6 +10,7 @@ tmp/**
 typings/**
 cache/**
 tools/**
+docs/**
 tsconfig.json
 vsc-extension-quickstart.md
 node_modules/serialport/bin/win32*/**

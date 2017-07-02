@@ -407,6 +407,10 @@ export class Sketch extends EventEmitter {
         });
     }
 
+    /**
+     * Ask user which file to run/debug
+     * @param runtimes List of runtimes
+     */
     private _askDebugTarget(runtimes: Runtime[]): Promise<string> {
         let { workspaceRoot } = RubicProcess.self;
         let items: RubicQuickPickItem[] = [];
