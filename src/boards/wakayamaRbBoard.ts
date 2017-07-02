@@ -8,7 +8,7 @@ import * as path from "path";
 import { enumerateRemovableDisks } from "../util/diskEnumerator";
 import { exec } from "child_process";
 import { RubicProcess } from "../processes/rubicProcess";
-import * as xml2js from "xml2js";
+import * as dedent from "dedent";
 
 const localize = nls.loadMessageBundle(__filename);
 const DEBUG = false;
@@ -342,28 +342,25 @@ export class WakayamaRbBoard extends Board {
         return Promise.resolve(RubicProcess.self.readTextFile(
             this.getConfigXmlPath(), false, ""
         ))
-        .then((content) => {
-            return pify(xml2js.parseString)(content);
-        })
-        .then((root) => {
-            return ((((root || {}).Config || {}).Start || {}).$ || {}).file;
+        .then((content: string) => {
+            let match = content.match(/file.*['"]([^'"])['"]/);
+            return (match != null) ? match[1] : null;
         });
     }
 
     setAutoStartProgram(relativePath: string): Promise<void> {
+        if (relativePath.match(/['"]/) != null) {
+            return Promise.reject(new Error(
+                "This board cannot handle files with quotemarks (['] or [\"])"
+            ));
+        }
         return Promise.resolve(RubicProcess.self.updateTextFile(
             this.getConfigXmlPath(),
             (content) => {
-                return pify(xml2js.parseString)(content)
-                .then((root) => {
-                    let obj = root || {};
-                    obj = (obj.Config == null) ? (obj.Config = {}) : obj.Config;
-                    obj = (obj.Start == null) ? (obj.Start = {}) : obj.Start;
-                    obj = (obj.$ == null) ? (obj.$ = {}) : obj.$;
-                    obj.file = relativePath;
-                    let builder = new xml2js.Builder();
-                    return builder.buildObject(root);
-                });
+                return dedent`
+                    <?xml version="1.0" encoding="utf-8" standalone="yes"?>
+                    <Config><Start file="${relativePath}" /></Config>
+                `;
             }
         ));
     }
