@@ -107,6 +107,12 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         });
 
         let { sketch } = RubicProcess.self;
+        this._currentSelection = {
+            boardClass: null,
+            repositoryUuid: null,
+            releaseTag: null,
+            variationPath: null
+        };
         sketch.on("load", () => {
             this._currentSelection = {
                 boardClass: sketch.boardClass,
