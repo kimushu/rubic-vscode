@@ -21,6 +21,7 @@ const LOCALIZED_YES = localize("yes", "Yes");
 const LOCALIZED_NO = localize("no", "No");
 
 const RUBIC_DEBUG_SERVER_PORT = process.env["RUBIC_DEBUG_SERVER_PORT"];
+const RUBIC_DEBUG_IPC_SILENT = process.env["RUBIC_DEBUG_IPC_SILENT"];
 const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
 const CMD_PROVIDE_INIT_CFG = "extension.rubic.provideInitialConfigurations";
 const CMD_GUESS_PROGRAM_NAME = "extension.rubic.guessProgramName";
@@ -390,7 +391,7 @@ export class RubicHostProcess extends RubicProcess {
         this._catalogData = new CatalogData();
         this._serverSetup = new Promise<void>((resolve) => {
             ipc.config.id = this.getUniqueId("h");
-            if (RUBIC_DEBUG_SERVER_PORT == null) {
+            if ((RUBIC_DEBUG_SERVER_PORT == null) || (RUBIC_DEBUG_IPC_SILENT != null)) {
                 ipc.config.silent = true;
             }
             ipc.serve(resolve);
