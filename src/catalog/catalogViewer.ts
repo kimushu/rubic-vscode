@@ -292,7 +292,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         let { lastModified } = catalogData;
         return Promise.resolve()
         .then(() => {
-            return catalogData.fetch();
+            return catalogData.fetch(true);
         })
         .then(() => {
             this._triggerUpdate();
