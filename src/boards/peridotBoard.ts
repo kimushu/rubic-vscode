@@ -1,13 +1,16 @@
-import { Board, BoardInformation, BoardStdioStream, BoardDebugStream } from "./board";
+import { Board, BoardInformation, BoardStdioStream, BoardDebugStream, BoardCandidate } from "./board";
 import { Canarium } from "canarium";
 import { Writable, Readable } from "stream";
 import { RubicProcess } from "../processes/rubicProcess";
 import * as path from "path";
+import * as elfy from "elfy";
 
 const AGENT_PATH_DEFAULT = "/sys/rubic";
 const STDIN_PATH  = "/dev/stdin";
 const STDOUT_PATH = "/dev/stdout";
 const STDERR_PATH = "/dev/stderr";
+
+elfy.constants.machine["113"] = "nios2";
 
 function getRemoteWritableStream(file: Canarium.RemoteFile): Writable {
     return new Writable({
@@ -47,11 +50,36 @@ export class PeridotBoard extends Board {
         super();
     }
 
+    static list(): Promise<BoardCandidate[]> {
+        return Canarium.enumerate().then((boards: any[]) => {
+            return boards.map((board) => {
+                let candidate: BoardCandidate = {
+                    boardClass: this.name,
+                    name: board.name,
+                    path: board.path,
+                };
+                if (board.vendorId) { candidate.vendorId = board.vendorId; }
+                if (board.productId) { candidate.productId = board.productId; }
+                this.judgeSupportedOrNot(candidate);
+                return candidate;
+            });
+        });
+    }
+
+    protected static judgeSupportedOrNot(candidate: BoardCandidate): void {
+    }
+
     /**
      * Get Canarium instance with connection check
      */
-    protected getCanarium(): Promise<Canarium> {
+    protected getCanarium(path?: string): Promise<Canarium> {
         if (this._canarium == null) {
+            if (path != null) {
+                return this.connect(path)
+                .then(() => {
+                    return this.getCanarium();
+                });
+            }
             return Promise.reject(new Error("Not connected"));
         }
         return Promise.resolve(this._canarium);
@@ -247,6 +275,40 @@ export class PeridotBoard extends Board {
                 {
                     bootProgram: `${this._storagePath}/${relativePath}`
                 }
+            );
+        });
+    }
+
+    /**
+     * Load ELF
+     * @param data ELF data
+     */
+    protected loadElf(data: Buffer): Promise<void> {
+        return Promise.resolve()
+        .then(() => {
+            return elfy.parse(data);
+        })
+        .then((elf) => {
+            if (elf.machine !== "nios2") {
+                return Promise.reject(new Error("Not NiosII program"));
+            }
+            return elf.body.programs.reduce(
+                (promise, program) => {
+                    if (program.type !== "load") {
+                        return promise;
+                    }
+                    let filesz = program.data.length;
+                    return promise
+                    .then(() => {
+                        return this._canarium.avm.write(program.paddr, program.data);
+                    })
+                    .then(() => {
+                        let zeroFill = program.memsz - filesz;
+                        if (zeroFill > 0) {
+                            return this._canarium.avm.write(program.paddr + filesz, Buffer.alloc(zeroFill, 0));
+                        }
+                    });
+                }, Promise.resolve()
             );
         });
     }

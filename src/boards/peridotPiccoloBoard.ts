@@ -7,6 +7,7 @@ import * as nls from "vscode-nls";
 import { RubicProcess } from "../processes/rubicProcess";
 import * as decompress from "decompress";
 import { Canarium } from "canarium";
+import { PeridotBoard } from "./peridotBoard";
 require("promise.prototype.finally").shim();
 const localize = nls.loadMessageBundle(__filename);
 
@@ -18,7 +19,7 @@ const WRITER_SPI_PATH = "/sys/flash/spi";
 const WRITER_BOOT_TIMEOUT_MS = 5000;
 const FLASH_SPLIT_SIZE = 16384;
 
-export class PeridotPiccoloBoard extends PeridotClassicBoard {
+export class PeridotPiccoloBoard extends PeridotBoard {
     constructor(path: string) {
         super(path);
     }
@@ -38,9 +39,10 @@ export class PeridotPiccoloBoard extends PeridotClassicBoard {
         let img1Rpd: Buffer;
         let ufmRpd: Buffer;
         let timeout: number;
-        Canarium.verbosity = 3;
+        let canarium: Canarium;
+
         let tryOpen = (path: string, timeoutEach: number = null): Promise<Canarium.RemoteFile> => {
-            return this.canarium.openRemoteFile(path, {O_WRONLY: true}, undefined, timeoutEach)
+            return canarium.openRemoteFile(path, {O_WRONLY: true}, undefined, timeoutEach)
             .catch((reason) => {
                 if (Date.now() < timeout) {
                     // Retry
@@ -79,11 +81,14 @@ export class PeridotPiccoloBoard extends PeridotClassicBoard {
         })
         .then(() => {
             // Connect to board
-            return this.canarium.open(boardPath);
+            return this.getCanarium(boardPath);
+
         })
-        .then(() => {
+        .then((result) => {
+            canarium = result;
+
             // Check current configuration image
-            return this.canarium.avm.iord(SWI_BASE, SWI_REG_CLASSID);
+            return canarium.avm.iord(SWI_BASE, SWI_REG_CLASSID);
         })
         .then((classId) => {
             if (classId !== PICCOLO_BOOT_CLASSID) {
@@ -96,7 +101,7 @@ export class PeridotPiccoloBoard extends PeridotClassicBoard {
                 localize("setup-writer", "Setting up writer program")
             );
             // Reset NiosII
-            return this.canarium.avm.iowr(SWI_BASE, SWI_REG_RSTSTS, SWI_RSTSTS_KEY_VAL | SWI_RSTSTS_RST_MSK);
+            return canarium.avm.iowr(SWI_BASE, SWI_REG_RSTSTS, SWI_RSTSTS_KEY_VAL | SWI_RSTSTS_RST_MSK);
         })
         .then(() => {
             // Load ELF
@@ -104,7 +109,7 @@ export class PeridotPiccoloBoard extends PeridotClassicBoard {
         })
         .then(() => {
             // Start NiosII
-            return this.canarium.avm.iowr(SWI_BASE, SWI_REG_RSTSTS, SWI_RSTSTS_KEY_VAL);
+            return canarium.avm.iowr(SWI_BASE, SWI_REG_RSTSTS, SWI_RSTSTS_KEY_VAL);
         })
         .then(() => {
             // Write Image1 (CFM1+CFM2)
@@ -162,7 +167,7 @@ export class PeridotPiccoloBoard extends PeridotClassicBoard {
         })
         .finally(() => {
             // Disconnect
-            return this.canarium.close().catch(() => {});
+            return this.disconnect();
         })
         .then(() => {
             return true;
