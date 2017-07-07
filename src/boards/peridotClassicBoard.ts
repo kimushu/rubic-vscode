@@ -20,7 +20,7 @@ export const SWI_RSTSTS_RST_MSK = (1 << 8);
 const WRITER_RBF_PATH = path.join(__dirname, "..", "..", "lib", "peridot_classic_writer.rbf");
 const WRITER_SPI_PATH = "/sys/flash/spi";
 const WRITER_BOOT_TIMEOUT_MS = 5 * 1000;
-const BIT_FLIP: number[] = [];
+const BIT_REVERSE: number[] = [];
 
 function buf2ab(buf: Buffer): ArrayBuffer {
     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
@@ -29,20 +29,20 @@ function buf2ab(buf: Buffer): ArrayBuffer {
 elfy.constants.machine["113"] = "nios2";
 
 /**
- * Convert RPD to raw bytes data (Execute bit-swap for each byte)
+ * Convert RPD to raw bytes data (Execute bit-reversing and byte-swapping)
  * @param rpd RPD data
  */
 export function rpd2bytes(rpd: Buffer): Buffer {
-    if (BIT_FLIP.length === 0) {
+    if (BIT_REVERSE.length === 0) {
         for (let i = 0; i < 256; ++i) {
-            BIT_FLIP[i] =
+            BIT_REVERSE[i] =
                 ((i << 7) & 0x80) | ((i << 5) & 0x40) | ((i << 3) & 0x20) | ((i << 1) & 0x10) |
                 ((i >> 7) & 0x01) | ((i >> 5) & 0x02) | ((i >> 3) & 0x04) | ((i >> 1) & 0x08);
         }
     }
-    let bytes = Buffer.allocUnsafe(rpd.byteLength);
+    let bytes = Buffer.alloc((rpd.byteLength + 3) & ~3);
     for (let i = 0; i < rpd.byteLength; ++i) {
-        bytes.writeUInt8(BIT_FLIP[rpd[i]], i);
+        bytes.writeUInt8(BIT_REVERSE[rpd[i]], i ^ 3);
     }
     return bytes;
 }
