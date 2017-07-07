@@ -325,13 +325,13 @@ export class Sketch extends EventEmitter {
                         boardPath: this.boardPath,
                         fullPath
                     }
-                ),
+                )/*,
                 new Promise((resolve, reject) => {
                     setTimeout(
                         reject, FW_WRITE_TIMEOUT_MS,
                         new Error("Timed out")
                     );
-                })
+                })*/
             ])
             .finally(() => {
                 return Promise.resolve(rprocess.stopDebugProcess(debuggerId));
