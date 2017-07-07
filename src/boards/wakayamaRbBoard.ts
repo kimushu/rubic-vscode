@@ -231,7 +231,7 @@ export class WakayamaRbBoard extends Board {
         }); // return Promise.resolve().then()...
     }
 
-    writeFirmware(filename: string, reporter: (message: string) => void): Promise<boolean> {
+    writeFirmware(filename: string, boardPath: string, reporter: (message?: string) => void): Promise<boolean> {
         let boardName = (<BoardConstructor>this.constructor).getBoardName();
         const warn = ` $(stop)${localize(
             "warn-x",
