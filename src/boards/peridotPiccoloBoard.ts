@@ -15,7 +15,7 @@ const WRITER_ELF_PATH = path.join(__dirname, "..", "..", "..", "lib", "peridot_p
 const WRITER_IMG1_PATH = "/sys/flash/image1";
 const WRITER_UFM_PATH = "/sys/flash/ufm";
 const WRITER_SPI_PATH = "/sys/flash/spi";
-const WRITER_BOOT_TIMEOUT_MS = 5000 * 1000;
+const WRITER_BOOT_TIMEOUT_MS = 5000;
 const FLASH_SPLIT_SIZE = 16384;
 
 export class PeridotPiccoloBoard extends PeridotClassicBoard {
@@ -39,12 +39,12 @@ export class PeridotPiccoloBoard extends PeridotClassicBoard {
         let ufmRpd: Buffer;
         let timeout: number;
         Canarium.verbosity = 3;
-        let tryOpen = (path: string): Promise<Canarium.RemoteFile> => {
-            return this.canarium.openRemoteFile(path, {O_WRONLY: true}, undefined, null)
+        let tryOpen = (path: string, timeoutEach: number = null): Promise<Canarium.RemoteFile> => {
+            return this.canarium.openRemoteFile(path, {O_WRONLY: true}, undefined, timeoutEach)
             .catch((reason) => {
                 if (Date.now() < timeout) {
                     // Retry
-                    return tryOpen(path);
+                    return tryOpen(path, timeoutEach);
                 }
                 return Promise.reject(reason);
             });
@@ -112,7 +112,7 @@ export class PeridotPiccoloBoard extends PeridotClassicBoard {
                 return;
             }
             timeout = Date.now() + WRITER_BOOT_TIMEOUT_MS;
-            return tryOpen(WRITER_IMG1_PATH)
+            return tryOpen(WRITER_IMG1_PATH, 1000)
             .then((file) => {
                 return tryWrite(
                     file,
