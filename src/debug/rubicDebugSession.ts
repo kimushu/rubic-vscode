@@ -362,7 +362,7 @@ class RubicDebugSession extends DebugSession {
                 return this._constructBoard(args);
             })
             .then(() => {
-                return this._board.writeFirmware(args.fullPath, (message: string) => {
+                return this._board.writeFirmware(args.fullPath, args.boardPath, (message: string) => {
                     progress.report({ message });
                 });
             });
