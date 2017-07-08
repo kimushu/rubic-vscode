@@ -27,6 +27,7 @@ interface BoardPathArguments {
 
 interface RubicLaunchRequestArguments extends DebugProtocol.LaunchRequestArguments, BoardPathArguments {
     noTransfer?: boolean;
+    format?: boolean;
     program: string;
 }
 
@@ -205,6 +206,15 @@ class RubicDebugSession extends DebugSession {
         }
 
         return Promise.resolve()
+        .then(() => {
+            if (args.format) {
+                // Format storage
+                this._report(
+                    localize("formatting-storage", "Formatting internal storage of the board")
+                );
+                return this._board.formatStorage();
+            }
+        })
         .then(() => {
             // Search files
             let files: string[] = [];

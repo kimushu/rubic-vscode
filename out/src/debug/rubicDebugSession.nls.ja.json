@@ -2,6 +2,7 @@
     "messages": [
         "ボードに接続します: {0} @ {1}",
         "ボードから切断します",
+        "ボードの内蔵ストレージをフォーマット中",
         "ファイル書き込み中: {0}",
         "転送が完了しました",
         "{0}個のファイルは変更が無いためスキップされました",
@@ -19,6 +20,7 @@
     "keys": [
         "connecting-board-x",
         "disconnecting-board",
+        "formatting-storage",
         "writing-file-x",
         "transfer-complete",
         "skipped-file-1",
