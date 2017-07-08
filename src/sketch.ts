@@ -20,7 +20,7 @@ const SKETCH_ENCODING = "utf8";
 const LAUNCH_JSON = "launch.json";
 const LAUNCH_ENCODING = "utf8";
 const CONN_TEST_TIMEOUT_MS = 10000;
-const FW_WRITE_TIMEOUT_MS = 60000;
+//const FW_WRITE_TIMEOUT_MS = 60000;
 
 const localize = nls.loadMessageBundle(__filename);
 

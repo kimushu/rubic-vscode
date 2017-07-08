@@ -1,5 +1,4 @@
-import { Board, BoardCandidate, BoardStdioStream, BoardInformation } from "./board";
-import * as stream from "stream";
+import { Board, BoardCandidate } from "./board";
 import { Canarium } from "canarium";
 import * as nls from "vscode-nls";
 import * as path from "path";
@@ -22,10 +21,6 @@ const WRITER_SPI_PATH = "/sys/flash/spi";
 const WRITER_BOOT_TIMEOUT_MS = 5 * 1000;
 const BIT_REVERSE: number[] = [];
 
-function buf2ab(buf: Buffer): ArrayBuffer {
-    return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-}
-
 /**
  * Convert RPD to raw bytes data (Execute bit-reversing and byte-swapping)
  * @param rpd RPD data
@@ -47,8 +42,8 @@ export function rpd2bytes(rpd: Buffer): Buffer {
 
 export class PeridotClassicBoard extends PeridotBoard {
 
-    public constructor(_path: string) {
-        super(_path);
+    public constructor(path_fixme: string) {
+        super();
     }
 
     public static getBoardName(): string {
@@ -133,28 +128,3 @@ export class PeridotClassicBoard extends PeridotBoard {
     }
 }
 Board.addConstructor(PeridotClassicBoard);
-
-class CanariumWritableStream extends stream.Writable {
-    constructor(private _file: any) {
-        super({decodeStrings: true});
-    }
-
-    public _write(chunk: Buffer, encoding: string, callback: Function) {
-        this._file.write(buf2ab(chunk), true).then(
-            () => { callback(); },
-            (error) => { callback(error); }
-        );
-    }
-}
-
-class CanariumReadableStream extends stream.Readable {
-    constructor(private _file: any) {
-        super({encoding: null});
-    }
-
-    public _read(size: number) {
-        this._file.read(size).then((arrayBuffer: ArrayBuffer) => {
-            this.push(Buffer.from(arrayBuffer));
-        });
-    }
-}

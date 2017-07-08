@@ -1,10 +1,9 @@
-import { PeridotClassicBoard, SWI_BASE, SWI_REG_RSTSTS, SWI_RSTSTS_KEY_VAL, SWI_RSTSTS_RST_MSK, SWI_RSTSTS_BOOTIMG_MSK, SWI_REG_CLASSID, rpd2bytes } from "./peridotClassicBoard";
+import { SWI_BASE, SWI_REG_RSTSTS, SWI_RSTSTS_KEY_VAL, SWI_RSTSTS_RST_MSK, SWI_REG_CLASSID, rpd2bytes } from "./peridotClassicBoard";
 import { BoardCandidate, Board } from "./board";
 import * as path from "path";
 import * as pify from "pify";
 import * as fs from "fs";
 import * as nls from "vscode-nls";
-import { RubicProcess } from "../processes/rubicProcess";
 import * as decompress from "decompress";
 import { Canarium } from "canarium";
 import { PeridotBoard } from "./peridotBoard";
@@ -20,8 +19,8 @@ const WRITER_BOOT_TIMEOUT_MS = 5000;
 const FLASH_SPLIT_SIZE = 16384;
 
 export class PeridotPiccoloBoard extends PeridotBoard {
-    constructor(path: string) {
-        super(path);
+    constructor(path_fixme: string) {
+        super();
     }
 
     public static getBoardName(): string {

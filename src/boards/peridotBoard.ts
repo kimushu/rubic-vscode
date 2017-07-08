@@ -11,7 +11,7 @@ const STDIN_PATH  = "/dev/stdin";
 const STDOUT_PATH = "/dev/stdout";
 const STDERR_PATH = "/dev/stderr";
 const INT_STORAGE_PATH = "/mnt/internal";
-const FORMAT_TIMEOUT_MS = 10 * 1000;
+//const FORMAT_TIMEOUT_MS = 10 * 1000;
 const RPC_TIMEOUT = 5000;
 const STATUS_POLL_INTERVAL = 1000;
 
@@ -52,7 +52,7 @@ export class PeridotBoard extends Board {
     private _canarium: Canarium;
     private _statusPoll: NodeJS.Timer;
 
-    protected constructor(private _storagePath: string, private _agentPath: string = AGENT_PATH_DEFAULT) {
+    protected constructor(private _agentPath: string = AGENT_PATH_DEFAULT) {
         super();
     }
 
@@ -182,7 +182,7 @@ export class PeridotBoard extends Board {
                         return file.read(1, true, RPC_TIMEOUT)
                         .finally(() => {
                             return file.close(RPC_TIMEOUT);
-                        })
+                        });
                     })
                     .then((buf) => {
                         if (buf.toString() === "0") {
@@ -289,13 +289,13 @@ export class PeridotBoard extends Board {
                 return canarium.openRemoteFile(STDOUT_PATH, {O_RDONLY: true, O_NONBLOCK: true}, undefined, RPC_TIMEOUT)
                 .then((file) => {
                     stdout = getRemoteReadableStream(file);
-                })
+                });
             })
             .then(() => {
                 return canarium.openRemoteFile(STDERR_PATH, {O_RDONLY: true, O_NONBLOCK: true}, undefined, RPC_TIMEOUT)
                 .then((file) => {
                     stdout = getRemoteReadableStream(file);
-                })
+                });
             })
             .then(() => {
                 return {stdin, stdout, stderr};
