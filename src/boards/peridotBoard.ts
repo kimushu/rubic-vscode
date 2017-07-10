@@ -75,13 +75,17 @@ export class PeridotBoard extends Board {
     protected static judgeSupportedOrNot(candidate: BoardCandidate): void {
     }
 
+    protected getDefaultBitrate(): number {
+        return null;
+    }
+
     /**
      * Get Canarium instance with connection check
      */
-    protected getCanarium(path?: string): Promise<Canarium> {
+    protected getCanarium(path?: string, bitrate?: number): Promise<Canarium> {
         if (this._canarium == null) {
             if (path != null) {
-                return this.connect(path)
+                return this.connect(path, bitrate)
                 .then(() => {
                     return this.getCanarium();
                 });
@@ -91,13 +95,19 @@ export class PeridotBoard extends Board {
         return Promise.resolve(this._canarium);
     }
 
-    connect(path: string): Promise<void> {
+    connect(path: string, bitrate?: number): Promise<void> {
         if (this._canarium != null) {
             return Promise.reject(
                 new Error("Already connected")
             );
         }
         this._canarium = new Canarium();
+        if (bitrate == null) {
+            bitrate = this.getDefaultBitrate();
+        }
+        if (bitrate != null) {
+            this._canarium.serialBitrate = bitrate;
+        }
         this._canarium.onClosed = () => {
             this._canarium = null;
             this.emit("disconnected");

@@ -11,6 +11,8 @@ require("promise.prototype.finally").shim();
 const localize = nls.loadMessageBundle(__filename);
 
 const PICCOLO_BOOT_CLASSID = 0x72a90000;
+const BOOTLOADER_BITRATE = 115200;
+const FIRMWARE_BITRATE = 921600;
 const WRITER_ELF_PATH = path.join(__dirname, "..", "..", "..", "lib", "peridot_piccolo_writer.elf");
 const WRITER_IMG1_PATH = "/sys/flash/image1";
 const WRITER_UFM_PATH = "/sys/flash/ufm";
@@ -30,6 +32,10 @@ export class PeridotPiccoloBoard extends PeridotBoard {
     protected static judgeSupportedOrNot(candidate: BoardCandidate): void {
         // Nothing to do
         // Piccolo has no fixed USB-UART device, so all VCP devices may be used as piccolo
+    }
+
+    protected getDefaultBitrate(): number {
+        return FIRMWARE_BITRATE;
     }
 
     writeFirmware(filename: string, boardPath: string, reporter: (message?: string) => void): Promise<boolean> {
@@ -80,8 +86,7 @@ export class PeridotPiccoloBoard extends PeridotBoard {
         })
         .then(() => {
             // Connect to board
-            return this.getCanarium(boardPath);
-
+            return this.getCanarium(boardPath, BOOTLOADER_BITRATE);
         })
         .then((result) => {
             canarium = result;
