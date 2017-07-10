@@ -147,7 +147,7 @@ export class PeridotBoard extends Board {
         .then((canarium) => {
             return canarium.openRemoteFile(
                 `${INT_STORAGE_PATH}/${relativePath}`,
-                {O_CREAT: true, O_WRONLY: true},
+                {O_CREAT: true, O_WRONLY: true, O_TRUNC: true},
                 0o644,
                 RPC_TIMEOUT
             )
