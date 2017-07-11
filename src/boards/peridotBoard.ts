@@ -13,12 +13,12 @@ const STDERR_PATH = "/dev/stderr";
 const INT_STORAGE_PATH = "/mnt/internal";
 //const FORMAT_TIMEOUT_MS = 10 * 1000;
 const RPC_TIMEOUT = 5000;
-const STATUS_POLL_INTERVAL = 1000;
+const STATUS_POLL_INTERVAL = 5000;
 
 elfy.constants.machine["113"] = "nios2";
 
 function getRemoteWritableStream(file: Canarium.RemoteFile): Writable {
-    return new Writable({
+    let stream = new Writable({
         write(chunk: Buffer, encoding, callback) {
             file.write(chunk, true, RPC_TIMEOUT).then(
                 () => { callback(); },
@@ -26,13 +26,15 @@ function getRemoteWritableStream(file: Canarium.RemoteFile): Writable {
             );
         }
     });
+    stream.on("close", () => file.close());
+    return stream;
 }
 
 function getRemoteReadableStream(file: Canarium.RemoteFile): Readable {
-    return new Readable({
+    let stream = new Readable({
         read(size: number) {
             let retry = () => {
-                return file.read(size, false, RPC_TIMEOUT)
+                return file.read(size, false, null)
                 .then((chunk) => {
                     this.push(chunk);
                     size -= chunk.length;
@@ -46,6 +48,8 @@ function getRemoteReadableStream(file: Canarium.RemoteFile): Readable {
             });
         }
     });
+    stream.on("close", () => file.close());
+    return stream;
 }
 
 export class PeridotBoard extends Board {
@@ -258,9 +262,11 @@ export class PeridotBoard extends Board {
                 RPC_TIMEOUT
             )
             .then((file) => {
-                return file.read(Infinity, false, RPC_TIMEOUT)
+                return file.read(256 /* FIXME */, false)
                 .then((path) => {
                     return (path.length === 0 || path.indexOf(0) === 0);
+                }, (reason) => {
+                    console.log(reason);
                 })
                 .finally(() => {
                     return file.close(RPC_TIMEOUT);
@@ -304,7 +310,7 @@ export class PeridotBoard extends Board {
             .then(() => {
                 return canarium.openRemoteFile(STDERR_PATH, {O_RDONLY: true, O_NONBLOCK: true}, undefined, RPC_TIMEOUT)
                 .then((file) => {
-                    stdout = getRemoteReadableStream(file);
+                    stderr = getRemoteReadableStream(file);
                 });
             })
             .then(() => {
