@@ -267,6 +267,7 @@ export class PeridotBoard extends Board {
                     return (path.length === 0 || path.indexOf(0) === 0);
                 }, (reason) => {
                     console.log(reason);
+                    return false;
                 })
                 .finally(() => {
                     return file.close(RPC_TIMEOUT);
