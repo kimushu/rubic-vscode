@@ -13,7 +13,7 @@ const STDERR_PATH = "/dev/stderr";
 const INT_STORAGE_PATH = "/mnt/internal";
 //const FORMAT_TIMEOUT_MS = 10 * 1000;
 const RPC_TIMEOUT = 5000;
-const STATUS_POLL_INTERVAL = 5000;
+const STATUS_POLL_INTERVAL = 1000;
 
 elfy.constants.machine["113"] = "nios2";
 
@@ -44,6 +44,12 @@ function getRemoteReadableStream(file: Canarium.RemoteFile): Readable {
                 });
             };
             retry().catch((reason) => {
+                if (reason instanceof Canarium.RemoteError) {
+                    if (reason.code === Canarium.RemoteError.EAGAIN) {
+                        // Ignore error
+                        return;
+                    }
+                }
                 this.emit("error", reason);
             });
         }
@@ -127,6 +133,7 @@ export class PeridotBoard extends Board {
     }
 
     disconnect(): Promise<void> {
+        this._stopStatusPolling();
         return this.getCanarium()
         .then((canarium) => {
             return canarium.close();
@@ -272,6 +279,9 @@ export class PeridotBoard extends Board {
                 .finally(() => {
                     return file.close(RPC_TIMEOUT);
                 });
+            }, (reason) => {
+                console.log(reason);
+                return false;
             });
         });
     }
@@ -295,27 +305,17 @@ export class PeridotBoard extends Board {
         let stdin, stdout, stderr;
         return this.getCanarium()
         .then((canarium) => {
-            return Promise.resolve()
-            .then(() => {
-                return canarium.openRemoteFile(STDIN_PATH, {O_WRONLY: true, O_NONBLOCK: true}, undefined, RPC_TIMEOUT)
-                .then((file) => {
-                    stdin = getRemoteWritableStream(file);
-                });
-            })
-            .then(() => {
-                return canarium.openRemoteFile(STDOUT_PATH, {O_RDONLY: true, O_NONBLOCK: true}, undefined, RPC_TIMEOUT)
-                .then((file) => {
-                    stdout = getRemoteReadableStream(file);
-                });
-            })
-            .then(() => {
-                return canarium.openRemoteFile(STDERR_PATH, {O_RDONLY: true, O_NONBLOCK: true}, undefined, RPC_TIMEOUT)
-                .then((file) => {
-                    stderr = getRemoteReadableStream(file);
-                });
-            })
-            .then(() => {
-                return {stdin, stdout, stderr};
+            return Promise.all([
+                canarium.openRemoteFile(STDIN_PATH, {O_WRONLY: true, O_NONBLOCK: true}, undefined, RPC_TIMEOUT),
+                canarium.openRemoteFile(STDOUT_PATH, {O_RDONLY: true, O_NONBLOCK: true}, undefined, RPC_TIMEOUT),
+                canarium.openRemoteFile(STDERR_PATH, {O_RDONLY: true, O_NONBLOCK: true}, undefined, RPC_TIMEOUT),
+            ])
+            .then(([stdin, stdout, stderr]) => {
+                return {
+                    stdin: getRemoteWritableStream(stdin),
+                    stdout: getRemoteReadableStream(stdout),
+                    stderr: getRemoteReadableStream(stderr),
+                };
             });
         });
     }
