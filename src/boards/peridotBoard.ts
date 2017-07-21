@@ -311,7 +311,6 @@ export class PeridotBoard extends Board {
     }
 
     getStdioStream(): Promise<BoardStdioStream> {
-        let stdin, stdout, stderr;
         return this.getCanarium()
         .then((canarium) => {
             return Promise.all([
