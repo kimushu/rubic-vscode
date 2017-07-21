@@ -163,8 +163,17 @@ export class PeridotBoard extends Board {
                 RPC_TIMEOUT
             )
             .then((file) => {
-                return file.write(data, true, RPC_TIMEOUT)
-                .then(() => {
+                const SPLIT_BYTES = 512;
+                let tryWrite = (offset: number) => {
+                    let end = Math.min(data.length, offset + SPLIT_BYTES);
+                    return file.write(data.slice(offset, end), true, RPC_TIMEOUT)
+                    .then(() => {
+                        if (end < data.length) {
+                            return tryWrite(end);
+                        }
+                    });
+                };
+                return tryWrite(0).finally(() => {
                     return file.close(RPC_TIMEOUT);
                 });
             });
