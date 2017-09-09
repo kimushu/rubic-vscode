@@ -13,12 +13,14 @@ tools/**
 docs/**
 tsconfig.json
 vsc-extension-quickstart.md
-node_modules/serialport/bin/win32*/**
-node_modules/serialport/bin/linux*/**
-node_modules/serialport/bin/darwin*/**
 node_modules/serialport/build/**
 node_modules/serialport/node_modules/**
+node_modules/serialport/prebuild/**
 node_modules/serialport/src/**
+node_modules/prebuild/**
+node_modules/prebuild-install/**
+node_modules/node-gyp/**
+node_modules/node-ninja/**
 node_modules/ajv/dist/**
 node_modules/markdown-it/dist/**
 node_modules/bson/browser_build/**
