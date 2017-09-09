@@ -1,0 +1,16 @@
+{
+    "messages": [
+        "PERIDOT Piccoloはブートローダーモードではありません",
+        "書き換えプログラムを準備中",
+        "Image1領域を書き込み中",
+        "UFM領域を書き込み中",
+        "SPIフラッシュを書き込み中"
+    ],
+    "keys": [
+        "not-boot-mode",
+        "setup-writer",
+        "write-img1",
+        "write-ufm",
+        "write-spi"
+    ]
+}
