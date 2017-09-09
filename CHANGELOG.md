@@ -3,6 +3,13 @@
 
 # <a id="en"></a>Change Log (en)
 
+## 0.99.11
+
+Hotfix for VSCode 1.16
+
+* Add Electron 1.7.3 support
+* Add x64 binary for Windows
+
 ## 0.99.10
 
 * Add runtime information for each firmware
@@ -57,6 +64,13 @@
 ----
 
 # <a id="ja"></a>変更ログ (ja)
+
+## 0.99.11
+
+VSCode 1.16向け緊急リリース
+
+* Electron 1.7.3 サポートの追加
+* Windows向け64-bitバイナリの追加
 
 ## 0.99.10
 
