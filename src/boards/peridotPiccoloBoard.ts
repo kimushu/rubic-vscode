@@ -21,7 +21,7 @@ const WRITER_BOOT_TIMEOUT_MS = 5000;
 const FLASH_SPLIT_SIZE = 16384;
 
 export class PeridotPiccoloBoard extends PeridotBoard {
-    constructor(path_fixme: string) {
+    constructor() {
         super();
     }
 

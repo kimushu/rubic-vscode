@@ -59,13 +59,13 @@ export interface BoardConstructor {
     /**
      * Constructor
      */
-    new (FIXME_path?: string): Board;
+    new (): Board;
 }
 
 export class Board extends EventEmitter {
     private static _classes: {[className: string]: BoardConstructor} = {};
 
-    protected constructor(FIXME_path?: string) {
+    protected constructor() {
         super();
     }
 

@@ -42,7 +42,7 @@ export function rpd2bytes(rpd: Buffer): Buffer {
 
 export class PeridotClassicBoard extends PeridotBoard {
 
-    public constructor(path_fixme: string) {
+    public constructor() {
         super();
     }
 

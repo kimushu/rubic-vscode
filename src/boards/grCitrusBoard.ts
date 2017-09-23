@@ -13,8 +13,8 @@ export class GrCitrusBoard extends WakayamaRbBoard {
         {vendorId: 0x2a50, productId: 0x0277},  // Akizuki
     ];
 
-    public constructor(FIXME_path?: string) {
-        super(FIXME_path);
+    public constructor() {
+        super();
     }
 }
 Board.addConstructor(GrCitrusBoard);
