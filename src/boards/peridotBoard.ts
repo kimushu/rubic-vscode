@@ -1,5 +1,5 @@
 import { Board, BoardInformation, BoardStdioStream, BoardDebugStream, BoardCandidate } from "./board";
-import { Canarium } from "canarium";
+import { Canarium, CanariumGen1, CanariumGen2 } from "canarium";
 import { Writable, Readable } from "stream";
 import { RubicProcess } from "../processes/rubicProcess";
 import * as path from "path";
@@ -16,6 +16,40 @@ const RPC_TIMEOUT = 5000;
 const STATUS_POLL_INTERVAL = 1000;
 
 elfy.constants.machine["113"] = "nios2";
+
+/**
+ * Load ELF
+ * @param data ELF data
+ */
+export function loadElf(canarium: CanariumGen1|CanariumGen2, data: Buffer): Promise<void> {
+    return Promise.resolve()
+    .then(() => {
+        return elfy.parse(data);
+    })
+    .then((elf) => {
+        if (elf.machine !== "nios2") {
+            return Promise.reject(new Error("Not NiosII program"));
+        }
+        return elf.body.programs.reduce(
+            (promise, program) => {
+                if (program.type !== "load") {
+                    return promise;
+                }
+                let filesz = program.data.length;
+                return promise
+                .then(() => {
+                    return canarium.avm.write(program.paddr, program.data);
+                })
+                .then(() => {
+                    let zeroFill = program.memsz - filesz;
+                    if (zeroFill > 0) {
+                        return canarium.avm.write(program.paddr + filesz, Buffer.alloc(zeroFill, 0));
+                    }
+                });
+            }, Promise.resolve()
+        );
+    });
+}
 
 function getRemoteWritableStream(file: Canarium.RemoteFile): Writable {
     let stream = new Writable({
@@ -387,37 +421,4 @@ export class PeridotBoard extends Board {
         });
     }
 
-    /**
-     * Load ELF
-     * @param data ELF data
-     */
-    protected loadElf(data: Buffer): Promise<void> {
-        return Promise.resolve()
-        .then(() => {
-            return elfy.parse(data);
-        })
-        .then((elf) => {
-            if (elf.machine !== "nios2") {
-                return Promise.reject(new Error("Not NiosII program"));
-            }
-            return elf.body.programs.reduce(
-                (promise, program) => {
-                    if (program.type !== "load") {
-                        return promise;
-                    }
-                    let filesz = program.data.length;
-                    return promise
-                    .then(() => {
-                        return this._canarium.avm.write(program.paddr, program.data);
-                    })
-                    .then(() => {
-                        let zeroFill = program.memsz - filesz;
-                        if (zeroFill > 0) {
-                            return this._canarium.avm.write(program.paddr + filesz, Buffer.alloc(zeroFill, 0));
-                        }
-                    });
-                }, Promise.resolve()
-            );
-        });
-    }
 }

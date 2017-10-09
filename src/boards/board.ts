@@ -48,11 +48,13 @@ export interface BoardDebugStream {
 export interface BoardConstructor {
     /**
      * Enumerate boards
+     * @return An array of scanned boards
      */
     list: () => Promise<BoardCandidate[]>;
 
     /**
      * Get localized board name
+     * @return Board name
      */
     getBoardName: () => string;
 
@@ -81,22 +83,6 @@ export class Board extends EventEmitter {
      */
     static getConstructor(className: string): BoardConstructor {
         return this._classes[className];
-    }
-
-    /**
-     * Enumerate boards
-     * @return An array of scanned boards
-     */
-    static enumerateBoards(): Promise<BoardCandidate[]> {
-        return Promise.reject(new Error("Not implemented"));
-    }
-
-    /**
-     * Get localized board name
-     * @return Board name
-     */
-    static getBoardName(): string {
-        throw new Error("Not implemented");
     }
 
     /**

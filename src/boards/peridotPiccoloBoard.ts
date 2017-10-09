@@ -1,41 +1,230 @@
-import { SWI_BASE, SWI_REG_RSTSTS, SWI_RSTSTS_KEY_VAL, SWI_RSTSTS_RST_MSK, SWI_REG_CLASSID, rpd2bytes } from "./peridotClassicBoard";
+import { rpd2bytes } from "./peridotClassicBoard";
+import { loadElf } from "./peridotBoard";
 import { BoardCandidate, Board } from "./board";
+import { crc32 } from "crc";
+import * as delay from "delay";
 import * as path from "path";
 import * as pify from "pify";
 import * as fs from "fs";
 import * as nls from "vscode-nls";
 import * as decompress from "decompress";
-import { Canarium } from "canarium";
-import { PeridotBoard } from "./peridotBoard";
+import { CanariumGen1, CanariumGen2 } from "canarium";
 require("promise.prototype.finally").shim();
 const localize = nls.loadMessageBundle(__filename);
 
-const PICCOLO_BOOT_CLASSID = 0x72a90000;
-const BOOTLOADER_BITRATE = 115200;
-const FIRMWARE_BITRATE = 921600;
+const BOOT_CLASSID = 0x72a90000;
+const BOOT_BITRATE = 115200;
+const BOOT_SWI_BASE = 0x10000000;
+const SWI_REG_CLASSID = 0;
+const SWI_REG_RSTSTS = 4;
+const SWI_REG_MESSAGE = 6;
+const SWI_RSTSTS_KEY_VAL = (0xdead << 16);
+const SWI_RSTSTS_RST_MSK = (1 << 8);
 const WRITER_ELF_PATH = path.join(__dirname, "..", "..", "..", "lib", "peridot_piccolo_writer.elf");
-const WRITER_IMG1_PATH = "/sys/flash/image1";
-const WRITER_UFM_PATH = "/sys/flash/ufm";
-const WRITER_SPI_PATH = "/sys/flash/spi";
-const WRITER_BOOT_TIMEOUT_MS = 5000;
-const FLASH_SPLIT_SIZE = 16384;
 
-export class PeridotPiccoloBoard extends PeridotBoard {
-    constructor(path_fixme: string) {
+const USER_BITRATE = 921600;
+
+namespace RubicFwUp {
+    const DEFAULT_TIMEOUT = 2000;
+    const MESSAGE_SPLIT = 8 * 1024;
+    const WRITE_TIMEOUT_PER_BYTE = 100 / 1024;  // 100ms/kB
+
+    interface ResponseReader {
+        (offset: number, length: number): Promise<Buffer>;
+    }
+
+    function issueCommand(canarium: CanariumGen1, message: Buffer, progress?: (percent: number) => void, responseTimeout?: number): Promise<ResponseReader> {
+        if (progress == null) {
+            progress = () => {};
+        }
+        let msgType = message.slice(0, 4).toString();
+        let getAddress = (expire?: number): Promise<number> => {
+            return canarium.avm.iord(BOOT_SWI_BASE, SWI_REG_MESSAGE)
+            .then((value) => {
+                if (value === 0) {
+                    return delay(50).then(() => {
+                        if ((expire != null) && (expire < Date.now())) {
+                            throw new Error(`Timeout ('${msgType}' message)`);
+                        }
+                        return getAddress(expire);
+                    });
+                }
+                return value;
+            });
+        };
+        return Promise.resolve()
+        .then(() => {
+            // Get message buffer pointer
+            progress(0);
+            return getAddress(Date.now() + DEFAULT_TIMEOUT);
+        })
+        .then((address) => {
+            // Check previous response and write new message
+            progress(5);
+            return canarium.avm.read(address, 8)
+            .then((prevResponse) => {
+                let signature = prevResponse.slice(0, 1).toString();
+                if (!signature.match(/^[brhwe]$/)) {
+                    throw new Error("invalid previous response");
+                }
+                let capacity = prevResponse.readUInt32LE(4);
+                if (message.length > capacity) {
+                    throw new Error("message is too large");
+                }
+            })
+            .then(() => {
+                // Write new message
+                progress(10);
+                let write = (offset: number) => {
+                    let len = Math.min(message.length - offset, MESSAGE_SPLIT);
+                    if (len === 0) {
+                        return;
+                    }
+                    let end = offset + len;
+                    return canarium.avm.write(address + offset, message.slice(offset, end))
+                    .then(() => {
+                        progress(10 + 80 * (end / message.length));
+                        return write(end);
+                    });
+                };
+                return write(0);
+            });
+        })
+        .then(() => {
+            // Notify new message
+            progress(90);
+            return canarium.avm.iowr(BOOT_SWI_BASE, SWI_REG_MESSAGE, 0);
+        })
+        .then(() => {
+            // Wait for response
+            progress(95);
+            return getAddress(Date.now() + ((responseTimeout != null) ? responseTimeout : DEFAULT_TIMEOUT));
+        })
+        .then((address) => {
+            // Return response reader
+            progress(100);
+            return ((offset, length) => {
+                return canarium.avm.read(address + offset, length);
+            });
+        });
+    }
+
+    export function writeMemory(canarium: CanariumGen1, name: string, data: Buffer, progress: (percent: number) => void): Promise<void> {
+        let update: boolean[];
+        let sectorSize: number;
+        let sectors: number;
+        return Promise.resolve()
+        .then(() => {
+            // Issue hash read message
+            progress(0);
+            let msg = Buffer.allocUnsafe(12);
+            msg.write(`H${name}`, 0, 4);
+            msg.writeInt32LE(data.length, 4);
+            msg.writeUInt32LE(0, 8);
+            return issueCommand(canarium, msg)
+            .then((reader) => {
+                return reader(0, 16)
+                .then((resp) => {
+                    let signature = resp.slice(0, 4).toString();
+                    if (signature !== `h${name}`) {
+                        throw new Error(`invalid response (${signature})`);
+                    }
+                    let length = resp.readUInt32LE(8);
+                    sectorSize = resp.readUInt32LE(12);
+                    sectors = length / sectorSize;
+                    update = new Array(sectors);
+                    data = Buffer.concat([data, Buffer.alloc(sectorSize, 0)], sectorSize * sectors);
+                    return reader(16, 4 * sectors);
+                })
+                .then((hashes) => {
+                    for (let i = 0; i < sectors; ++i) {
+                        let expected = crc32(data.slice(i * sectorSize, (i + 1) * sectorSize));
+                        if (hashes.readUInt32LE(i * 4) !== expected) {
+                            update[i] = true;
+                        }
+                    }
+                });
+            });
+        })
+        .then(() => {
+            // Issue write message
+            let entries: Buffer[] = [];
+            let head = 0;
+            for (let i = 0; i < sectors; ++i) {
+                if (update[i]) {
+                    if (head < 0) {
+                        head = i;
+                    }
+                    if (update[i + 1]) {
+                        // Concatinate sectors
+                        continue;
+                    }
+                    let len = (i - head + 1) * sectorSize;
+                    let entry = Buffer.allocUnsafe(12 + len);
+                    let part = data.slice(head * sectorSize, (i + 1) * sectorSize);
+                    let hash = crc32(part);
+                    entry.writeUInt32LE(len, 0);
+                    entry.writeUInt32LE(head * sectorSize, 4);
+                    entry.writeUInt32LE(hash, 8);
+                    part.copy(entry, 12);
+                    entries.push(entry);
+                    head = -1;
+                }
+            }
+            let signature = Buffer.allocUnsafe(4);
+            signature.write(`W${name}`, 0, 4);
+            let msg = Buffer.concat([
+                signature, ...entries, Buffer.alloc(4)
+            ]);
+            return issueCommand(canarium, msg, progress, data.length * WRITE_TIMEOUT_PER_BYTE)
+            .then((reader) => {
+                return reader(0, 16)
+                .then((resp) => {
+                    let result = resp.readInt32LE(8);
+                    let address = resp.readUInt32LE(12);
+                    if (result !== 0) {
+                        throw new Error(`Write failed at 0x${address.toString(16)} (errno=${result})`);
+                    }
+                });
+            });
+        });
+    }
+}
+
+export class PeridotPiccoloBoard extends Board {
+    constructor() {
         super();
     }
 
+    /**
+     * Get localized board name
+     * @return Board name
+     */
     public static getBoardName(): string {
         return "PERIDOT Piccolo";
+    }
+
+    /**
+     * Enumerate boards
+     * @return An array of scanned boards
+     */
+    static list(): Promise<BoardCandidate[]> {
+        return CanariumGen2.list()
+        .then((ports) => {
+            return ports.map((port) => {
+                let candidate: BoardCandidate = {
+                    boardClass: this.name,
+                    name: port.path,
+                    path: port.path,
+                };
+                return candidate;
+            });
+        });
     }
 
     protected static judgeSupportedOrNot(candidate: BoardCandidate): void {
         // Nothing to do
         // Piccolo has no fixed USB-UART device, so all VCP devices may be used as piccolo
-    }
-
-    protected getDefaultBitrate(): number {
-        return FIRMWARE_BITRATE;
     }
 
     writeFirmware(filename: string, boardPath: string, reporter: (message?: string) => void): Promise<boolean> {
@@ -44,29 +233,12 @@ export class PeridotPiccoloBoard extends PeridotBoard {
         let img1Rpd: Buffer;
         let ufmRpd: Buffer;
         let timeout: number;
-        let canarium: Canarium;
+        let canarium: CanariumGen1;
 
-        let tryOpen = (path: string, timeoutEach: number = null): Promise<Canarium.RemoteFile> => {
-            return canarium.openRemoteFile(path, {O_WRONLY: true}, undefined, timeoutEach)
-            .catch((reason) => {
-                if (Date.now() < timeout) {
-                    // Retry
-                    return tryOpen(path, timeoutEach);
-                }
-                return Promise.reject(reason);
-            });
-        };
-        let tryWrite = (file: Canarium.RemoteFile, data: Buffer, message: string, offset: number = 0): Promise<void> => {
-            let partLength = Math.min(data.length - offset, FLASH_SPLIT_SIZE);
-            if (partLength === 0) {
-                return;
-            }
-            let nextOffset = offset + partLength;
-            reporter(`${message} (${(nextOffset / 1024).toFixed()}/${(data.length / 1024).toFixed()} kB)`);
-            return file.write(data.slice(offset, nextOffset), true, null)
-            .then(() => {
-                return tryWrite(file, data, message, nextOffset);
-            });
+        let makePercentReporter = (text) => {
+            return (percent: number) => {
+                reporter(`${text} (${percent.toFixed(0)}%)`);
+            };
         };
 
         return Promise.all([
@@ -86,16 +258,16 @@ export class PeridotPiccoloBoard extends PeridotBoard {
         })
         .then(() => {
             // Connect to board
-            return this.getCanarium(boardPath, BOOTLOADER_BITRATE);
+            canarium = new CanariumGen1();
+            canarium.serialBitrate = BOOT_BITRATE;
+            return canarium.open(boardPath);
         })
-        .then((result) => {
-            canarium = result;
-
+        .then(() => {
             // Check current configuration image
-            return canarium.avm.iord(SWI_BASE, SWI_REG_CLASSID);
+            return canarium.avm.iord(BOOT_SWI_BASE, SWI_REG_CLASSID);
         })
         .then((classId) => {
-            if (classId !== PICCOLO_BOOT_CLASSID) {
+            if (classId !== BOOT_CLASSID) {
                 return Promise.reject(new Error(localize(
                     "not-boot-mode",
                     "PERIDOT Piccolo is not running in boot-loader mode"
@@ -105,73 +277,56 @@ export class PeridotPiccoloBoard extends PeridotBoard {
                 localize("setup-writer", "Setting up writer program")
             );
             // Reset NiosII
-            return canarium.avm.iowr(SWI_BASE, SWI_REG_RSTSTS, SWI_RSTSTS_KEY_VAL | SWI_RSTSTS_RST_MSK);
+            return canarium.avm.iowr(
+                BOOT_SWI_BASE, SWI_REG_RSTSTS,
+                SWI_RSTSTS_KEY_VAL | SWI_RSTSTS_RST_MSK
+            );
+        })
+        .then(() => {
+            // Reset message register
+            return canarium.avm.iowr(BOOT_SWI_BASE, SWI_REG_MESSAGE, 0);
         })
         .then(() => {
             // Load ELF
-            return this.loadElf(writerElf);
+            return loadElf(canarium, writerElf);
         })
         .then(() => {
             // Start NiosII
-            return canarium.avm.iowr(SWI_BASE, SWI_REG_RSTSTS, SWI_RSTSTS_KEY_VAL);
+            return canarium.avm.iowr(BOOT_SWI_BASE, SWI_REG_RSTSTS, SWI_RSTSTS_KEY_VAL);
         })
         .then(() => {
             // Write Image1 (CFM1+CFM2)
             if (img1Rpd == null) {
                 return;
             }
-            timeout = Date.now() + WRITER_BOOT_TIMEOUT_MS;
-            return tryOpen(WRITER_IMG1_PATH, 1000)
-            .then((file) => {
-                return tryWrite(
-                    file,
-                    rpd2bytes(img1Rpd),
-                    localize("write-img1", "Writing Image1 area"),
-                )
-                .finally(() => {
-                    return file.close();
-                });
-            });
+            return RubicFwUp.writeMemory(
+                canarium, "img", rpd2bytes(img1Rpd),
+                makePercentReporter(localize("write-img1", "Writing Image1 area"))
+            );
         })
         .then(() => {
             // Write UFM
             if (ufmRpd == null) {
                 return;
             }
-            timeout = Date.now() + WRITER_BOOT_TIMEOUT_MS;
-            return tryOpen(WRITER_UFM_PATH)
-            .then((file) => {
-                return tryWrite(
-                    file,
-                    rpd2bytes(ufmRpd),
-                    localize("write-ufm", "Writing UFM area"),
-                )
-                .finally(() => {
-                    return file.close();
-                });
-            });
+            return RubicFwUp.writeMemory(
+                canarium, "ufm", rpd2bytes(ufmRpd),
+                makePercentReporter(localize("write-ufm", "Writing UFM area"))
+            );
         })
         .then(() => {
             // Write SPI
             if (spiElf == null) {
                 return;
             }
-            timeout = Date.now() + WRITER_BOOT_TIMEOUT_MS;
-            return tryOpen(WRITER_SPI_PATH)
-            .then((file) => {
-                return tryWrite(
-                    file,
-                    spiElf,
-                    localize("write-spi", "Writing SPI flash"),
-                )
-                .finally(() => {
-                    return file.close();
-                });
-            });
+            return RubicFwUp.writeMemory(
+                canarium, "spi", spiElf,
+                makePercentReporter(localize("write-spi", "Writing SPI flash"))
+            );
         })
         .finally(() => {
             // Disconnect
-            return this.disconnect();
+            canarium.close();
         })
         .then(() => {
             return true;
