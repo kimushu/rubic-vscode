@@ -1,7 +1,7 @@
 import { rpd2bytes } from "./peridotClassicBoard";
 import { loadElf } from "./peridotBoard";
 import { BoardCandidate, Board } from "./board";
-import { crc32 } from "crc";
+import * as md5 from "md5";
 import * as delay from "delay";
 import * as path from "path";
 import * as pify from "pify";
@@ -134,12 +134,12 @@ namespace RubicFwUp {
                     sectors = length / sectorSize;
                     update = new Array(sectors);
                     data = Buffer.concat([data, Buffer.alloc(sectorSize, 0)], sectorSize * sectors);
-                    return reader(16, 4 * sectors);
+                    return reader(16, 16 * sectors);
                 })
                 .then((hashes) => {
                     for (let i = 0; i < sectors; ++i) {
-                        let expected = crc32(data.slice(i * sectorSize, (i + 1) * sectorSize));
-                        if (hashes.readUInt32LE(i * 4) !== expected) {
+                        let expected = Buffer.from(md5(data.slice(i * sectorSize, (i + 1) * sectorSize)), "hex");
+                        if (expected.compare(hashes, i * 16, (i + 1) * 16) !== 0) {
                             update[i] = true;
                         }
                     }
@@ -160,13 +160,13 @@ namespace RubicFwUp {
                         continue;
                     }
                     let len = (i - head + 1) * sectorSize;
-                    let entry = Buffer.allocUnsafe(12 + len);
+                    let entry = Buffer.allocUnsafe(24 + len);
                     let part = data.slice(head * sectorSize, (i + 1) * sectorSize);
-                    let hash = crc32(part);
+                    let hash = Buffer.from(md5(part), "hex");
                     entry.writeUInt32LE(len, 0);
                     entry.writeUInt32LE(head * sectorSize, 4);
-                    entry.writeUInt32LE(hash, 8);
-                    part.copy(entry, 12);
+                    hash.copy(entry, 8);
+                    part.copy(entry, 24);
                     entries.push(entry);
                     head = -1;
                 }
