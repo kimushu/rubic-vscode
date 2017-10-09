@@ -42,13 +42,14 @@
             "name": "Launch Server",
             "type": "node",
             "request": "launch",
+            "protocol": "inspector",
             "cwd": "${workspaceRoot}",
             "program": "${workspaceRoot}/out/src/debug/rubicDebugSession.js",
             "args": ["--server=4711"],
             "sourceMaps": true,
             "outFiles": ["${workspaceRoot}/out/**/*.js"],
             "windows": {
-                "runtimeExecutable": "C:\\Program Files (x86)\\Microsoft VS Code\\Code.exe"
+                "runtimeExecutable": "C:\\Program Files\\Microsoft VS Code\\Code.exe"
             },
             "osx": {
                 "runtimeExecutable": "/Applications/Visual Studio Code.app/Contents/MacOS/Electron"
