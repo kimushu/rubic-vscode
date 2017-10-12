@@ -7,11 +7,12 @@ import { DebugProtocol } from "vscode-debugprotocol";
 import { RubicDebugProcess } from "../processes/rubicDebugProcess";
 import { SketchLoadResult } from "../sketch";
 import { RubicProcess } from "../processes/rubicProcess";
-import { Board, BoardStdioStream, BoardInformation } from "../boards/board";
+import { Board, BoardStdioStream, BoardInformation, BoardDebugStream } from "../boards/board";
 import * as glob from "glob";
 import * as pify from "pify";
 import * as fs from "fs";
 import * as path from "path";
+import * as net from "net";
 
 const SEPARATOR_RUN  = `${"-".repeat(64)}`;
 const SEPARATOR_STOP = `${"-".repeat(64)}`;
@@ -29,6 +30,7 @@ interface RubicLaunchRequestArguments extends DebugProtocol.LaunchRequestArgumen
     noTransfer?: boolean;
     format?: boolean;
     program: string;
+    debugPort?: number;
 }
 
 interface RubicAttachRequestArguments extends DebugProtocol.AttachRequestArguments {
@@ -54,6 +56,12 @@ class RubicDebugSession extends DebugSession {
     /** Subscriptions for disposable object */
     public subscriptions: Disposable[] = [];
 
+    /** Server for external debugger */
+    private _debugServer: net.Server;
+
+    /** Resolver for debug stream */
+    private _debugStreamResolver: (s: BoardDebugStream) => void;
+
     /**
      * Execute normal program launch on board
      * @param response Response
@@ -61,6 +69,24 @@ class RubicDebugSession extends DebugSession {
      */
     protected launchRequest(response: DebugProtocol.LaunchResponse, args: RubicLaunchRequestArguments): void {
         this.subscriptions.push(new RubicDebugProcess(this, args));
+
+        if (!args.noDebug && args.debugPort != null) {
+            let promise = new Promise<BoardDebugStream>((resolve, reject) => {
+                this._debugStreamResolver = resolve;
+            });
+            this._debugServer = net.createServer((socket) => {
+                console.log(`External debugger attached (${socket.remoteAddress}:${socket.remotePort} -> ${socket.localAddress}:${socket.localPort}`);
+                promise.then((s) => {
+                    console.log("Connected pipe between external debugger and board");
+                    socket.pipe(s.tx);
+                    s.rx.pipe(socket);
+                });
+            });
+            this._debugServer.listen(args.debugPort);
+            this.subscriptions.push({
+                dispose: () => this._debugServer.close()
+            });
+        }
         RubicProcess.self.sketch.load(false)
         .then((value) => {
             if (value !== SketchLoadResult.LOAD_SUCCESS) {
@@ -298,6 +324,15 @@ class RubicDebugSession extends DebugSession {
                 this.sendEvent(new TerminatedEvent());
             });
             return this._board.runProgram(file);
+        })
+        .then(() => {
+            if (this._debugStreamResolver == null) {
+                return;
+            }
+            return this._board.getDebugStream()
+            .then((debugStream) => {
+                this._debugStreamResolver(debugStream);
+            });
         })
         .then(() => {
             return this._board.getStdioStream();
