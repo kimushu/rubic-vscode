@@ -27,6 +27,7 @@ function delay(ms: number): Promise<void> {
 }
 
 export class WakayamaRbBoard extends Board {
+    private _path: string;
     private _port: SerialPort;
     private _info: BoardInformation;
     private _stdio: BoardStdioStream;
@@ -48,7 +49,7 @@ export class WakayamaRbBoard extends Board {
         {vendorId: 0x045b, productId: 0x0234},  // Renesas
     ];
 
-    public constructor(private _path: string) {
+    public constructor() {
         super();
     }
 
