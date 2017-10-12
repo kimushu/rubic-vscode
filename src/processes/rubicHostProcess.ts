@@ -5,7 +5,7 @@ import {
 } from "./rubicProcess";
 import {
     ExtensionContext, OutputChannel, ProgressLocation, ProgressOptions,
-    commands, window, workspace, TextEditor
+    commands, debug, window, workspace, TextEditor
 } from "vscode";
 import * as ipc from "node-ipc";
 import * as path from "path";
@@ -213,6 +213,11 @@ export class RubicHostProcess extends RubicProcess {
         ctx.completer();
         return Promise.resolve(ctx.thenable);
     }
+    private _withProgressClear(): void {
+        for (let progress_id in this._progressContexts) {
+            this._withProgressEnd(progress_id);
+        }
+    }
     readonly printOutput = function (this: RubicHostProcess, text: string, preserveFocus?: boolean): Thenable<void> {
         if (this._outputChannel == null) {
             this._outputChannel = window.createOutputChannel("Rubic");
@@ -378,6 +383,11 @@ export class RubicHostProcess extends RubicProcess {
                 );
             })
         );
+        _context.subscriptions.push(
+            debug.onDidTerminateDebugSession(() => {
+                this._withProgressClear();
+            })
+        );
         if (this.workspaceRoot != null) {
             this._sketch = new Sketch(this.workspaceRoot);
             _context.subscriptions.push(this._sketch);
@@ -534,7 +544,7 @@ export class RubicHostProcess extends RubicProcess {
             );
         })
         .then(() => {
-            return { status: "ok" };
+            return <any>{ status: "ok" };
         });
     }
 
