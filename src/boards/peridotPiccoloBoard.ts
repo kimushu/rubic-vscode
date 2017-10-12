@@ -1,6 +1,6 @@
 import { rpd2bytes } from "./peridotClassicBoard";
 import { loadElf } from "./peridotBoard";
-import { BoardCandidate, Board } from "./board";
+import { BoardCandidate, Board, BoardInformation, BoardStdioStream, BoardDebugStream } from "./board";
 import * as md5 from "md5";
 import * as delay from "delay";
 import * as path from "path";
@@ -8,9 +8,16 @@ import * as pify from "pify";
 import * as fs from "fs";
 import * as nls from "vscode-nls";
 import * as decompress from "decompress";
+import { RubicAgent } from "../util/rubicAgent";
 import { CanariumGen1, CanariumGen2 } from "canarium";
 require("promise.prototype.finally").shim();
 const localize = nls.loadMessageBundle(__filename);
+
+const O_RDONLY  = 0;
+const O_WRONLY  = 1;
+const O_RDWR    = 2;
+const O_CREAT   = 0x0200;
+const O_TRUNC   = 0x0400;
 
 const BOOT_CLASSID = 0x72a90000;
 const BOOT_BITRATE = 115200;
@@ -22,7 +29,15 @@ const SWI_RSTSTS_KEY_VAL = (0xdead << 16);
 const SWI_RSTSTS_RST_MSK = (1 << 8);
 const WRITER_ELF_PATH = path.join(__dirname, "..", "..", "..", "lib", "peridot_piccolo_writer.elf");
 
+const EPCS_FATFS_IOCTL_FORMAT = 0x4501;
+
 const USER_BITRATE = 921600;
+const USER_RPC_CHANNEL = 1;
+const USER_RPC_SPLIT = 8192;
+const USER_STDIN_CHANNEL = 2;
+const USER_STDOUT_CHANNEL = USER_STDIN_CHANNEL;
+const USER_STDERR_CHANNEL = 3;
+const USER_DEBUG_CHANNEL = 4;
 
 namespace RubicFwUp {
     const DEFAULT_TIMEOUT = 2000;
@@ -92,12 +107,11 @@ namespace RubicFwUp {
         })
         .then(() => {
             // Notify new message
-            progress(90);
             return canarium.avm.iowr(BOOT_SWI_BASE, SWI_REG_MESSAGE, 0);
         })
         .then(() => {
             // Wait for response
-            progress(95);
+            progress(90);
             return getAddress(Date.now() + ((responseTimeout != null) ? responseTimeout : DEFAULT_TIMEOUT));
         })
         .then((address) => {
@@ -192,8 +206,21 @@ namespace RubicFwUp {
 }
 
 export class PeridotPiccoloBoard extends Board {
+    private _canarium: CanariumGen2;
+    private _rpc: CanariumGen2.RpcClient;
+    private _agentInfo: RubicAgent.InfoResponse;
+    private _runningTid: number;
+    
     constructor() {
         super();
+    }
+
+    /**
+     * Get board internal file path
+     * @param relativePath Relative path of file
+     */
+    private _getInternalPath(relativePath: string): string {
+        return `${this._agentInfo.storages.internal}/${relativePath}`;
     }
 
     /**
@@ -222,11 +249,151 @@ export class PeridotPiccoloBoard extends Board {
         });
     }
 
-    protected static judgeSupportedOrNot(candidate: BoardCandidate): void {
-        // Nothing to do
-        // Piccolo has no fixed USB-UART device, so all VCP devices may be used as piccolo
+    /**
+     * Connect to board
+     * @param path Path of the board
+     */
+    connect(path: string): Promise<void> {
+        this._canarium = new CanariumGen2(path, {bitrate: USER_BITRATE});
+        this._rpc = this._canarium.createRpcClient(USER_RPC_CHANNEL);
+        this._canarium.on("close", () => {
+            this._rpc = null;
+        });
+        return this._canarium.open()
+        .then(() => {
+            let params: RubicAgent.InfoParameters = {};
+            return this._rpc.call(RubicAgent.METHOD_INFO, params);
+        })
+        .then((info: RubicAgent.InfoResponse) => {
+            this._agentInfo = info;
+            return this._rpc.call("fs.cleanup", null);
+        })
+        .catch((reason) => {
+            return this._canarium.close()
+            .finally(() => {
+                throw reason;
+            });
+        });
     }
 
+    /**
+     * Disconnect from board
+     */
+    disconnect(): Promise<void> {
+        return this._canarium.close();
+    }
+
+    /**
+     * Get board information
+     */
+    getInfo(): Promise<BoardInformation> {
+        return this._canarium.getInfo()
+        .then((info) => {
+            return {
+                path: this._canarium.path,
+                serialNumber: `${info.id}-${info.serialCode}`,
+            };
+        });
+    }
+
+    /**
+     * Write file
+     * @param relativePath Relative path of the file to be stored
+     * @param data Data to write
+     */
+    writeFile(relativePath: string, data: Buffer): Promise<void> {
+        return this._rpc.call("fs.open", {
+            path: this._getInternalPath(relativePath),
+            flags: O_WRONLY | O_CREAT | O_TRUNC
+        })
+        .then(({fd}) => {
+            let tryWrite = (offset: number): Promise<void> => {
+                let nextOffset = Math.min(data.length, offset + USER_RPC_SPLIT);
+                if (nextOffset === offset) {
+                    // No more data
+                    return;
+                }
+                return this._rpc.call("fs.write", {
+                    fd,
+                    data: data.slice(offset, nextOffset)
+                })
+                .then(({length}) => {
+                    if (length === 0) {
+                        throw new Error(`Cannot write more data to '${relativePath}' at ${offset}`);
+                    }
+                    return tryWrite(offset + length);
+                });
+            };
+            return tryWrite(0)
+            .finally(() => {
+                return this._rpc.call("fs.close", {fd});
+            });
+        });
+    }
+
+    /**
+     * Read file
+     * @param relativePath Relative path of the file to be read
+     * @return Read data
+     */
+    readFile(relativePath: string): Promise<Buffer> {
+        return this._rpc.call("fs.open", {
+            path: this._getInternalPath(relativePath),
+            flags: O_RDONLY
+        })
+        .then(({fd}) => {
+            let chunks: Buffer[] = [];
+            let total: number = 0;
+            let tryRead = (): Promise<Buffer> => {
+                return this._rpc.call("fs.read", {
+                    fd,
+                    length: USER_RPC_SPLIT
+                })
+                .then(({data, length}) => {
+                    if (length === 0) {
+                        return Buffer.concat(chunks, total);
+                    }
+                    chunks.push(data);
+                    total += data.length;
+                    return tryRead();
+                });
+            };
+            return tryRead()
+            .finally(() => {
+                return this._rpc.call("fs.close", {fd});
+            });
+        });
+    }
+
+    /**
+     * Format internal storage
+     */
+    formatStorage(): Promise<void> {
+        return this._rpc.call("fs.open", {
+            path: this._agentInfo.storages.internal,
+            flags: O_WRONLY
+        })
+        .then(({fd}) => {
+            return this._rpc.call("fs.ioctl", {
+                req: EPCS_FATFS_IOCTL_FORMAT
+            })
+            .then(({result}) => {
+                if (result !== 0) {
+                    throw new Error(`Error occured during format (result=${result})`);
+                }
+            })
+            .finally(() => {
+                return this._rpc.call("fs.close", {fd});
+            });
+        });
+    }
+
+    /**
+     * Program firmware
+     * @param filename Full path of firmware file
+     * @param boardPath Board path
+     * @param reporter Progress indication callback
+     */
     writeFirmware(filename: string, boardPath: string, reporter: (message?: string) => void): Promise<boolean> {
         let writerElf: Buffer;
         let spiElf: Buffer;
@@ -237,7 +404,7 @@ export class PeridotPiccoloBoard extends Board {
 
         let makePercentReporter = (text) => {
             return (percent: number) => {
-                reporter(`${text} (${percent.toFixed(0)}%)`);
+                reporter(`${text} (${Math.floor(percent)}%)`);
             };
         };
 
@@ -330,6 +497,79 @@ export class PeridotPiccoloBoard extends Board {
         })
         .then(() => {
             return true;
+        });
+    }
+
+    /**
+     * Run program
+     * @param relativePath Relative path of the file to be executed
+     */
+    runProgram(relativePath: string): Promise<void> {
+        return Promise.resolve()
+        .then(() => {
+            let params: RubicAgent.QueueStartParameters = {
+                name: "start",
+                file: this._getInternalPath(relativePath),
+                //debug: true
+            };
+            return this._rpc.call(RubicAgent.METHOD_QUEUE, params);
+        })
+        .then((result: RubicAgent.QueueStartResponse) => {
+            this._runningTid = result.tid;
+            let params: RubicAgent.QueueCallbackParameters = {
+                name: "callback",
+                tid: result.tid
+            };
+
+            // Set callback
+            this._rpc.call(RubicAgent.METHOD_QUEUE, params)
+            .then((result: RubicAgent.QueueCallbackResponse) => {
+                this.emit("stop", {result: result.result});
+            });
+        });
+    }
+
+    /**
+     * Get program running state
+     */
+    isRunning(): Promise<boolean> {
+        return Promise.reject(new Error("Not supported"));
+    }
+
+    /**
+     * Stop program
+     */
+    stopProgram(): Promise<void> {
+        if (this._runningTid == null) {
+            return Promise.reject(new Error("Not running"));
+        }
+        let params: RubicAgent.QueueAbortParameters = {
+            name: "abort",
+            tid: this._runningTid
+        };
+        return this._rpc.call(RubicAgent.METHOD_QUEUE, params)
+        .then((result: RubicAgent.QueueAbortResponse) => {
+        });
+    }
+
+    /**
+     * Get standard I/O streams
+     */
+    getStdioStream(): Promise<BoardStdioStream> {
+        return Promise.resolve({
+            stdin: this._canarium.createWriteStream(USER_STDIN_CHANNEL),
+            stdout: this._canarium.createReadStream(USER_STDOUT_CHANNEL),
+            stderr: this._canarium.createReadStream(USER_STDERR_CHANNEL),
+        });
+    }
+
+    /**
+     * Get debug streams
+     */
+    getDebugStream(): Promise<BoardDebugStream> {
+        return Promise.resolve({
+            tx: this._canarium.createWriteStream(USER_DEBUG_CHANNEL),
+            rx: this._canarium.createReadStream(USER_DEBUG_CHANNEL),
         });
     }
 }
