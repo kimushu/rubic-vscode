@@ -11,6 +11,7 @@
   "debug.rubic.label": "Rubic デバッガ",
   "debug.rubic.attribute.workspaceRoot.description": "ワークスペースのパス",
   "debug.rubic.launch.program.description": "ボード上で実行するプログラムへのパス",
+  "debug.rubic.launch.debugPort.description": "外部デバッガ用のポート番号",
   "debug.rubic.attach.action.description": "実行するアクション (\"download\", \"upload\", \"getinfo\" のいずれか)",
   "debug.rubic.snippet.launch.label": "Rubic: プログラムの書き込み＆実行",
   "debug.rubic.snippet.launch.description": "プログラムをボードに書き込んだ後、実行を開始します。",

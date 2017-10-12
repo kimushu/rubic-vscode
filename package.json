@@ -156,6 +156,10 @@
               "program": {
                 "type": "string",
                 "description": "%debug.rubic.launch.program.description%"
+              },
+              "debugPort": {
+                "type": "number",
+                "description": "%debug.rubic.launch.debugPort.description%"
               }
             }
           },
@@ -249,8 +253,8 @@
     "request": "^2.81.0",
     "rimraf": "^2.6.1",
     "serialport": "5.1.0-beta5",
-    "vscode-debugadapter": "^1.17.0",
-    "vscode-debugprotocol": "^1.17.0",
+    "vscode-debugadapter": "^1.24.0",
+    "vscode-debugprotocol": "^1.24.0",
     "vscode-nls": "^2.0.2"
   },
   "devDependencies": {
@@ -267,7 +271,7 @@
     "@types/node": "^6.0.40",
     "@types/node-ipc": "^9.0.0",
     "@types/promise.prototype.finally": "^2.0.0",
-    "@types/request": "0.0.43",
+    "@types/request": "^2.0.4",
     "@types/rimraf": "0.0.28",
     "@types/semver": "^5.3.31",
     "@types/serialport": "^4.0.9",
@@ -281,10 +285,10 @@
     "rimraf": "^2.6.1",
     "shx": "^0.2.2",
     "tslint": "^5.3.2",
-    "typescript": "2.3.x",
+    "typescript": "^2.5.3",
     "typescript-json-schema": "^0.12.0",
-    "vscode": "^1.0.0",
-    "vscode-nls-dev": "^2.0.1"
+    "vscode": "^1.1.5",
+    "vscode-nls-dev": "^2.1.3"
   },
   "extensionDependencies": [],
   "scripts": {
