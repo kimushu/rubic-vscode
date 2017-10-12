@@ -153,13 +153,18 @@ export class Board extends EventEmitter {
         return Promise.reject(new Error("Not supported"));
     }
 
-    /** Format internal storage */
+    /**
+     * Format internal storage
+     */
     formatStorage(): Promise<void> {
         return Promise.reject(new Error("Not supported"));
     }
 
     /**
      * Program firmware
+     * @param filename Full path of firmware file
+     * @param boardPath Board path
+     * @param reporter Progress indication callback
      */
     writeFirmware(filename: string, boardPath: string, reporter: (message?: string) => void): Promise<boolean> {
         return Promise.reject(new Error("Not supported"));
