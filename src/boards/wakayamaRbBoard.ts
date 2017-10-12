@@ -408,7 +408,7 @@ export class WakayamaRbBoard extends Board {
             reject(Error("Operation cancelled"));
         }
         return this._portCall("drain").then(() => {
-            return new Promise((resolve, reject) => {
+            return new Promise<string|Buffer>((resolve, reject) => {
                 let waiter: any = {resolve, reject: (reason) => {
                     global.clearTimeout(waiter.timerId);
                     reject(reason);

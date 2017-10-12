@@ -67,6 +67,7 @@ export class MrubyCompiler implements RubicDebugHook {
                 "mruby Compilation failed. Check \"{0}\" output for details",
                 CHANNEL_NAME)
             );
+            return false;
         });
     }
 
