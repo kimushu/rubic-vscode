@@ -17,7 +17,8 @@ console.log(`serialport version: ${SP_VERSION}`);
 const EL_VERSIONS = process.argv.slice(2);
 
 const CACHE_DIR = path.join(__dirname, "prebuild-cache");
-const DEST_DIR = path.join(__dirname, "..", "node_modules", "serialport", "compiled");
+const PKG_DIR = path.join(__dirname, "..", "node_modules", "serialport");
+const DEST_DIR = path.join(PKG_DIR, "compiled");
 
 const ELECTRON_VERSION_MAP = {
     "1.6.6": {node: "7.4.0", modules: "53"},
@@ -61,4 +62,11 @@ EL_VERSIONS.reduce((promise, elVer) => {
             });
         }, Promise.resolve());
     });
-}, pify(fs.ensureDir)(CACHE_DIR));
+}, pify(fs.ensureDir)(CACHE_DIR))
+.then(() => {
+    let localBuild = path.join(PKG_DIR, "build", "Release", "serialport.node");
+    if (fs.existsSync(localBuild)) {
+        console.log(`- Removed local build binary ${localBuild}`);
+        fs.removeSync(localBuild);
+    }
+});
