@@ -1,5 +1,3 @@
-import { rpd2bytes } from "./peridotClassicBoard";
-import { loadElf } from "./peridotBoard";
 import { BoardCandidate, Board, BoardInformation, BoardStdioStream, BoardDebugStream } from "./board";
 import * as md5 from "md5";
 import * as delay from "delay";
@@ -10,15 +8,17 @@ import * as nls from "vscode-nls";
 import * as decompress from "decompress";
 import { RubicAgent } from "../util/rubicAgent";
 import { CanariumGen1, CanariumGen2 } from "canarium";
+import { loadNios2Elf, convertRpdToBytes } from "../util/altera";
 require("promise.prototype.finally").shim();
 const localize = nls.loadMessageBundle(__filename);
 
 const O_RDONLY  = 0;
 const O_WRONLY  = 1;
-const O_RDWR    = 2;
+// const O_RDWR    = 2;
 const O_CREAT   = 0x0200;
 const O_TRUNC   = 0x0400;
 
+const GEN1_OPEN_TIMEOUT = 1000;
 const BOOT_CLASSID = 0x72a90000;
 const BOOT_BITRATE = 115200;
 const BOOT_SWI_BASE = 0x10000000;
@@ -399,7 +399,6 @@ export class PeridotPiccoloBoard extends Board {
         let spiElf: Buffer;
         let img1Rpd: Buffer;
         let ufmRpd: Buffer;
-        let timeout: number;
         let canarium: CanariumGen1;
 
         let makePercentReporter = (text) => {
@@ -427,7 +426,13 @@ export class PeridotPiccoloBoard extends Board {
             // Connect to board
             canarium = new CanariumGen1();
             canarium.serialBitrate = BOOT_BITRATE;
-            return canarium.open(boardPath);
+            return Promise.race([
+                canarium.open(boardPath),
+                delay(GEN1_OPEN_TIMEOUT).then(() => {
+                    canarium.close();
+                    throw new Error("Timed out");
+                })
+            ]);
         })
         .then(() => {
             // Check current configuration image
@@ -455,7 +460,7 @@ export class PeridotPiccoloBoard extends Board {
         })
         .then(() => {
             // Load ELF
-            return loadElf(canarium, writerElf);
+            return loadNios2Elf(canarium, writerElf);
         })
         .then(() => {
             // Start NiosII
@@ -467,7 +472,7 @@ export class PeridotPiccoloBoard extends Board {
                 return;
             }
             return RubicFwUp.writeMemory(
-                canarium, "img", rpd2bytes(img1Rpd),
+                canarium, "img", convertRpdToBytes(img1Rpd),
                 makePercentReporter(localize("write-img1", "Writing Image1 area"))
             );
         })
@@ -477,7 +482,7 @@ export class PeridotPiccoloBoard extends Board {
                 return;
             }
             return RubicFwUp.writeMemory(
-                canarium, "ufm", rpd2bytes(ufmRpd),
+                canarium, "ufm", convertRpdToBytes(ufmRpd),
                 makePercentReporter(localize("write-ufm", "Writing UFM area"))
             );
         })

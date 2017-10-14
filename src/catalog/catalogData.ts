@@ -124,7 +124,7 @@ export class CatalogData implements vscode.Disposable {
                             return resolve(resp);
                         });
                         req.on("response", (resp) => {
-                            total = parseInt(resp.headers["content-length"]);
+                            total = parseInt(<string>resp.headers["content-length"]);
                         });
                         req.on("data", (chunk) => {
                             ended += chunk.length;

@@ -1,6 +1,6 @@
 import {
     RubicProcess, RubicMessageOptions, RubicQuickPickOptions,
-    RubicInputBoxOptions, RubicMessageItem, RubicQuickPickItem,
+    RubicInputBoxOptions, RubicMessageItem,
     RubicProgress, RubicProgressOptions, RubicConfirmOptions
 } from "./rubicProcess";
 import { DebugSession, TerminatedEvent } from "vscode-debugadapter";

@@ -5,7 +5,7 @@ import {
 } from "./rubicProcess";
 import {
     ExtensionContext, OutputChannel, ProgressLocation, ProgressOptions,
-    commands, debug, window, workspace, TextEditor
+    commands, debug, window, workspace
 } from "vscode";
 import * as ipc from "node-ipc";
 import * as path from "path";

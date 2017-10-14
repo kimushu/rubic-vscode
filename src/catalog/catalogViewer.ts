@@ -1,22 +1,18 @@
 import * as nls from "vscode-nls";
 import * as path from "path";
-import * as util from "util";
 import * as dedent from "dedent";
-import { BoardConstructor, Board, BoardCandidate, BoardInformation } from "../boards/board";
+import { Board } from "../boards/board";
 import { CacheStorage } from "../util/cacheStorage";
 import {
     CancellationToken, Disposable,
     EventEmitter, ExtensionContext,
-    MessageItem, ProviderResult, QuickPickItem,
-    StatusBarAlignment, StatusBarItem,
+    QuickPickItem,
     TextDocumentContentProvider, Uri, ViewColumn,
     commands, window, workspace
 } from "vscode";
 import { CatalogData, toLocalizedString } from "./catalogData";
-import { FSWatcher, readFileSync, watch } from "fs";
 import { SketchLoadResult } from "../sketch";
 import * as MarkdownIt from "markdown-it";
-import { GitHubRepository } from "../util/githubFetcher";
 import { RubicProcess, RubicMessageItem } from "../processes/rubicProcess";
 import { Runtime } from "../runtimes/runtime";
 require("promise.prototype.finally").shim();
@@ -41,11 +37,6 @@ interface CatalogSelection {
     repositoryUuid: string;
     releaseTag: string;
     variationPath: string;
-}
-
-function makeGithubURL(owner: string, repo: string, branch?: string): string {
-    let suffix = branch ? `/tree/${branch}` : "";
-    return `https://github.com/${owner}/${repo}${suffix}`;
 }
 
 export class CatalogViewer implements TextDocumentContentProvider, Disposable {
@@ -402,7 +393,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
      * Provide HTML for Rubic board catalog
      */
     provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
-        let { catalogData, sketch } = RubicProcess.self;
+        let { catalogData } = RubicProcess.self;
         if (uri.scheme !== "rubic" || uri.authority !== "catalog") {
             return Promise.reject(new Error("invalid URI for Rubic board catalog"));
         }

@@ -229,7 +229,6 @@ export class Board extends EventEmitter {
     }
 }
 
-require("./peridotClassicBoard");
 require("./peridotPiccoloBoard");
 require("./wakayamaRbBoard");
 require("./grCitrusBoard");
