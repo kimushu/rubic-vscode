@@ -18,7 +18,7 @@ const O_WRONLY  = 1;
 const O_CREAT   = 0x0200;
 const O_TRUNC   = 0x0400;
 
-const GEN1_OPEN_TIMEOUT = 1000;
+const GEN1_OPEN_TIMEOUT = 5000;
 const BOOT_CLASSID = 0x72a90000;
 const BOOT_BITRATE = 115200;
 const BOOT_SWI_BASE = 0x10000000;
