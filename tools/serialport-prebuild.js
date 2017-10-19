@@ -11,14 +11,14 @@ const decompress = require("decompress");
 const BASE_URL = "https://github.com/EmergingTechnologyAdvisors/node-serialport/releases/download";
 const ARCHS = ["darwin-x64", "linux-ia32", "linux-x64", "win32-ia32", "win32-x64"];
 
-const SP_VERSION = require(path.join(__dirname, "..", "package.json")).dependencies.serialport;
-console.log(`serialport version: ${SP_VERSION}`);
-
-const EL_VERSIONS = process.argv.slice(2);
-
 const CACHE_DIR = path.join(__dirname, "prebuild-cache");
 const PKG_DIR = path.join(__dirname, "..", "node_modules", "serialport");
 const DEST_DIR = path.join(PKG_DIR, "compiled");
+
+const SP_VERSION = require(path.join(PKG_DIR, "package.json")).version;
+console.log(`serialport version: ${SP_VERSION}`);
+
+const EL_VERSIONS = process.argv.slice(2);
 
 const ELECTRON_VERSION_MAP = {
     "1.6.6": {node: "7.4.0", modules: "53"},
