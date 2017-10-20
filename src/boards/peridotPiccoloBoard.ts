@@ -31,7 +31,7 @@ const WRITER_ELF_PATH = path.join(__dirname, "..", "..", "..", "lib", "peridot_p
 
 const EPCS_FATFS_IOCTL_FORMAT = 0x4501;
 
-const USER_BITRATE = 921600;
+const USER_BAUDRATE = 921600;
 const USER_RPC_CHANNEL = 1;
 const USER_RPC_SPLIT = 8192;
 const USER_STDIN_CHANNEL = 2;
@@ -254,7 +254,7 @@ export class PeridotPiccoloBoard extends Board {
      * @param path Path of the board
      */
     connect(path: string): Promise<void> {
-        this._canarium = new CanariumGen2(path, {bitrate: USER_BITRATE});
+        this._canarium = new CanariumGen2(path, {baudRate: USER_BAUDRATE, disableTimeouts: true});
         this._rpc = this._canarium.createRpcClient(USER_RPC_CHANNEL);
         this._canarium.on("close", () => {
             this._rpc = null;
