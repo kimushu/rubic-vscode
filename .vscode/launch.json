@@ -55,6 +55,7 @@
                 "runtimeExecutable": "/Applications/Visual Studio Code.app/Contents/MacOS/Electron"
             },
             "env": {
+                "DEBUG": "canarium:*",
                 "ELECTRON_RUN_AS_NODE": "1"
             }
         }
