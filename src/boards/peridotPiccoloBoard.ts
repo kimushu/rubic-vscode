@@ -243,6 +243,8 @@ export class PeridotPiccoloBoard extends Board {
                     boardClass: this.name,
                     name: port.path,
                     path: port.path,
+                    vendorId: port.vendorId,
+                    productId: port.productId,
                 };
                 return candidate;
             });
