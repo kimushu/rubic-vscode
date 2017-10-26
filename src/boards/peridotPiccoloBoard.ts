@@ -395,11 +395,9 @@ export class PeridotPiccoloBoard extends Board {
      * @param reporter Progress indication callback
      */
     writeFirmware(filename: string, boardPath: string, reporter: (message?: string) => void): Promise<boolean> {
-        let writerElf: Buffer;
         let spiElf: Buffer;
         let img1Rpd: Buffer;
         let ufmRpd: Buffer;
-        let canarium: CanariumGen1;
 
         let makePercentReporter = (text) => {
             return (percent: number) => {
@@ -407,34 +405,132 @@ export class PeridotPiccoloBoard extends Board {
             };
         };
 
-        return Promise.all([
-            pify(fs.readFile)(WRITER_ELF_PATH),
-            pify(fs.readFile)(filename)
-        ])
-        .then((buffers) => {
-            let zip: Buffer;
-            [ writerElf, zip ] = buffers;
-            // Extract firmware files
+        return pify(fs.readFile)(filename)
+        .then((zip) => {
             return decompress(zip);
         })
         .then((files) => {
             spiElf = (files.find((file) => file.path === "spi.elf") || {}).data;
             img1Rpd = (files.find((file) => file.path === "image1.rpd") || {}).data;
+            if (img1Rpd != null) {
+                img1Rpd = convertRpdToBytes(img1Rpd);
+            }
             ufmRpd = (files.find((file) => file.path === "ufm.rpd") || {}).data;
+            if (ufmRpd != null) {
+                ufmRpd = convertRpdToBytes(ufmRpd);
+            }
+        })
+        .then(() => {
+            return this._writeFirmwareGen2(boardPath, spiElf, img1Rpd, ufmRpd, reporter)
+            .catch(() => {
+                // Use Gen1 as a fallback I/F
+                return this._writeFirmwareGen1(boardPath, spiElf, img1Rpd, ufmRpd, reporter);
+            });
+        });
+    }
+
+    private _writeFirmwareGen2(boardPath: string, spiElf: Buffer, img1Rpd: Buffer, ufmRpd: Buffer, reporter: (message?: string) => void): Promise<void> {
+        let canarium = new CanariumGen2(boardPath, {baudRate: USER_BAUDRATE});
+        let rpc = canarium.createRpcClient(1);
+        reporter(localize("trying-gen2", "Trying Gen2 Protocol"));
+        let makePercentReporter = (text) => {
+            return (percent: number) => {
+                reporter(`${text} (${Math.floor(percent)}%)`);
+            };
+        };
+        let writer = (buffer: Buffer, area: string, report: (progress: number) => void, offset: number = 0): Promise<void> => {
+            if (offset >= buffer.length) {
+                report(100);
+                return;
+            }
+            report(offset / buffer.length * 100);
+            return rpc.call<{hash: Buffer, length: number}>("rubic.prog.hash", {area, offset})
+            .then(({hash, length}) => {
+                let data = buffer.slice(offset, offset + length);
+                if (data.length < length) {
+                    data = Buffer.concat([data], length);
+                }
+                let md5sum = md5(data);
+                let expected = Buffer.from(md5sum, "hex");
+                return Promise.resolve()
+                .then(() => {
+                    if (expected.compare(hash) === 0) {
+                        // No change
+                        return;
+                    }
+                    return rpc.call("rubic.prog.write", {area, offset, data, hash: expected});
+                })
+                .then(() => {
+                    return writer(buffer, area, report, offset + length);
+                });
+            });
+        };
+        return Promise.resolve()
+        .then(() => {
+            return canarium.open();
+        })
+        .then(() => {
+            if (spiElf == null) {
+                return;
+            }
+            return writer(
+                spiElf, "spi",
+                makePercentReporter(localize("write-spi", "Writing SPI flash"))
+            );
+        })
+        .then(() => {
+            if (img1Rpd == null) {
+                return;
+            }
+            return writer(
+                img1Rpd, "img",
+                makePercentReporter(localize("write-img1", "Writing Image1 area"))
+            );
+        })
+        .then(() => {
+            if (ufmRpd == null) {
+                return;
+            }
+            return writer(
+                ufmRpd, "ufm",
+                makePercentReporter(localize("write-ufm", "Writing UFM area"))
+            );
+        })
+        .finally(() => {
+            return canarium.close();
+        });
+    }
+
+    private _writeFirmwareGen1(boardPath: string, spiElf: Buffer, img1Rpd: Buffer, ufmRpd: Buffer, reporter: (message?: string) => void): Promise<void> {
+        let writerElf: Buffer;
+        let canarium = new CanariumGen1();
+        canarium.serialBitrate = BOOT_BITRATE;
+        reporter(localize("trying-gen1", "Trying Gen1 Protocol"));
+        let makePercentReporter = (text) => {
+            return (percent: number) => {
+                reporter(`${text} [Gen1] (${Math.floor(percent)}%)`);
+            };
+        };
+
+        let timeout = true;
+        return pify(fs.readFile)(WRITER_ELF_PATH)
+        .then((buffer)=> {
+            writerElf = buffer;
         })
         .then(() => {
             // Connect to board
-            canarium = new CanariumGen1();
-            canarium.serialBitrate = BOOT_BITRATE;
             return Promise.race([
                 canarium.open(boardPath),
                 delay(GEN1_OPEN_TIMEOUT).then(() => {
-                    canarium.close();
-                    throw new Error("Timed out");
+                    if (timeout) {
+                        canarium.close();
+                        throw new Error("Timed out");
+                    }
                 })
             ]);
         })
         .then(() => {
+            timeout = false;
             // Check current configuration image
             return canarium.avm.iord(BOOT_SWI_BASE, SWI_REG_CLASSID);
         })
@@ -472,7 +568,7 @@ export class PeridotPiccoloBoard extends Board {
                 return;
             }
             return RubicFwUp.writeMemory(
-                canarium, "img", convertRpdToBytes(img1Rpd),
+                canarium, "img", img1Rpd,
                 makePercentReporter(localize("write-img1", "Writing Image1 area"))
             );
         })
@@ -482,7 +578,7 @@ export class PeridotPiccoloBoard extends Board {
                 return;
             }
             return RubicFwUp.writeMemory(
-                canarium, "ufm", convertRpdToBytes(ufmRpd),
+                canarium, "ufm", ufmRpd,
                 makePercentReporter(localize("write-ufm", "Writing UFM area"))
             );
         })
