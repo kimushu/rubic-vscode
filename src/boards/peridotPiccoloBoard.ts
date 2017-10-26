@@ -9,6 +9,7 @@ import * as decompress from "decompress";
 import { RubicAgent } from "../util/rubicAgent";
 import { CanariumGen1, CanariumGen2 } from "canarium";
 import { loadNios2Elf, convertRpdToBytes } from "../util/altera";
+import { RubicProcess } from "../processes/rubicProcess";
 require("promise.prototype.finally").shim();
 const localize = nls.loadMessageBundle(__filename);
 
@@ -38,6 +39,16 @@ const USER_STDIN_CHANNEL = 2;
 const USER_STDOUT_CHANNEL = USER_STDIN_CHANNEL;
 const USER_STDERR_CHANNEL = 3;
 const USER_DEBUG_CHANNEL = 4;
+
+const LOCALIZED_WRITE_SPI = localize("write-spi", "Writing SPI flash");
+const LOCALIZED_WRITE_CFG = localize("write-cfg", "Writing FPGA configuration");
+const LOCALIZED_WRITE_UFM = localize("write-ufm", "Writing UFM");
+
+interface PiccoloBinaries {
+    spi: Buffer;    // ELF image located at the head of SPI flash
+    cfg: Buffer;    // FPGA configuration (User side of dual configuration)
+    ufm: Buffer;    // UFM (for bootloader)
+}
 
 namespace RubicFwUp {
     const DEFAULT_TIMEOUT = 2000;
@@ -127,6 +138,9 @@ namespace RubicFwUp {
         let update: boolean[];
         let sectorSize: number;
         let sectors: number;
+        if (data == null) {
+            return Promise.resolve();
+        }
         return Promise.resolve()
         .then(() => {
             // Issue hash read message
@@ -201,6 +215,34 @@ namespace RubicFwUp {
                     }
                 });
             });
+        });
+    }
+
+    export function formatStorage(canarium: CanariumGen1, name: string, flags: number): Promise<void> {
+        let msg = Buffer.allocUnsafe(12);
+        msg.write(`F${name}`, 0, 4);
+        msg.writeInt32LE(flags, 4);
+        return issueCommand(canarium, msg)
+        .then((reader) => {
+            return reader(0, 12)
+            .then((resp) => {
+                let signature = resp.slice(0, 4).toString();
+                if (signature !== `f${name}`) {
+                    throw new Error(`Invalid response for format request (${signature})`);
+                }
+                let result = resp.readInt32LE(8);
+                if (result !== 0) {
+                    throw new Error(`Format failed (errno=${result})`);
+                }
+            });
+        });
+    }
+
+    export function close(canarium: CanariumGen1): Promise<void> {
+        let msg = Buffer.allocUnsafe(4);
+        msg.write("Stop", 0, 4);
+        return issueCommand(canarium, msg)
+        .then((reader) => {
         });
     }
 }
@@ -395,9 +437,7 @@ export class PeridotPiccoloBoard extends Board {
      * @param reporter Progress indication callback
      */
     writeFirmware(filename: string, boardPath: string, reporter: (message?: string) => void): Promise<boolean> {
-        let spiElf: Buffer;
-        let img1Rpd: Buffer;
-        let ufmRpd: Buffer;
+        let binaries: PiccoloBinaries;
 
         let makePercentReporter = (text) => {
             return (percent: number) => {
@@ -410,26 +450,31 @@ export class PeridotPiccoloBoard extends Board {
             return decompress(zip);
         })
         .then((files) => {
-            spiElf = (files.find((file) => file.path === "spi.elf") || {}).data;
-            img1Rpd = (files.find((file) => file.path === "image1.rpd") || {}).data;
-            if (img1Rpd != null) {
-                img1Rpd = convertRpdToBytes(img1Rpd);
-            }
-            ufmRpd = (files.find((file) => file.path === "ufm.rpd") || {}).data;
-            if (ufmRpd != null) {
-                ufmRpd = convertRpdToBytes(ufmRpd);
-            }
+            binaries = {
+                spi: (files.find((file) => file.path === "spi.elf") || {}).data,
+                cfg: convertRpdToBytes((files.find((file) => file.path === "config.rpd") || {}).data),
+                ufm: convertRpdToBytes((files.find((file) => file.path === "ufm.rpd") || {}).data),
+            };
         })
         .then(() => {
-            return this._writeFirmwareGen2(boardPath, spiElf, img1Rpd, ufmRpd, reporter)
+            return this._writeFirmwareGen2(boardPath, binaries, reporter)
             .catch(() => {
-                // Use Gen1 as a fallback I/F
-                return this._writeFirmwareGen1(boardPath, spiElf, img1Rpd, ufmRpd, reporter);
+                // Fallback to Gen1
+                return RubicProcess.self.showInformationMessage(
+                    localize("switch-to-boot", "Switch to Boot mode (BOOTSEL=0) and push reset button on the board"),
+                    {title: localize("push-done", "OK, pushed")}
+                )
+                .then((select) => {
+                    if (select == null) {
+                        throw new Error("Cancelled");
+                    }
+                    return this._writeFirmwareGen1(boardPath, binaries, reporter);
+                });
             });
         });
     }
 
-    private _writeFirmwareGen2(boardPath: string, spiElf: Buffer, img1Rpd: Buffer, ufmRpd: Buffer, reporter: (message?: string) => void): Promise<void> {
+    private _writeFirmwareGen2(boardPath: string, binaries: PiccoloBinaries, reporter: (message?: string) => void): Promise<void> {
         let canarium = new CanariumGen2(boardPath, {baudRate: USER_BAUDRATE});
         let rpc = canarium.createRpcClient(1);
         reporter(localize("trying-gen2", "Trying Gen2 Protocol"));
@@ -439,6 +484,9 @@ export class PeridotPiccoloBoard extends Board {
             };
         };
         let writer = (buffer: Buffer, area: string, report: (progress: number) => void, offset: number = 0): Promise<void> => {
+            if (buffer == null) {
+                return;
+            }
             if (offset >= buffer.length) {
                 report(100);
                 return;
@@ -470,38 +518,20 @@ export class PeridotPiccoloBoard extends Board {
             return canarium.open();
         })
         .then(() => {
-            if (spiElf == null) {
-                return;
-            }
-            return writer(
-                spiElf, "spi",
-                makePercentReporter(localize("write-spi", "Writing SPI flash"))
-            );
+            return writer(binaries.cfg, "img", makePercentReporter(LOCALIZED_WRITE_CFG));
         })
         .then(() => {
-            if (img1Rpd == null) {
-                return;
-            }
-            return writer(
-                img1Rpd, "img",
-                makePercentReporter(localize("write-img1", "Writing Image1 area"))
-            );
+            return writer(binaries.ufm, "ufm", makePercentReporter(LOCALIZED_WRITE_UFM));
         })
         .then(() => {
-            if (ufmRpd == null) {
-                return;
-            }
-            return writer(
-                ufmRpd, "ufm",
-                makePercentReporter(localize("write-ufm", "Writing UFM area"))
-            );
+            return writer(binaries.spi, "spi", makePercentReporter(LOCALIZED_WRITE_SPI));
         })
         .finally(() => {
             return canarium.close();
         });
     }
 
-    private _writeFirmwareGen1(boardPath: string, spiElf: Buffer, img1Rpd: Buffer, ufmRpd: Buffer, reporter: (message?: string) => void): Promise<void> {
+    private _writeFirmwareGen1(boardPath: string, binaries: PiccoloBinaries, reporter: (message?: string) => void): Promise<void> {
         let writerElf: Buffer;
         let canarium = new CanariumGen1();
         canarium.serialBitrate = BOOT_BITRATE;
@@ -564,33 +594,26 @@ export class PeridotPiccoloBoard extends Board {
         })
         .then(() => {
             // Write Image1 (CFM1+CFM2)
-            if (img1Rpd == null) {
-                return;
-            }
             return RubicFwUp.writeMemory(
-                canarium, "img", img1Rpd,
-                makePercentReporter(localize("write-img1", "Writing Image1 area"))
+                canarium, "img", binaries.cfg, makePercentReporter(LOCALIZED_WRITE_CFG)
             );
         })
         .then(() => {
             // Write UFM
-            if (ufmRpd == null) {
-                return;
-            }
             return RubicFwUp.writeMemory(
-                canarium, "ufm", ufmRpd,
-                makePercentReporter(localize("write-ufm", "Writing UFM area"))
+                canarium, "ufm", binaries.ufm, makePercentReporter(LOCALIZED_WRITE_UFM)
             );
         })
         .then(() => {
             // Write SPI
-            if (spiElf == null) {
-                return;
-            }
             return RubicFwUp.writeMemory(
-                canarium, "spi", spiElf,
-                makePercentReporter(localize("write-spi", "Writing SPI flash"))
+                canarium, "spi", binaries.spi, makePercentReporter(LOCALIZED_WRITE_SPI)
             );
+        })
+        .then(() => {
+            // Format internal storage
+            reporter(localize("format-int", "Formatting internal storage"));
+            return RubicFwUp.formatStorage(canarium, "int", 0);
         })
         .finally(() => {
             // Disconnect
