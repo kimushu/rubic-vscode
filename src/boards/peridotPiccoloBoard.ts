@@ -533,6 +533,9 @@ export class PeridotPiccoloBoard extends Board {
         .then(() => {
             return writer(binaries.spi, "spi", makePercentReporter(LOCALIZED_WRITE_SPI));
         })
+        .then(() => {
+            return rpc.notify("rubic.prog.reset", {});
+        })
         .finally(() => {
             return canarium.close();
         });
