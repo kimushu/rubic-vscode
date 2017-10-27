@@ -1,16 +1,30 @@
 {
     "messages": [
+        "SPIフラッシュを書き込み中",
+        "FPGAコンフィグレーションを書き込み中",
+        "UFMを書き込み中",
+        "ブートモード(BOOTSEL=0)に切り替え、ボード上のリセットボタンを押して下さい",
+        "はい、ボタンを押しました",
+        "ユーザーモード(BOOTSEL=1 または オープン)に切り替え、ボード上のリセットボタンを押して下さい",
+        "Gen2プロトコルで試行中",
+        "Gen1プロトコルで試行中",
         "PERIDOT Piccolo がブートローダーモードで動作していません",
         "書き込み用プログラムの準備中",
-        "Image1領域を書き込み中",
-        "UFM領域を書き込み中",
-        "SPIフラッシュを書き込み中"
+        "ボード上の内蔵ストレージをフォーマットしますか？",
+        "内蔵ストレージをフォーマット中"
     ],
     "keys": [
+        "write-spi",
+        "write-cfg",
+        "write-ufm",
+        "switch-to-boot",
+        "push-done",
+        "switch-to-user",
+        "trying-gen2",
+        "trying-gen1",
         "not-boot-mode",
         "setup-writer",
-        "write-img1",
-        "write-ufm",
-        "write-spi"
+        "format-confirm",
+        "format-int"
     ]
 }
