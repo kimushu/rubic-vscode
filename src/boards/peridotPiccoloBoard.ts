@@ -471,6 +471,11 @@ export class PeridotPiccoloBoard extends Board {
                         throw new Error("Cancelled");
                     }
                     return this._writeFirmwareGen1(boardPath, binaries, reporter);
+                })
+                .then(() => {
+                    return RubicProcess.self.showInformationMessage(
+                        localize("switch-to-user", "Switch back to User mode (BOOTSEL=1 or open) and push reset button on the board")
+                    );
                 });
             });
         });
@@ -533,7 +538,7 @@ export class PeridotPiccoloBoard extends Board {
         });
     }
 
-    private _writeFirmwareGen1(boardPath: string, binaries: PiccoloBinaries, reporter: (message?: string) => void): Promise<void> {
+    private _writeFirmwareGen1(boardPath: string, binaries: PiccoloBinaries, reporter: (message?: string) => void, format?: boolean): Promise<void> {
         let writerElf: Buffer;
         let canarium = new CanariumGen1();
         canarium.serialBitrate = BOOT_BITRATE;
@@ -613,9 +618,20 @@ export class PeridotPiccoloBoard extends Board {
             );
         })
         .then(() => {
-            // Format internal storage
-            reporter(localize("format-int", "Formatting internal storage"));
-            return RubicFwUp.formatStorage(canarium, "int", 0);
+            // Confirm format
+            if (format != null) {
+                return format;
+            }
+            return RubicProcess.self.showInformationConfirm(
+                localize("format-confirm", "Do you want to format internal storage on the board?")
+            );
+        })
+        .then((do_format) => {
+            if (do_format) {
+                // Format internal storage
+                reporter(localize("format-int", "Formatting internal storage"));
+                return RubicFwUp.formatStorage(canarium, "int", 0);
+            }
         })
         .finally(() => {
             // Disconnect
