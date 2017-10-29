@@ -55,7 +55,7 @@ export class WakayamaRbBoard extends Board {
 
     public static list(): Promise<BoardCandidate[]> {
         return pify(SerialPort.list).call(SerialPort)
-        .then((ports: SerialPort.portConfig[]) => {
+        .then((ports: SerialPort.PortConfig[]) => {
             let result: BoardCandidate[] = [];
             ports.forEach((port) => {
                 let vid = parseInt(port.vendorId, 16);

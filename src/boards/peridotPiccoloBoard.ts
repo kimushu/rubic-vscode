@@ -441,12 +441,6 @@ export class PeridotPiccoloBoard extends Board {
     writeFirmware(filename: string, boardPath: string, reporter: (message?: string) => void): Promise<boolean> {
         let binaries: PiccoloBinaries;
 
-        let makePercentReporter = (text) => {
-            return (percent: number) => {
-                reporter(`${text} (${Math.floor(percent)}%)`);
-            };
-        };
-
         return pify(fs.readFile)(filename)
         .then((zip) => {
             return decompress(zip);
