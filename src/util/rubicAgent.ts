@@ -76,4 +76,24 @@ export namespace RubicAgent {
     export interface QueueCallbackResponse {
         result: number;
     }
+
+    /**
+     * Method name for query status
+     */
+    export const METHOD_STATUS = "rubic.status";
+
+    /**
+     * Parameters for METHOD_STATUS
+     */
+    export interface StatusParameters {
+    }
+
+    /**
+     * Response of METHOD_STATUS
+     */
+    export interface StatusResponse {
+        threads: {
+            running: boolean;
+        }[];
+    }
 }

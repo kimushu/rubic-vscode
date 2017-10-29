@@ -134,6 +134,26 @@ class RubicDebugSession extends DebugSession {
     }
 
     /**
+     * Stop programs
+     * @param response Response
+     * @param args Arguments
+     */
+    protected disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments): void {
+        Promise.resolve()
+        .then(() => {
+            return this._stopProgram();
+        })
+        .finally(() => {
+            return this._disconnectBoard();
+        })
+        .then(() => {
+            this.sendResponse(response);
+        }, (reason) => {
+            this.sendErrorResponse(response, 1003, `Failed to stop program: ${reason}`);
+        });
+    }
+
+    /**
      * Process Rubic custom debug request
      * @param request Request name
      * @param args Arguments
@@ -316,10 +336,12 @@ class RubicDebugSession extends DebugSession {
         this._report(SEPARATOR_RUN);
         return Promise.resolve()
         .then(() => {
-            this._board.once("stop", () => {
+            this._board.once("stop", (force, result) => {
                 this._report(SEPARATOR_STOP);
                 this._report(
-                    localize("program-ended", "Program ended")
+                    force ?
+                    localize("program-forcedly-stopped", "Program forcedly stopped") :
+                    localize("program-ended", "Program ended") + ` ${result}`
                 );
                 this.sendEvent(new TerminatedEvent());
             });
@@ -356,6 +378,16 @@ class RubicDebugSession extends DebugSession {
         });
     }
 
+    /**
+     * Stop program
+     */
+    private _stopProgram(): Promise<void> {
+        return Promise.resolve()
+        .then(() => {
+            return this._board.stopProgram();
+        });
+    }
+    
     /**
      * Get board info
      * @param args Arguments passed by custom request
@@ -398,6 +430,10 @@ class RubicDebugSession extends DebugSession {
      * @param args Arguments passed by custom request
      */
     private _writeFirmware(args: WriteFirmwareArguments): Promise<boolean> {
+        let followInstMessage = `${localize(
+            "follow-inst",
+            "Please follow instructions showed on the top of window"
+        )} $(arrow-up)`;
         return Promise.resolve(RubicProcess.self.withProgress({
             location: { Window: true },
             title: localize("firmware-update", "Firmware update")
@@ -407,7 +443,10 @@ class RubicDebugSession extends DebugSession {
                 return this._constructBoard(args);
             })
             .then(() => {
-                return this._board.writeFirmware(args.fullPath, args.boardPath, (message: string) => {
+                return this._board.writeFirmware(args.fullPath, args.boardPath, (message?: string) => {
+                    if (message == null) {
+                        message = followInstMessage;
+                    }
                     progress.report({ message });
                 });
             });

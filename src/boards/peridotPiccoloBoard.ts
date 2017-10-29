@@ -454,7 +454,7 @@ export class PeridotPiccoloBoard extends Board {
         .then((files) => {
             binaries = {
                 spi: (files.find((file) => file.path === "spi.elf") || {}).data,
-                cfg: convertRpdToBytes((files.find((file) => file.path === "config.rpd") || {}).data),
+                cfg: convertRpdToBytes((files.find((file) => file.path === "cfg.rpd") || {}).data),
                 ufm: convertRpdToBytes((files.find((file) => file.path === "ufm.rpd") || {}).data),
             };
         })
@@ -462,6 +462,7 @@ export class PeridotPiccoloBoard extends Board {
             return this._writeFirmwareGen2(boardPath, binaries, reporter)
             .catch(() => {
                 // Fallback to Gen1
+                reporter();
                 return RubicProcess.self.showInformationMessage(
                     localize("switch-to-boot", "Switch to Boot mode (BOOTSEL=0) and push reset button on the board"),
                     {title: localize("push-done", "OK, pushed")}
@@ -473,6 +474,7 @@ export class PeridotPiccoloBoard extends Board {
                     return this._writeFirmwareGen1(boardPath, binaries, reporter);
                 })
                 .then(() => {
+                    reporter();
                     return RubicProcess.self.showInformationMessage(
                         localize("switch-to-user", "Switch back to User mode (BOOTSEL=1 or open) and push reset button on the board")
                     );
@@ -625,6 +627,7 @@ export class PeridotPiccoloBoard extends Board {
             if (format != null) {
                 return format;
             }
+            reporter();
             return RubicProcess.self.showInformationConfirm(
                 localize("format-confirm", "Do you want to format internal storage on the board?")
             );
@@ -652,14 +655,17 @@ export class PeridotPiccoloBoard extends Board {
     runProgram(relativePath: string): Promise<void> {
         return Promise.resolve()
         .then(() => {
+            return this._stopAllPrograms();
+        })
+        .then(() => {
             let params: RubicAgent.QueueStartParameters = {
                 name: "start",
                 file: this._getInternalPath(relativePath),
                 //debug: true
             };
-            return this._rpc.call(RubicAgent.METHOD_QUEUE, params);
+            return this._rpc.call<RubicAgent.QueueStartResponse>(RubicAgent.METHOD_QUEUE, params);
         })
-        .then((result: RubicAgent.QueueStartResponse) => {
+        .then((result) => {
             this._runningTid = result.tid;
             let params: RubicAgent.QueueCallbackParameters = {
                 name: "callback",
@@ -667,9 +673,9 @@ export class PeridotPiccoloBoard extends Board {
             };
 
             // Set callback
-            this._rpc.call(RubicAgent.METHOD_QUEUE, params)
-            .then((result: RubicAgent.QueueCallbackResponse) => {
-                this.emit("stop", {result: result.result});
+            this._rpc.call<RubicAgent.QueueCallbackResponse>(RubicAgent.METHOD_QUEUE, params)
+            .then((result) => {
+                this.emit("stop", false, result.result);
             });
         });
     }
@@ -692,8 +698,38 @@ export class PeridotPiccoloBoard extends Board {
             name: "abort",
             tid: this._runningTid
         };
-        return this._rpc.call(RubicAgent.METHOD_QUEUE, params)
-        .then((result: RubicAgent.QueueAbortResponse) => {
+        return this._rpc.call<RubicAgent.QueueAbortResponse>(RubicAgent.METHOD_QUEUE, params)
+        .then((result) => {
+            this.emit("stop", true);
+        });
+    }
+
+    /**
+     * Stop all programs
+     */
+    private _stopAllPrograms(): Promise<void> {
+        return Promise.resolve()
+        .then(() => {
+            let params: RubicAgent.StatusParameters = {
+            };
+            return this._rpc.call<RubicAgent.StatusResponse>(RubicAgent.METHOD_STATUS, params);
+        })
+        .then((result) => {
+            return Promise.all(result.threads.map((info, tid) => {
+                if (!info.running) {
+                    return;
+                }
+                let params: RubicAgent.QueueAbortParameters = {
+                    name: "abort", tid
+                };
+                return this._rpc.call<RubicAgent.QueueAbortResponse>(RubicAgent.METHOD_QUEUE, params)
+                .catch(() => {
+                    // Ignore errors
+                });
+            }))
+            .then(() => {
+                // Ignore results
+            });
         });
     }
 

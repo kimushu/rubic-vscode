@@ -8,6 +8,7 @@
         "{0}個のファイルは変更が無いためスキップされました",
         "{0}個のファイルは変更が無いためスキップされました",
         "プログラム実行開始: {0}",
+        "プログラムは強制終了されました",
         "プログラムが終了しました",
         "ボードの接続先",
         "シリアル番号",
@@ -15,6 +16,7 @@
         "リリースタグ",
         "バリエーション名",
         "ファームウェアの識別子",
+        "ウィンドウ上部に表示される指示に従って操作して下さい",
         "ファームウェア更新"
     ],
     "keys": [
@@ -26,6 +28,7 @@
         "skipped-file-1",
         "skipped-file-n",
         "run-program-x",
+        "program-forcedly-stopped",
         "program-ended",
         "pass-of-board",
         "serial-number",
@@ -33,6 +36,7 @@
         "tag-rel",
         "name-variation",
         "firm-id",
+        "follow-inst",
         "firmware-update"
     ]
 }
