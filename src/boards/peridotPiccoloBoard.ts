@@ -525,7 +525,7 @@ export class PeridotPiccoloBoard extends Board {
             return canarium.open();
         })
         .then(() => {
-            return writer(binaries.cfg, "img", makePercentReporter(LOCALIZED_WRITE_CFG));
+            return writer(binaries.cfg, "cfg", makePercentReporter(LOCALIZED_WRITE_CFG));
         })
         .then(() => {
             return writer(binaries.ufm, "ufm", makePercentReporter(LOCALIZED_WRITE_UFM));
@@ -605,7 +605,7 @@ export class PeridotPiccoloBoard extends Board {
         .then(() => {
             // Write Image1 (CFM1+CFM2)
             return RubicFwUp.writeMemory(
-                canarium, "img", binaries.cfg, makePercentReporter(LOCALIZED_WRITE_CFG)
+                canarium, "cfg", binaries.cfg, makePercentReporter(LOCALIZED_WRITE_CFG)
             );
         })
         .then(() => {
