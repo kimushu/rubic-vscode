@@ -239,12 +239,7 @@ export class WakayamaRbBoard extends Board {
             "Please wait! Do not disconnect {0}",
             boardName
         )} `;
-        reporter(
-            `${localize(
-                "follow-inst",
-                "Please follow instructions showed on the top of window"
-            )} $(arrow-up)`
-        );
+        reporter();
         return Promise.resolve()
         .then(() => {
             return RubicProcess.self.showInformationMessage(
