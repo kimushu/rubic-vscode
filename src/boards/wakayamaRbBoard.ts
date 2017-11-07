@@ -119,8 +119,6 @@ export class WakayamaRbBoard extends Board {
         }
         return Promise.resolve(
         ).then(() => {
-            return this._flush();
-        }).then(() => {
             return this._send("H\r");
         }).then(() => {
             return this._recv("H [ENTER])\r\n>");
@@ -383,12 +381,6 @@ export class WakayamaRbBoard extends Board {
             });
         };
         return tryEnumerate(0);
-    }
-
-    private _flush(): Promise<void> {
-        this._received = null;
-        if (DEBUG) { console.log("_flush()"); }
-        return this._portCall("flush");
     }
 
     private _send(data: string|Buffer): Promise<void> {
