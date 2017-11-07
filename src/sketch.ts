@@ -14,6 +14,7 @@ require("promise.prototype.finally").shim();
 
 // Declaration only
 import vscode = require("vscode");
+import { RubicDebugConfigProvider } from "./debug/rubicDebugConfigProvider";
 
 const RUBIC_JSON  = "rubic.json";
 const SKETCH_ENCODING = "utf8";
@@ -29,19 +30,6 @@ export enum SketchLoadResult {
     LOAD_MIGRATED,
     LOAD_CANCELED,
     NO_SKETCH,
-}
-
-/**
- * Generate debug configuration
- */
-export function generateDebugConfiguration(workspaceRoot: string): any {
-    return {
-        type: "rubic",
-        request: "launch",
-        name: "Launch on target board",
-        workspaceRoot: "${workspaceRoot}",
-        program: "${file}"
-    };
 }
 
 /**
@@ -647,7 +635,8 @@ export class Sketch extends EventEmitter {
                 (jsonText) => {
                     let obj = CJSON.parse(jsonText);
                     let cfg = obj.configurations || (obj.configurations = []);
-                    cfg.push(generateDebugConfiguration(this._workspaceRoot));
+                    let initialConfig = <any>(new RubicDebugConfigProvider().resolveDebugConfiguration(undefined, <any>{}));
+                    cfg.push(initialConfig);
                     return CJSON.stringify(obj, null, 4);
                 },
                 "{\"version\":\"0.2.0\",\"configurations\":[]}",

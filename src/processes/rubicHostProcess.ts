@@ -11,9 +11,10 @@ import * as ipc from "node-ipc";
 import * as path from "path";
 import * as nls from "vscode-nls";
 import * as fse from "fs-extra";
-import { Sketch, generateDebugConfiguration } from "../sketch";
+import { Sketch } from "../sketch";
 import * as CJSON from "comment-json";
 import { CatalogData } from "../catalog/catalogData";
+import { RubicDebugConfigProvider } from "../debug/rubicDebugConfigProvider";
 
 const localize = nls.loadMessageBundle(__filename);
 
@@ -23,7 +24,6 @@ const LOCALIZED_NO = localize("no", "No");
 const RUBIC_DEBUG_SERVER_PORT = process.env["RUBIC_DEBUG_SERVER_PORT"];
 const RUBIC_DEBUG_IPC_SILENT = process.env["RUBIC_DEBUG_IPC_SILENT"];
 const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
-const CMD_PROVIDE_INIT_CFG = "extension.rubic.provideInitialConfigurations";
 const CMD_GUESS_PROGRAM_NAME = "extension.rubic.guessProgramName";
 
 interface StartSessionResult {
@@ -372,16 +372,14 @@ export class RubicHostProcess extends RubicProcess {
             )
         );
         _context.subscriptions.push(
-            commands.registerCommand(CMD_PROVIDE_INIT_CFG, () => {
-                return this._provideInitConfig();
-            })
-        );
-        _context.subscriptions.push(
             commands.registerCommand(CMD_GUESS_PROGRAM_NAME, () => {
                 RubicProcess.self.showWarningMessage(
                     "guessProgramName is obsolete! Please regenerate your launch.json"
                 );
             })
+        );
+        _context.subscriptions.push(
+            debug.registerDebugConfigurationProvider("rubic", new RubicDebugConfigProvider())
         );
         _context.subscriptions.push(
             debug.onDidTerminateDebugSession(() => {
@@ -522,9 +520,11 @@ export class RubicHostProcess extends RubicProcess {
      */
     private _startDebugSession(config: any): Promise<StartSessionResult> {
         if (Object.keys(config).length === 0) {
+            let provider = new RubicDebugConfigProvider();
+            let initialConfig = <any>provider.resolveDebugConfiguration(undefined, <any>{});
             return Promise.resolve<StartSessionResult>({
                 status: "saveConfiguration",
-                content: this._provideInitConfig()
+                content: initialConfig
             });
         }
         config.program = substituteVariables(config.program);
@@ -546,16 +546,6 @@ export class RubicHostProcess extends RubicProcess {
         .then(() => {
             return <any>{ status: "ok" };
         });
-    }
-
-    /**
-     * Provide initial debug configuration
-     */
-    private _provideInitConfig(): string {
-        return JSON.stringify({
-            version: "0.2.0",
-            configurations: [ generateDebugConfiguration(workspace.rootPath) ]
-        }, null, 4);
     }
 
     /** Sketch instance */

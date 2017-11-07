@@ -1,9 +1,10 @@
 {
   "name": "rubic",
-  "version": "0.99.903",
+  "version": "0.99.12",
   "publisher": "kimushu",
   "engines": {
-    "vscode": "^1.15.0"
+    "vscode": "^1.17.0",
+    "node": "^7.9.0"
   },
   "license": "MIT",
   "displayName": "Rubic",
@@ -180,7 +181,15 @@
             }
           }
         },
-        "initialConfigurations": "extension.rubic.provideInitialConfigurations",
+        "initialConfigurations": [
+          {
+            "type": "rubic",
+            "request": "launch",
+            "name": "Launch on target board",
+            "workspaceRoot": "${workspaceRoot}",
+            "program": "${file}"
+          }
+        ],
         "configurationSnippets": [
           {
             "label": "%debug.rubic.snippet.launch.label%",
@@ -223,8 +232,6 @@
   },
   "activationEvents": [
     "onCommand:extension.rubic.showCatalog",
-    "onCommand:extension.rubic.startDebugSession",
-    "onCommand:extension.rubic.provideInitialConfigurations",
     "onCommand:extension.rubic.guessProgramName",
     "onDebug:rubic",
     "workspaceContains:.vscode/rubic.json"
