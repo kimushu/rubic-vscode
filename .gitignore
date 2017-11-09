@@ -11,3 +11,4 @@ typings
 /cache
 .DS_Store
 npm-debug.log*
+/.vscode-test
