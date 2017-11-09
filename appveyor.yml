@@ -12,6 +12,7 @@ build_script:
   - node --version
   - npm --version
   - npm run pretest
+  - npm run vscode:prepublish
 
 test_script:
   - npm run test:offline
