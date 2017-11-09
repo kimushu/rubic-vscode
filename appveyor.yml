@@ -8,7 +8,10 @@ install:
   - ps: Install-Product node 7.9.0 x64
   - npm install -g npm@4 --silent
 
-test_script:
+build_script:
   - node --version
   - npm --version
-  - npm test
+  - npm run pretest
+
+test_script:
+  - npm run test:offline
