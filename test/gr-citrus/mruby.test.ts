@@ -4,11 +4,17 @@ import * as fs from "fs";
 import * as rimraf from "rimraf";
 import * as path from "path";
 import { findBoard } from "../board-finder";
-import * as delay from "delay";
+// import * as delay from "delay";
 require("promise.prototype.finally").shim();
 
 suite("GR-CITRUS online tests with mruby", function() {
     let workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    function setBoardPath(value: string): void {
+        let rubicJson = path.join(workspaceRoot, ".vscode", "rubic.json");
+        let obj = JSON.parse(fs.readFileSync(rubicJson, "utf8"));
+        obj.hardware.boardPath = value;
+        fs.writeFileSync(rubicJson, JSON.stringify(obj, null, 4), "utf8");
+    }
     suiteSetup(function(done) {
         // Cleanup files
         rimraf(path.join(workspaceRoot, "*.mrb"), done);
@@ -19,16 +25,15 @@ suite("GR-CITRUS online tests with mruby", function() {
             if (err) {
                 return done(err);
             }
-            let rubicJson = path.join(workspaceRoot, ".vscode", "rubic.json");
-            let obj = JSON.parse(fs.readFileSync(rubicJson, "utf8"));
-            obj.hardware.boardPath = boardPath;
-            fs.writeFileSync(rubicJson, JSON.stringify(obj, null, 4), "utf8");
+            setBoardPath(boardPath);
             done();
         });
     });
+    suiteTeardown(function() {
+        setBoardPath("");
+    });
     test("Launch program", function(done) {
         this.timeout(0);
-        let disposable: vscode.Disposable;
         vscode.debug.startDebugging(
             vscode.workspace.workspaceFolders[0], "Launch on target board"
         ).then((value) => {
