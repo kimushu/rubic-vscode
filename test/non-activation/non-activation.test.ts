@@ -14,3 +14,15 @@ suite("Non activation tests", function() {
     });
 
 });
+
+suite("Manual activation tests", function() {
+
+    test("Rubic can be activated by command", function() {
+        const ext = vscode.extensions.getExtension("kimushu.rubic");
+        vscode.commands.executeCommand("extension.rubic.showCatalog")
+        .then(() => {
+            assert(ext.isActive);
+        });
+    });
+
+});
