@@ -293,6 +293,10 @@ export class PeridotPiccoloBoard extends Board {
         });
     }
 
+    get isConnected(): boolean {
+        return ((!!this._canarium) && this._canarium.opened);
+    }
+
     /**
      * Connect to board
      * @param path Path of the board

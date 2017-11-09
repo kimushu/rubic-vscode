@@ -86,6 +86,13 @@ export class Board extends EventEmitter {
     }
 
     /**
+     * Check if the board is connected or not
+     */
+    get isConnected(): boolean {
+        throw new Error("Not implemented");
+    }
+
+    /**
      * Get localizes board name (instance method version)
      * @return Board name
      */

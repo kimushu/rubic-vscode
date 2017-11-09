@@ -101,6 +101,10 @@ export class WakayamaRbBoard extends Board {
         });
     }
 
+    get isConnected(): boolean {
+        return !!this._port;
+    }
+
     connect(path: string): Promise<void> {
         this._path = path;
         return this._portCall("open");
