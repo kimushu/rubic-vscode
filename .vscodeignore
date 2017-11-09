@@ -11,6 +11,7 @@ typings/**
 cache/**
 tools/**
 docs/**
+*.yml
 tsconfig.json
 vsc-extension-quickstart.md
 node_modules/serialport/build/**
