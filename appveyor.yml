@@ -2,6 +2,8 @@ environment:
   ELECTRON_RUN_AS_NODE: 1
 
 cache:
+  - .vscode-test
+  - tools/prebuild-cache
   - '%APPDATA%\npm-cache'
 
 install:
