@@ -13,7 +13,6 @@ require("promise.prototype.finally").shim();
 
 // Declaration only
 import vscode = require("vscode");
-import { RubicDebugConfigProvider } from "./debug/rubicDebugConfigProvider";
 
 const RUBIC_JSON  = "rubic.json";
 const SKETCH_ENCODING = "utf8";
@@ -595,6 +594,10 @@ export class Sketch extends EventEmitter {
     }
 
     private _mergeLaunchConfig(): Promise<void> {
+        if (!RubicProcess.self.isHost) {
+            return Promise.reject(new Error("_mergeLaunchConfig is supported only on host side"));
+        }
+        const { RubicDebugConfigProvider } = require("./debug/rubicDebugConfigProvider");
         return Promise.resolve(
             RubicProcess.self.updateTextFile(
                 this._launchFile,
