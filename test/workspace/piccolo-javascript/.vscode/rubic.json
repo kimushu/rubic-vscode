@@ -1,0 +1,12 @@
+{
+    "hardware": {
+        "boardClass": "PeridotPiccoloBoard",
+        "repositoryUuid": "ec1da73b-cf4f-4550-9953-142a0a55c6af",
+        "releaseTag": "v0.1.2",
+        "variationPath": "olive_rubic_duktape.zip",
+        "boardPath": ""
+    },
+    "rubicVersion": {
+        "last": "0.99.12"
+    }
+}
