@@ -1,5 +1,8 @@
 # <a id="en"></a>Rubic
 
+[![Build Status (for OSX/Linux)](https://travis-ci.org/kimushu/rubic-vscode.svg?branch=master)](https://travis-ci.org/kimushu/rubic-vscode)
+[![Build status (for Windows)](https://ci.appveyor.com/api/projects/status/jxu1mf0d3ke1o0a3?svg=true)](https://ci.appveyor.com/project/kimushu/rubic-vscode)
+
 * [Japanese explanation is here / 日本語の説明はこちら](#ja)
 
 This extension makes it easy to develop embedded-board such as PERIDOT and GR-CITRUS from VSCode.<br>

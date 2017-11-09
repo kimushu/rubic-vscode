@@ -1,7 +1,12 @@
-- [English](#en)
-- [日本語](#ja)
+# Change Log
 
-# <a id="en"></a>Change Log (en)
+## 0.99.12
+
+Hotfix for VSCode 1.18
+
+* Add Piccolo olive support
+* Drop Electron 1.6.6 support (VSCode 1.15 or earlier is no longer supported)
+* Replace `node-ipc` with `DebugSessionCustomEvent` and remove deprecated contributions.
 
 ## 0.99.11
 
@@ -60,65 +65,3 @@ Hotfix for VSCode 1.16
 ## 0.99.1
 
 * Initial release (alpha version) for [NT Kyoto 2017](http://j.nicotech.jp/ntkyoto2017)
-
-----
-
-# <a id="ja"></a>変更ログ (ja)
-
-## 0.99.11
-
-VSCode 1.16向け緊急リリース
-
-* Electron 1.7.3 サポートの追加
-* Windows向け64-bitバイナリの追加
-
-## 0.99.10
-
-* ファームウェアにランタイムの情報表示を追加
-* デバッグ対象ファイルの振る舞いを変更 ([#14](https://github.com/kimushu/rubic-vscode/issues/14))
-* mruby関連のオプションを `mrbconfig.json` ファイルに移動
-* JSONスキーマの翻訳メッセージを追加 (`rubic.json` および `mrbconfig.json`)
-* カタログのデザインを改良 (配色と構成保存メッセージ)
-* rubic.jsonのフォーマットを変更(旧バージョンから新バージョンへは自動変換されます)
-
-## 0.99.8
-
-* READMEを更新 (Rubic本体に変更はありません)
-
-## 0.99.7
-
-* macやLinux環境において発生する `spawn EACCES` エラーを修正しました
-* Rubicに内蔵されているWindows向けmrubyコンパイラを再ビルドしました。これにより、VC++ 2015 ランタイムをインストールする必要は無くなりました。
-* 接続先未選択の状態でデバッグを開始した際、接続先を選択する画面を表示するようになりました
-* カタログで一部の項目に対して設定が保存できない不具合を修正しました
-
-## 0.99.6
-
-* デバッグにおける実行対象スクリプトの自動検出機能を追加
-* カタログキャッシュの保存場所を変更
-  * Windowsならば `%USERPROFILE%\.rubic`、Linux/macならば `$HOME/.rubic` となります
-  * Rubic拡張機能のバージョン変更や再インストールをしても、キャッシュデータが引き継がれるようになりました
-* macにおけるデバイス検出を改善
-
-## 0.99.5
-
-* ファームウェア開発者向け限定リリース
-
-## 0.99.4
-
-* Canariumを更新
-* テストコードを削除
-
-## 0.99.3
-
-* serialportモジュールをVSCode 1.12向けに差し替え
-* フォルダ未オープン時のカタログ挙動を改善
-* 接続テスト機能を実装
-
-## 0.99.2
-
-* ファームウェア開発者向けリリース
-
-## 0.99.1
-
-* [NT京都2017](http://j.nicotech.jp/ntkyoto2017)向けのアルファ版リリース
