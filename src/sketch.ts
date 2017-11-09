@@ -8,7 +8,6 @@ import * as pify from "pify";
 import { EventEmitter } from "events";
 import * as chokidar from "chokidar";
 import { RubicProcess, RubicQuickPickItem } from "./processes/rubicProcess";
-import { BoardInformation } from "./boards/board";
 import { Runtime } from "./runtimes/runtime";
 require("promise.prototype.finally").shim();
 
@@ -246,7 +245,6 @@ export class Sketch extends EventEmitter {
      * Execute connection test
      */
     testConnection(): Promise<boolean> {
-        let rprocess = RubicProcess.self;
         if (!this.loaded) {
             return Promise.reject(new Error("No sketch loaded"));
         }
@@ -256,35 +254,18 @@ export class Sketch extends EventEmitter {
         if (this.boardPath == null) {
             return Promise.reject(new Error("No board path specified"));
         }
-        return Promise.resolve(rprocess.startDebugProcess({
-            type: "rubic",
-            request: "attach"
-        }, true))
-        .then((debuggerId) => {
-            return Promise.race([
-                rprocess.sendDebugRequest(
-                    debuggerId,
-                    "board.getInfo",
-                    {
-                        boardClass: this.boardClass,
-                        boardPath: this.boardPath
-                    }
-                ),
-                new Promise((resolve, reject) => {
-                    setTimeout(
-                        reject, CONN_TEST_TIMEOUT_MS,
-                        new Error("Timed out")
-                    );
-                })
-            ])
-            .finally(() => {
-                return Promise.resolve(rprocess.stopDebugProcess(debuggerId));
-            })
-            .then((result: BoardInformation) => {
-                return true;
-            }, (reason) => {
-                return false;
-            });
+        return Promise.resolve(RubicProcess.self.delegateRequest(
+            "board.getInfo",
+            {
+                boardClass: this.boardClass,
+                boardPath: this.boardPath
+            },
+            CONN_TEST_TIMEOUT_MS
+        ))
+        .then((boardInfo) => {
+            return true;
+        }, (reason) => {
+            return false;
         });
     }
 
@@ -292,38 +273,23 @@ export class Sketch extends EventEmitter {
      * Execute connection test
      */
     writeFirmware(fullPath: string): Promise<boolean> {
-        let rprocess = RubicProcess.self;
         if (!this.loaded) {
             return Promise.reject(new Error("No sketch loaded"));
         }
         if (this.boardClass == null) {
             return Promise.reject(new Error("No board class specified"));
         }
-        return Promise.resolve(rprocess.startDebugProcess({
-            type: "rubic",
-            request: "attach"
-        }, true))
-        .then((debuggerId) => {
-            return Promise.race([
-                rprocess.sendDebugRequest(
-                    debuggerId,
-                    "board.writeFirmware",
-                    {
-                        boardClass: this.boardClass,
-                        boardPath: this.boardPath,
-                        fullPath
-                    }
-                )/*,
-                new Promise((resolve, reject) => {
-                    setTimeout(
-                        reject, FW_WRITE_TIMEOUT_MS,
-                        new Error("Timed out")
-                    );
-                })*/
-            ])
-            .finally(() => {
-                return Promise.resolve(rprocess.stopDebugProcess(debuggerId));
-            });
+        return Promise.resolve(RubicProcess.self.delegateRequest(
+            "board.writeFirmware",
+            {
+                boardClass: this.boardClass,
+                boardPath: this.boardPath,
+                fullPath
+            }/*,
+            FW_WRITE_TIMEOUT_MS*/
+        ))
+        .then((finished: boolean) => {
+            return !!finished;
         });
     }
 
@@ -635,7 +601,7 @@ export class Sketch extends EventEmitter {
                 (jsonText) => {
                     let obj = CJSON.parse(jsonText);
                     let cfg = obj.configurations || (obj.configurations = []);
-                    let initialConfig = <any>(new RubicDebugConfigProvider().resolveDebugConfiguration(undefined, <any>{}));
+                    let initialConfig = <any>(new RubicDebugConfigProvider(null).resolveDebugConfiguration(undefined, <any>{}));
                     cfg.push(initialConfig);
                     return CJSON.stringify(obj, null, 4);
                 },

@@ -4,10 +4,9 @@ import {
     RubicConfirmOptions, RubicMessageItem
 } from "./rubicProcess";
 import {
-    ExtensionContext, OutputChannel, ProgressLocation, ProgressOptions,
+    DebugSession, ExtensionContext, OutputChannel, ProgressLocation, ProgressOptions,
     commands, debug, window, workspace
 } from "vscode";
-import * as ipc from "node-ipc";
 import * as path from "path";
 import * as nls from "vscode-nls";
 import * as fse from "fs-extra";
@@ -15,6 +14,7 @@ import { Sketch } from "../sketch";
 import * as CJSON from "comment-json";
 import { CatalogData } from "../catalog/catalogData";
 import { RubicDebugConfigProvider } from "../debug/rubicDebugConfigProvider";
+import * as delay from "delay";
 
 const localize = nls.loadMessageBundle(__filename);
 
@@ -22,37 +22,17 @@ const LOCALIZED_YES = localize("yes", "Yes");
 const LOCALIZED_NO = localize("no", "No");
 
 const RUBIC_DEBUG_SERVER_PORT = process.env["RUBIC_DEBUG_SERVER_PORT"];
-const RUBIC_DEBUG_IPC_SILENT = process.env["RUBIC_DEBUG_IPC_SILENT"];
-const CMD_START_DEBUG_SESSION = "extension.rubic.startDebugSession";
 const CMD_GUESS_PROGRAM_NAME = "extension.rubic.guessProgramName";
+const HOST_RESPONSE_NAME = "host.response";
 
-interface StartSessionResult {
-    status: "ok" | "initialConfiguration" | "saveConfiguration";
-    content?: string;
+interface DebugSessionSet {
+    [sessionId: string]: DebugSession;
 }
 
-interface DebugRequest {
-    request_id: string;
-    resolve: Function;
-    reject: Function;
-}
-
-interface DebugRequestSet {
-    [request_id: string]: DebugRequest;
-}
-
-interface DebugProcessReference {
-    debugger_id: string;
-    socket?: any;
-    startResolve: () => void;
-    startReject: (reason: any) => void;
-    stopResolve?: () => void;
-    stopReject?: (reason: any) => void;
-    debugRequests: DebugRequestSet;
-}
-
-interface DebugProcessReferenceSet {
-    [debugger_id: string]: DebugProcessReference;
+interface DelegateSessionSet {
+    [name: string]: {
+        resolve: (sessionId: string) => void;
+    };
 }
 
 interface ProgressContext {
@@ -67,63 +47,19 @@ interface ProgressContextSet {
 }
 
 /**
- * Substitute variables for VSCode
- * @param input Input string
- */
-function substituteVariables(input: string): string {
-    let editor = window.activeTextEditor;
-    let fileName = (editor != null) ? editor.document.fileName : null;
-    return input.replace(/\$\{(\w+)\}/g, (match, name) => {
-        switch (name) {
-            case "workspaceRoot":
-                return workspace.rootPath;
-            case "workspaceRootFolderName":
-                return path.basename(workspace.rootPath);
-            case "file":
-                if (fileName != null) {
-                    return fileName;
-                }
-                break;
-            case "relativeFile":
-                if (fileName != null) {
-                    return path.relative(workspace.rootPath, fileName);
-                }
-                break;
-            case "fileBasename":
-                if (fileName != null) {
-                    return path.basename(fileName);
-                }
-                break;
-            case "fileBasenameNoExtension":
-                if (fileName != null) {
-                    return path.basename(fileName, ".*");
-                }
-                break;
-            case "fileDirname":
-                if (fileName != null) {
-                    return path.dirname(fileName);
-                }
-                break;
-            case "fileExtname":
-                if (fileName != null) {
-                    return path.extname(fileName);
-                }
-                break;
-            default:
-                return "${" + name + "}";
-        }
-        return "";
-    });
-}
-
-/**
  * Extension host process
  */
 export class RubicHostProcess extends RubicProcess {
     /* Properties */
     get isHost() { return true; }
     get isDebug() { return false; }
-    get workspaceRoot() { return workspace.rootPath; }
+    get workspaceRoot(): string {
+        let { workspaceFolders } = workspace;
+        if (workspaceFolders == null) {
+            return undefined;
+        }
+        return workspaceFolders[0].uri.fsPath;
+    }
     get extensionRoot() { return this._context.extensionPath; }
     get sketch() { return this._sketch; }
     get catalogData() { return this._catalogData; }
@@ -240,63 +176,49 @@ export class RubicHostProcess extends RubicProcess {
             this._debugHooks.unshift(listener);
         }
     };
-    readonly startDebugProcess = function(this: RubicHostProcess, configuration: any, clearConsole?: boolean): Thenable<string> {
-        return this._serverSetup.then(() => {
-            let host_id = ipc.config.id;
-            let debugger_id = this.getUniqueId("d");
-            let { workspaceRoot, extensionRoot } = this;
-            let config: RubicDebugRequestArguments = Object.assign({
-                type: "rubic",
-                request: "attach",
-                debugServer: RUBIC_DEBUG_SERVER_PORT,
-            }, configuration);
-            config.__private = { host_id, debugger_id, workspaceRoot, extensionRoot };
-            return new Promise<void>((startResolve, startReject) => {
-                this._debuggers[debugger_id] = {
-                    debugger_id, startResolve, startReject, debugRequests: {}
-                };
-                if (clearConsole) {
-                    commands.executeCommand("workbench.debug.panel.action.clearReplAction");
+    readonly delegateRequest = function(this: RubicHostProcess, request: string, args: any, timeout?: number): Thenable<any> {
+        let name = `__delegate__${Math.random().toString(16).substr(2)}`;
+        let config: RubicDebugRequestArguments = {
+            type: "rubic",
+            name,
+            request: "attach",
+            debugServer: RUBIC_DEBUG_SERVER_PORT,
+        };
+        commands.executeCommand("workbench.debug.panel.action.clearReplAction");
+        return new Promise<string>((resolve, reject) => {
+            this._delegateSessions[name] = { resolve };
+            debug.startDebugging(workspace.workspaceFolders[0], config)
+            .then((succeeded) => {
+                if (!succeeded) {
+                    delete this._delegateSessions[name];
+                    return reject(new Error("vscode.debug.startDebugging failed"));
                 }
-                commands.executeCommand("vscode.startDebug", config);
-            })
-            .then(() => {
-                return debugger_id;
             });
-        });
-    };
-    readonly sendDebugRequest = function(this: RubicHostProcess, debugger_id: string, request: string, args: any): Thenable<any> {
-        return this._getDebuggerRef(debugger_id)
-        .then((ref) => {
-            return new Promise((resolve, reject) => {
-                let request_id = this.getUniqueId("dr");
-                ref.debugRequests[request_id] = { request_id, resolve, reject };
-                ipc.server.emit(ref.socket, "app.debug-request", { request_id, request, args });
-            });
-        });
-    };
-    readonly stopDebugProcess = function(this: RubicHostProcess, debugger_id: string): Thenable<void> {
-        return this._getDebuggerRef(debugger_id)
-        .then((ref) => {
-            return new Promise<void>((resolve, reject) => {
-                ref.stopResolve = resolve;
-                ref.stopReject = reject;
-                ipc.server.emit(ref.socket, "app.terminate", {});
-            });
-        });
-    };
-    private _getDebuggerRef(debugger_id: string): Thenable<DebugProcessReference> {
-        return this._serverSetup
-        .then(() => {
-            let ref = this._debuggers[debugger_id];
-            if (ref == null) {
-                throw new Error(
-                    `Cannot find debugger process named ${debugger_id}`
-                );
+        })
+        .then((sessionId) => {
+            delete this._delegateSessions[name];
+            let session = this._debugSessions[sessionId];
+            if (session == null) {
+                throw new Error(`No debug session id=${sessionId}`);
             }
-            return ref;
+            let promises = [
+                session.customRequest(request, args)
+                .then((value) => {
+                    if (value.reason != null) {
+                        throw value.reason;
+                    }
+                    return value.result;
+                })
+            ];
+            if (timeout != null) {
+                promises.push(delay.reject(timeout));
+            }
+            return Promise.race(promises)
+            .finally(() => {
+                return session.customRequest("stop", null);
+            });
         });
-    }
+    };
 
     /* Settings */
     readonly getRubicSetting = function(this: RubicHostProcess, path: string): Thenable<any> {
@@ -366,12 +288,6 @@ export class RubicHostProcess extends RubicProcess {
     constructor(private _context: ExtensionContext) {
         super();
         _context.subscriptions.push(
-            commands.registerCommand(
-                CMD_START_DEBUG_SESSION,
-                (config) => this._startDebugSession(config)
-            )
-        );
-        _context.subscriptions.push(
             commands.registerCommand(CMD_GUESS_PROGRAM_NAME, () => {
                 RubicProcess.self.showWarningMessage(
                     "guessProgramName is obsolete! Please regenerate your launch.json"
@@ -379,11 +295,46 @@ export class RubicHostProcess extends RubicProcess {
             })
         );
         _context.subscriptions.push(
-            debug.registerDebugConfigurationProvider("rubic", new RubicDebugConfigProvider())
+            debug.registerDebugConfigurationProvider(
+                "rubic",
+                new RubicDebugConfigProvider(this._debugHooks)
+            )
         );
         _context.subscriptions.push(
-            debug.onDidTerminateDebugSession(() => {
+            debug.onDidStartDebugSession((session) => {
+                this._debugSessions[session.id] = session;
+                let delegate = this._delegateSessions[session.name];
+                if (delegate != null) {
+                    delegate.resolve(session.id);
+                }
+            })
+        );
+        _context.subscriptions.push(
+            debug.onDidTerminateDebugSession((session) => {
+                delete this._debugSessions[session.id];
+                delete this._delegateSessions[session.name];
                 this._withProgressClear();
+            })
+        );
+        _context.subscriptions.push(
+            debug.onDidReceiveDebugSessionCustomEvent((event) => {
+                let { id, request, args } = event.body;
+                this._processRequest(request, args)
+                .then((result) => {
+                    if (id != null) {
+                        event.session.customRequest(
+                            HOST_RESPONSE_NAME,
+                            { id, result }
+                        );
+                    }
+                }, (reason) => {
+                    if (id != null) {
+                        event.session.customRequest(
+                            HOST_RESPONSE_NAME,
+                            { id, reason: (reason || new Error("unknown error"))
+                        });
+                    }
+                });
             })
         );
         if (this.workspaceRoot != null) {
@@ -397,78 +348,6 @@ export class RubicHostProcess extends RubicProcess {
             });
         }
         this._catalogData = new CatalogData();
-        this._serverSetup = new Promise<void>((resolve) => {
-            ipc.config.id = this.getUniqueId("h");
-            if ((RUBIC_DEBUG_SERVER_PORT == null) || (RUBIC_DEBUG_IPC_SILENT != null)) {
-                ipc.config.silent = true;
-            }
-            ipc.serve(resolve);
-            ipc.server.start();
-        })
-        .then(() => {
-            ipc.server.on("app.initialized", (data, socket) => {
-                let { debugger_id } = data;
-                let ref = this._debuggers[debugger_id];
-                if (ref == null) {
-                    console.warn(`initialize event from unknown debugger id: ${debugger_id}`);
-                    return;
-                }
-                ref.socket = socket;
-                ref.startResolve();
-            });
-            ipc.server.on("app.host-request", (data, socket) => {
-                let { type, id, } = data;
-                Promise.resolve()
-                .then(() => {
-                    return this._processRequest(type, data.args || {});
-                })
-                .then((result: any) => {
-                    ipc.server.emit(socket, "app.host-response", {
-                        id, result: (result == null) ? null : result
-                    });
-                })
-                .catch((reason: any) => {
-                    ipc.server.emit(socket, "app.host-response", {
-                        id, reason: (reason == null) ? null : reason
-                    });
-                });
-            });
-            ipc.server.on("app.debug-response", (data, socket) => {
-                let { debugger_id, request_id } = data;
-                let ref = this._debuggers[debugger_id];
-                if (ref == null) {
-                    console.warn(`debug-response from unknown debugger: ${debugger_id}`);
-                    return;
-                }
-                let req = ref.debugRequests[request_id];
-                if (req == null) {
-                    console.warn(`debug-response with unknown request id: ${request_id}`);
-                    return;
-                }
-                delete ref.debugRequests[request_id];
-                if (data.reason !== undefined) {
-                    req.reject(data.reason);
-                } else {
-                    req.resolve(data.result);
-                }
-            });
-            ipc.server.on("socket.disconnected", (socket, destroyedSocketID) => {
-                let ref: DebugProcessReference;
-                for (let id of Object.keys(this._debuggers)) {
-                    let refTemp = this._debuggers[id];
-                    if (refTemp.socket === socket) {
-                        ref = refTemp;
-                        break;
-                    }
-                }
-                if (ref != null) {
-                    if (ref.stopResolve != null) {
-                        ref.stopResolve();
-                    }
-                    delete this._debuggers[ref.debugger_id];
-                }
-            });
-        });
     }
 
     readonly dispose = function(this: RubicHostProcess): Thenable<void> {
@@ -514,40 +393,6 @@ export class RubicHostProcess extends RubicProcess {
         );
     }
 
-    /**
-     * Start debug session
-     * @param configuration Debug configuration
-     */
-    private _startDebugSession(config: any): Promise<StartSessionResult> {
-        if (Object.keys(config).length === 0) {
-            let provider = new RubicDebugConfigProvider();
-            let initialConfig = <any>provider.resolveDebugConfiguration(undefined, <any>{});
-            return Promise.resolve<StartSessionResult>({
-                status: "saveConfiguration",
-                content: initialConfig
-            });
-        }
-        config.program = substituteVariables(config.program);
-        return this._debugHooks.reduce((promise, hook) => {
-            return promise
-            .then((continueDebug) => {
-                return hook.onDebugStart(config);
-            });
-        }, Promise.resolve(true))
-        .then((continueDebug) => {
-            if (continueDebug) {
-                return this.startDebugProcess(config);
-            }
-        }, (reason) => {
-            this.showErrorMessage(
-                `${localize("cannot-start-debug", "Cannot start debug session")}: ${reason}`
-            );
-        })
-        .then(() => {
-            return <any>{ status: "ok" };
-        });
-    }
-
     /** Sketch instance */
     private readonly _sketch: Sketch;
 
@@ -557,11 +402,11 @@ export class RubicHostProcess extends RubicProcess {
     /** Debug hooks */
     private readonly _debugHooks: RubicDebugHook[] = [];
 
-    /** Server setup */
-    private readonly _serverSetup: Promise<void>;
-
     /** Set of debug processes */
-    private readonly _debuggers: DebugProcessReferenceSet = {};
+    private readonly _debugSessions: DebugSessionSet = {};
+
+    /** Set of debug processes for delegate */
+    private readonly _delegateSessions: DelegateSessionSet = {};
 
     /** Set of progress contexts */
     private _progressContexts: ProgressContextSet = {};

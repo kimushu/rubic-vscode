@@ -2,7 +2,7 @@
 import * as nls from "vscode-nls";
 const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
-import { DebugSession, OutputEvent, TerminatedEvent } from "vscode-debugadapter";
+import { DebugSession, Event, OutputEvent, TerminatedEvent } from "vscode-debugadapter";
 import { DebugProtocol } from "vscode-debugprotocol";
 import { RubicDebugProcess } from "../processes/rubicDebugProcess";
 import { SketchLoadResult } from "../sketch";
@@ -43,6 +43,13 @@ interface WriteFirmwareArguments extends BoardPathArguments {
     fullPath: string;
 }
 
+interface HostRequestQueue {
+    [id: string]: {
+        resolve: (value: any) => void;
+        reject: (reason: any) => void;
+    };
+}
+
 /**
  * Debug session for Rubic
  */
@@ -61,6 +68,9 @@ class RubicDebugSession extends DebugSession {
 
     /** Resolver for debug stream */
     private _debugStreamResolver: (s: BoardDebugStream) => void;
+
+    /** Sent host requests (with response) */
+    private _hostRequests: HostRequestQueue = {};
 
     /**
      * Execute normal program launch on board
@@ -154,11 +164,73 @@ class RubicDebugSession extends DebugSession {
     }
 
     /**
+     * Receiver for custom request
+     * @param command Event name
+     * @param response Response
+     * @param args Arguments
+     */
+    protected customRequest(command: string, response: DebugProtocol.Response, args: any): void {
+        response.command = command;
+        switch (command) {
+            case "host.response":
+                // Event response from HostProcess
+                let { id, result, reason } = args;
+                let req = this._hostRequests[id];
+                if (req != null) {
+                    delete this._hostRequests[id];
+                    if (reason != null) {
+                        req.reject(reason);
+                    } else {
+                        req.resolve(result);
+                    }
+                }
+                this.sendResponse(response);
+                return;
+            case "stop":
+                // Stop debug session
+                this.sendResponse(response);
+                this.sendEvent(new TerminatedEvent());
+                return;
+        } 
+
+        // Process custom debug requests
+        this.rubicDebugRequest(command, args)
+        .then((result) => {
+            response.body = { result };
+            this.sendResponse(response);
+        }, (reason) => {
+            response.body = { reason: `${reason}` };
+            this.sendResponse(response);
+        });
+    }
+
+    /**
+     * Send custom request to host process
+     * @param request Request name
+     * @param args Arguments
+     * @param withResponse Wait response (if false, returned promise will soon resolved with undefined)
+     */
+    sendHostRequest(request: string, args: any, withResponse: boolean): Thenable<any> {
+        let id: string;
+        let promise: Promise<any>;
+        if (withResponse) {
+            id = Math.random().toString(16).substr(2);
+            promise = new Promise((resolve, reject) => {
+                this._hostRequests[id] = { resolve, reject };
+            });
+        } else {
+            promise = Promise.resolve();
+        }
+        this.sendEvent(new Event("host.request", { id, request, args }));
+        return promise;
+    }
+
+    /**
      * Process Rubic custom debug request
      * @param request Request name
      * @param args Arguments
      */
-    rubicDebugRequest(request: string, args: any): Thenable<any> {
+    protected rubicDebugRequest(request: string, args: any): Thenable<any> {
         switch (request) {
             case "board.getInfo":
                 return this._getInfo(args);
@@ -230,9 +302,11 @@ class RubicDebugSession extends DebugSession {
      * Disconnect from board
      */
     private _disconnectBoard(): Promise<void> {
-        this._report(
-            localize("disconnecting-board", "Disconnecting from board")
-        );
+        if (this._board.isConnected) {
+            this._report(
+                localize("disconnecting-board", "Disconnecting from board")
+            );
+        }
         return this._board.disconnect();
     }
 

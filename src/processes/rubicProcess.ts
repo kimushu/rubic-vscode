@@ -113,6 +113,7 @@ interface RubicTextUpdaterFunction {
  */
 export interface RubicDebugRequestArguments extends vsdp.DebugProtocol.AttachRequestArguments, vsdp.DebugProtocol.LaunchRequestArguments {
     type: "rubic";
+    name: string;
     request: "launch" | "attach";
     [key: string]: any;
 }
@@ -158,23 +159,12 @@ export class RubicProcess {
     readonly registerDebugHook: (listener: RubicDebugHook) => void;
 
     /**
-     * Start a new debug process (for host-side only)
-     * @param configuration Configuration data to be passed to debug-adapter
-     * @return Promise with process ID
+     * Delegate request to debug adapter process (for host-side only)
+     * @param request Request name
+     * @param args Arguments
+     * @param timeout Timeout in milliseconds
      */
-    readonly startDebugProcess: (configuration: any, clearConsole?: boolean) => Thenable<string>;
-
-    /**
-     * Send Rubic custom request to existing debug process (for host-side only)
-     * @param debugger_id The ID of the debugger process to wait
-     */
-    readonly sendDebugRequest: (debugger_id: string, request: string, args: any) => Thenable<any>;
-
-    /**
-     * Stop existing debug process (for host-side only)
-     * @param debugger_id The ID of the debugger process to stop
-     */
-    readonly stopDebugProcess: (debugger_id: string) => Thenable<void>;
+    readonly delegateRequest: (request: string, args: any, timeout?: number) => Thenable<any>;
 
     /**
      * Get Rubic setting

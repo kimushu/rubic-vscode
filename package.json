@@ -142,7 +142,6 @@
         "label": "%debug.rubic.label%",
         "program": "./out/src/debug/rubicDebugSession.js",
         "runtime": "node",
-        "startSessionCommand": "extension.rubic.startDebugSession",
         "configurationAttributes": {
           "launch": {
             "required": [
@@ -253,7 +252,6 @@
     "markdown-it": "^8.4.0",
     "md5": "^2.2.1",
     "mruby-native": "github:kimushu/node-mruby-native#1.2.0-build3",
-    "node-ipc": "^9.1.1",
     "pify": "^3.0.0",
     "promise.prototype.finally": "^3.0.1",
     "request": "^2.83.0",
@@ -275,7 +273,6 @@
     "@types/md5": "^2.1.32",
     "@types/mocha": "^2.2.43",
     "@types/node": "^8.0.45",
-    "@types/node-ipc": "^9.1.0",
     "@types/promise.prototype.finally": "^2.0.2",
     "@types/request": "^2.0.6",
     "@types/rimraf": "2.0.2",

@@ -3,14 +3,12 @@
         "はい",
         "いいえ",
         "ファイル {0} は編集中で保存されていません。",
-        "スケッチのロードに失敗しました: {0}",
-        "デバッグセッションを開始できません"
+        "スケッチのロードに失敗しました: {0}"
     ],
     "keys": [
         "yes",
         "no",
         "file-x-dirty",
-        "sketch-load-failed-x",
-        "cannot-start-debug"
+        "sketch-load-failed-x"
     ]
 }
