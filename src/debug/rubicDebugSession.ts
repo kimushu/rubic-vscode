@@ -435,21 +435,31 @@ class RubicDebugSession extends DebugSession {
         })
         .then((stdio) => {
             this._stdio = stdio;
-            if (stdio.stdout != null) {
-                stdio.stdout.on("data", (chunk) => {
-                    this.sendEvent(
-                        new OutputEvent(chunk.toString(), "stdout")
-                    );
-                });
-            }
-            if (stdio.stderr != null) {
-                stdio.stderr.on("data", (chunk) => {
-                    this.sendEvent(
-                        new OutputEvent(chunk.toString(), "stderr")
-                    );
-                });
-            }
+            this._watchStdio();
         });
+    }
+
+    /**
+     * Start watching for stdio
+     */
+    private _watchStdio(): void {
+        if (this._stdio == null) {
+            return;
+        }
+        if (this._stdio.stdout != null) {
+            this._stdio.stdout.on("data", (chunk) => {
+                this.sendEvent(
+                    new OutputEvent(chunk.toString(), "stdout")
+                );
+            });
+        }
+        if (this._stdio.stderr != null) {
+            this._stdio.stderr.on("data", (chunk) => {
+                this.sendEvent(
+                    new OutputEvent(chunk.toString(), "stderr")
+                );
+            });
+        }
     }
 
     /**
