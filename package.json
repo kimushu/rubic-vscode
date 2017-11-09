@@ -304,7 +304,7 @@
     "pretest": "npm install",
     "test": "npm-run-all vscode:prepublish test:*",
     "test:offline": "node tools/run-test.js non-activation auto-activation",
-    "localize": "vscl out/src/**/*.js",
+    "localize": "node node_modules/vscode-nls-dev/lib/vscl.js out/src/**/*.js",
     "postlocalize": "node tools/nls-json-check.js **/*.nls.json",
     "license-check": "license-checker --production",
     "handlebars": "npm-run-all -p handlebars:*",
