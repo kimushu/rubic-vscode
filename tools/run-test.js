@@ -5,8 +5,12 @@ const cp = require("child_process");
 let tests = process.argv.slice(2);
 
 tests.forEach((test) => {
-    let testRoot = path.join(rootDir, "out", "test", test);
-    let workspace = path.join(rootDir, "test", "workspace", test);
+    let [ testName, wsName ] = test.split("@", 2);
+    if (wsName == null) {
+        wsName = testName;
+    }
+    let testRoot = path.join(rootDir, "out", "test", testName);
+    let workspace = path.join(rootDir, "test", "workspace", wsName);
     console.log("#".repeat(100));
     console.log(`# [${test}] Started at ${new Date().toString()}`);
     console.log("");

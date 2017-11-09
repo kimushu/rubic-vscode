@@ -303,7 +303,7 @@
     "postinstall": "node ./node_modules/vscode/bin/install",
     "pretest": "npm install",
     "test": "npm-run-all vscode:prepublish test:*",
-    "test:offline": "node tools/run-test.js non-activation auto-activation",
+    "test:offline": "node tools/run-test.js non-activation@non-rubic auto-activation@empty catalog@empty",
     "localize": "node node_modules/vscode-nls-dev/lib/vscl.js out/src/**/*.js",
     "postlocalize": "node tools/nls-json-check.js **/*.nls.json",
     "license-check": "license-checker --production",
