@@ -1,8 +1,7 @@
 # <a id="en"></a>Rubic
 
-[![AppVeyor](https://img.shields.io/appveyor/ci/kimushu/rubic-vscode.svg?label=build%20%28Windows%29)](https://ci.appveyor.com/project/kimushu/rubic-vscode)
-[![Travis](https://img.shields.io/travis/kimushu/rubic-vscode.svg?label=build%20%28Linux%2fOSX%29)](https://travis-ci.org/kimushu/rubic-vscode)
-[![license](https://img.shields.io/github/license/kimushu/rubic-vscode.svg)]()
+[![AppVeyor](https://ci.appveyor.com/api/projects/status/jxu1mf0d3ke1o0a3?svg=true "AppVeyor for Windows build")](https://ci.appveyor.com/project/kimushu/rubic-vscode)
+[![Travis CI](https://travis-ci.org/kimushu/rubic-vscode.svg?branch=master "Travis CI for Linux/OSX builds")](https://travis-ci.org/kimushu/rubic-vscode)
 
 * [Japanese explanation is here / 日本語の説明はこちら](#ja)
 
