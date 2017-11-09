@@ -672,6 +672,9 @@ export class PeridotPiccoloBoard extends Board {
 
             // Set callback
             this._rpc.call<RubicAgent.QueueCallbackResponse>(RubicAgent.METHOD_QUEUE, params)
+            .catch(() => {
+                return {result: 0}; // FIXME
+            })
             .then((result) => {
                 this.emit("stop", false, result.result);
             });
