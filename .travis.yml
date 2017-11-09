@@ -21,4 +21,4 @@ before_install:
   - npm run vscode:prepublish
 
 script:
-  - npm run test:offline --silent
+  - npm run test:offline
