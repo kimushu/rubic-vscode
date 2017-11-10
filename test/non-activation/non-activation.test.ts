@@ -18,6 +18,7 @@ suite("Non activation tests", function() {
 suite("Manual activation tests", function() {
 
     test("Rubic can be activated by command", function() {
+        this.timeout(5000);
         const ext = vscode.extensions.getExtension("kimushu.rubic");
         return vscode.commands.executeCommand("extension.rubic.showCatalog")
         .then(() => {
