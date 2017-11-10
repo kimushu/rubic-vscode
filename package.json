@@ -313,6 +313,7 @@
     "handlebars:compile": "handlebars src/catalog/template.hbs -c ./handlebars -m -f out/src/catalog/template.js",
     "handlebars:runtime": "shx cp node_modules/handlebars/dist/handlebars.runtime.min.js out/src/catalog/handlebars.js",
     "handlebars:stylesheets": "shx cp src/catalog/*.css out/src/catalog/",
+    "preclean": "npm prune",
     "clean": "rimraf out/**/*.js out/**/*.js.map out/**/*.nls.json",
     "binary": "node tools/serialport-prebuild.js 1.7.3",
     "package": "vsce package",
