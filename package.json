@@ -232,7 +232,7 @@
   "activationEvents": [
     "onCommand:extension.rubic.showCatalog",
     "onCommand:extension.rubic.guessProgramName",
-    "onDebug:rubic",
+    "onDebug",
     "workspaceContains:.vscode/rubic.json"
   ],
   "badges": [],
