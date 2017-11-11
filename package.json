@@ -184,7 +184,7 @@
           {
             "type": "rubic",
             "request": "launch",
-            "name": "Launch on target board",
+            "name": "Launch",
             "workspaceRoot": "${workspaceRoot}",
             "program": "${file}"
           }

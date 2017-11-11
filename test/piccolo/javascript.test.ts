@@ -35,7 +35,7 @@ suite("Piccolo online tests with JavaScript", function() {
     test("Launch program", function(done) {
         this.timeout(0);
         vscode.debug.startDebugging(
-            vscode.workspace.workspaceFolders[0], "Launch on target board"
+            vscode.workspace.workspaceFolders[0], "Launch"
         ).then((value) => {
             if (!value) {
                 return done(new Error("Failed to launch"));
