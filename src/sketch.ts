@@ -166,7 +166,7 @@ export class Sketch extends EventEmitter {
 
     /** Get transfer include patterns */
     get transfer_include() {
-        return this._get<string[]>("transfer.include", ["*.mrb", "*.js", "boot.json"]);
+        return this._get<string[]>("transfer.include", ["*.mrb", "*.js", "*.lua", "boot.json"]);
     }
 
     /** Set transfer include patterns for write pending */
