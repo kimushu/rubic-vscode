@@ -95,7 +95,7 @@ Rubicを使った開発を始めるには、作業用のフォルダをVSCodeで
 ## 対応しているボードおよびプログラミング言語
 
 * 組み込みボード
-  * [PERIDOT board](http://osafune.github.io/peridot.html)
+  * [PERIDOT Piccolo](https://peridotcraft.buyshop.jp/items/7877090)
   * [GR-CITRUS](http://gadget.renesas.com/ja/product/citrus.html)
   * [Wakayama.rb board](https://github.com/wakayamarb/wrbb-v2lib-firm)
 
