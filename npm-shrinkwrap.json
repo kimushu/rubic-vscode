@@ -3,9 +3,9 @@
   "version": "0.99.12",
   "dependencies": {
     "@rubic/catalog-fetcher": {
-      "version": "0.99.13",
+      "version": "0.99.14",
       "from": "@rubic/catalog-fetcher@latest",
-      "resolved": "https://registry.npmjs.org/@rubic/catalog-fetcher/-/catalog-fetcher-0.99.13.tgz",
+      "resolved": "https://registry.npmjs.org/@rubic/catalog-fetcher/-/catalog-fetcher-0.99.14.tgz",
       "dependencies": {
         "github": {
           "version": "11.0.0",

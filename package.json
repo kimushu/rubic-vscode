@@ -238,7 +238,7 @@
   "badges": [],
   "markdown": "github",
   "dependencies": {
-    "@rubic/catalog-fetcher": "^0.99.13",
+    "@rubic/catalog-fetcher": "^0.99.14",
     "canarium": "^1.1.3",
     "chokidar": "^1.7.0",
     "comment-json": "^1.1.3",
