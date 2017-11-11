@@ -33,7 +33,7 @@ To start development with Rubic, open the work folder in VSCode, press `F1` to o
 ## Supported boards and programming languages
 
 * Supported embedded-boards
-  * [PERIDOT board](http://osafune.github.io/peridot.html)
+  * [PERIDOT Piccolo](https://peridotcraft.buyshop.jp/items/7877090)
   * [GR-CITRUS](http://gadget.renesas.com/en/product/citrus.html)
   * [Wakayama.rb board](https://github.com/wakayamarb/wrbb-v2lib-firm)
 
