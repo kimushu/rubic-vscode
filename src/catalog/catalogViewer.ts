@@ -643,6 +643,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             panel.items.push({
                 id: variation.path,
                 title: toLocalizedString(variation.name),
+                preview: variation.preview,
                 selected: (variation.path === variationPath),
                 description: toLocalizedString(variation.description),
                 topics
