@@ -15,16 +15,11 @@ tests.forEach((test) => {
     console.log("#".repeat(100));
     console.log(`# [${test}] Started at ${new Date().toString()}`);
     console.log("");
-    let cmd = (process.platform === "win32") ? "node" : "env";
-    let args = [tester];
-    if (process.platform !== "win32") {
-        args.unshift("node");
-    }
-    let result = cp.spawnSync(cmd, args, {
-        env: {
+    let result = cp.spawnSync("node", [tester], {
+        env: Object.assign({}, process.env, {
             CODE_TESTS_PATH: testRoot,
             CODE_TESTS_WORKSPACE: workspace
-        },
+        }),
         stdio: "inherit"
     });
     console.log(`# [${test}] Finished at ${new Date().toString()} (result=${result.status})`);
