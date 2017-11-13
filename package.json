@@ -303,7 +303,7 @@
     "postinstall": "node ./node_modules/vscode/bin/install",
     "pretest": "npm install",
     "test": "npm-run-all vscode:prepublish test:*",
-    "test:offline": "node tools/run-test.js non-activation@non-rubic auto-activation@empty catalog@empty",
+    "test:offline": "node tools/run-test.js non-activation@non-rubic auto-activation@empty catalog@empty launch-setup",
     "test:gr-citrus": "node tools/run-test.js gr-citrus@gr-citrus-small gr-citrus@gr-citrus-large",
     "test:piccolo": "node tools/run-test.js piccolo@piccolo-javascript",
     "localize": "node node_modules/vscode-nls-dev/lib/vscl.js out/src/**/*.js",

@@ -3,8 +3,9 @@ import * as vscode from "vscode";
 import * as rimraf from "rimraf";
 import * as path from "path";
 import * as fs from "fs";
+import * as CJSON from "comment-json";
 
-suite("Auto activation tests", function() {
+suite("launch.json setup test", function() {
 
     let workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
     let launchJson = path.join(workspaceRoot, ".vscode", "launch.json");
@@ -17,24 +18,17 @@ suite("Auto activation tests", function() {
         rimraf(launchJson, done);
     });
 
-    test("Rubic is detected", function() {
-        const ext = vscode.extensions.getExtension("kimushu.rubic");
-        assert(ext);
-    });
-
-    test("Rubic has been automatically activated by existence of rubic.json", function() {
-        const ext = vscode.extensions.getExtension("kimushu.rubic");
-        assert(ext.isActive);
-    });
-
-    test("Debug fails without hardware configuration", function() {
-        this.timeout(0);
+    test("launch.json can be created by Rubic at the first debug", function() {
+        this.timeout(30000);
         return vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], <any>{ type: "rubic" })
         .then((succeeded) => {
-            throw new Error("should be rejected");
-        }, (reason) => {
-            // OK
+            assert(succeeded);
+            let json = CJSON.parse(fs.readFileSync(launchJson, "utf8"));
+            assert.strictEqual(json.configurations.length, 1);
+            assert.strictEqual(json.configurations[0].type, "rubic");
+            assert.strictEqual(json.configurations[0].request, "launch");
+            assert.strictEqual(json.configurations[0].name, "Launch");
         });
     });
-    
+
 });

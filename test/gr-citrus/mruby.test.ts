@@ -33,14 +33,16 @@ suite("GR-CITRUS online tests with mruby", function() {
         setBoardPath("");
     });
     test("Launch program", function(done) {
-        this.timeout(0);
+        this.timeout(60000);
         vscode.debug.startDebugging(
             vscode.workspace.workspaceFolders[0], "Launch"
         ).then((value) => {
             if (!value) {
-                return done(new Error("Failed to launch"));
+                throw new Error("Failed to launch");
             }
             assert(vscode.debug.activeDebugSession != null);
+        })
+        .then(() => {
             let timeouts = 10;
             let timer = setInterval(() => {
                 if (--timeouts <= 0) {
@@ -52,6 +54,6 @@ suite("GR-CITRUS online tests with mruby", function() {
                     done();
                 }
             }, 1000);
-        });
+        }, (reason) => done(reason));
     });
 });
