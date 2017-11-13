@@ -32,4 +32,4 @@ before_install:
   - npm run vscode:prepublish
 
 script:
-  - npm run test:offline
+  - npm run test:offline || ls -lR .vscode-test
