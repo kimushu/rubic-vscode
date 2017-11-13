@@ -90,6 +90,10 @@ export class RubicDebugConfigProvider implements DebugConfigurationProvider {
             const rubicDebugger = (<any[]>debuggers).find((debug) => debug.type === "rubic");
             const { initialConfigurations } = rubicDebugger;
             Object.assign(config, initialConfigurations[0]);
+            RubicProcess.self.showInformationMessage(
+                localize("launch-json-created", "Debug configuration has been created. Open file which you want to run and start debug again")
+            );
+            return undefined;
         }
 
         // Add private data to debug adapter process

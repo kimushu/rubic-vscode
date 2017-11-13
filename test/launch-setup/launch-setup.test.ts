@@ -19,7 +19,7 @@ suite("launch.json setup test", function() {
     });
 
     test("launch.json can be created by Rubic at the first debug", function() {
-        this.timeout(30000);
+        this.timeout(5000);
         return vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], <any>{ type: "rubic" })
         .then((succeeded) => {
             assert(succeeded);
