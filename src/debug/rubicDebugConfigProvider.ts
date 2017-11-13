@@ -84,7 +84,7 @@ export class RubicDebugConfigProvider implements DebugConfigurationProvider {
             throw new Error(localize("hw-cfg-not-set", "Hardware configuration is not set"));
         }
 
-        if (!config.type && !config.request && !config.name) {
+        if (!config.type || !config.request || !config.name) {
             // launch.json is missing or empty
             const { debuggers } = RubicProcess.self.packageJson.contributes;
             const rubicDebugger = (<any[]>debuggers).find((debug) => debug.type === "rubic");
