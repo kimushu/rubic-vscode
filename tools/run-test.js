@@ -23,10 +23,11 @@ tests.forEach((test) => {
         stdio: "inherit"
     });
     console.log(`# [${test}] Finished at ${new Date().toString()} (result=${result.status})`);
-    console.log("");
     if (result.status !== 0) {
+        console.error(`${result.error}`);
         ++failed;
     }
+    console.log("");
 });
 
 if (failed > 0) {
