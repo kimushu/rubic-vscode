@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.99.13
+
+Hotfix for Rubic 0.99.12
+
+* Fix error on `launch.json` generation
+* Add Lua support (experimental)
+
 ## 0.99.12
 
 Hotfix for VSCode 1.18
