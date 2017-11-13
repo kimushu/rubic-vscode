@@ -1,9 +1,9 @@
 {
     "hardware": {
-        "boardClass": "dummy",
-        "repositoryUuid": "dummy",
-        "releaseTag": "dummy",
-        "variationPath": "dummy",
+        "boardClass": "DummyBoard",
+        "repositoryUuid": "32d64356-cb50-493b-b3a9-cc55d066a8a6",
+        "releaseTag": "dummy-tag1",
+        "variationPath": "dummy-variation1",
         "boardPath": ""
     },
     "rubicVersion": {
