@@ -3,10 +3,14 @@ import {
     DebugConfiguration, DebugConfigurationProvider,
     ProviderResult,
     WorkspaceFolder,
-    window, workspace
+    commands, window, workspace
 } from "vscode";
 import * as path from "path";
 import { RubicDebugHook, RubicProcess } from "../processes/rubicProcess";
+import * as nls from "vscode-nls";
+import { CMD_SHOW_CATALOG } from "../catalog/catalogViewer";
+
+const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 
 /**
  * Substitute variables for VSCode
@@ -66,10 +70,24 @@ export class RubicDebugConfigProvider implements DebugConfigurationProvider {
     }
 
     resolveDebugConfiguration(folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
+        if (!RubicProcess.self.sketch.isHardwareFixed) {
+            let openMsg = localize("open-catalog", "Open catalog");
+            RubicProcess.self.showInformationMessage(
+                localize("choose-cfg-before-debug", "Before debugging, choose your board and firmware from Rubic catalog"),
+                openMsg
+            )
+            .then((choice) => {
+                if (choice === openMsg) {
+                    commands.executeCommand(CMD_SHOW_CATALOG);
+                }
+            });
+            throw new Error(localize("hw-cfg-not-set", "Hardware configuration is not set"));
+        }
+
         if (!config.type && !config.request && !config.name) {
             // launch.json is missing or empty
-            const { debuggers } = require(path.join(__dirname, "..", "..", "package.json")).contributes;
-            const { rubicDebugger } = (<any[]>debuggers).find((debug) => debug.type === "rubic");
+            const { debuggers } = RubicProcess.self.packageJson.contributes;
+            const rubicDebugger = (<any[]>debuggers).find((debug) => debug.type === "rubic");
             const { initialConfigurations } = rubicDebugger;
             Object.assign(config, initialConfigurations[0]);
         }

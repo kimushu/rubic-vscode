@@ -1,0 +1,12 @@
+{
+    "messages": [
+        "カタログを開く",
+        "デバッグを開始する前に、Rubicカタログから使用するボードとファームウェアを選んでください",
+        "ハードウェア構成が設定されていません"
+    ],
+    "keys": [
+        "open-catalog",
+        "choose-cfg-before-debug",
+        "hw-cfg-not-set"
+    ]
+}

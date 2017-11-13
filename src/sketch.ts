@@ -128,6 +128,12 @@ export class Sketch extends EventEmitter {
     /** Check if current sketch is invalid */
     get invalid() { return this._invalid; }
 
+    /** Check if hardware configuration fixed */
+    get isHardwareFixed() {
+        return (this.boardClass != null) && (this.repositoryUuid != null) &&
+            (this.releaseTag != null) && (this.variationPath != null);
+    }
+
     /** Get board class */
     get boardClass() { return this._get<string>("hardware.boardClass"); }
 

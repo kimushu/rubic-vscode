@@ -153,6 +153,9 @@ export class RubicProcess {
     /** Version */
     readonly version: string;
 
+    /** package.json of this extension */
+    readonly packageJson: any;
+
     /**
      * Register hook for starting debug
      */
@@ -295,7 +298,8 @@ export class RubicProcess {
             throw new Error("RubicProcess must be instantiated once");
         }
         RubicProcess._self = this;
-        this.version = require(path.join(__dirname, "..", "..", "..", "package.json")).version;
+        this.packageJson = require(path.join(__dirname, "..", "..", "..", "package.json"));
+        this.version = this.packageJson.version;
     }
 }
 
