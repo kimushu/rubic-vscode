@@ -24,6 +24,54 @@ const OFFICIAL_CATALOG_REPO: GitHubRepository = {
     branch: "vscode-master"
 };
 
+const DUMMY_CATALOG: RubicCatalog.Board = {
+    class: "DummyBoard",
+    name: { en: "Dummy board" },
+    description: { en: "Dummy board for offline tests" },
+    icon: null,
+    author: { en: "nobody" },
+    website: null,
+    topics: [],
+    repositories: [
+        {
+            host: null,
+            owner: "nobody",
+            repo: "dummy-repo1",
+            uuid: "32d64356-cb50-493b-b3a9-cc55d066a8a6",
+            cache: {
+                name: { en: "dummy-repo1" },
+                description: { en: "Dummy repository" },
+                releases: [
+                    {
+                        name: "dummy-release1",
+                        tag: "dummy-tag1",
+                        description: "Dummy release tag 1",
+                        published_at: 0,
+                        updated_at: 0,
+                        author: "nobody",
+                        url: null,
+                        cache: {
+                            variations: [
+                                {
+                                    path: "dummy-variation1",
+                                    name: { en: "Dummy variation 1" },
+                                    description: { en: "Dummy variation 1 description" },
+                                    runtimes: [
+                                        {
+                                            name: "mruby"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    disabled: true
+};
+
 interface CatalogRootOverlay {
     __custom__?: boolean;
 }
@@ -69,6 +117,9 @@ export class CatalogData implements vscode.Disposable {
      */
     getBoard(boardClass: string): RubicCatalog.Board {
         if (this._root == null || boardClass == null) { return null; }
+        if (boardClass === DUMMY_CATALOG.class) {
+            return DUMMY_CATALOG;
+        }
         return this._root.boards.find((board: RubicCatalog.Board) => {
             return (board.class === boardClass);
         });
@@ -80,11 +131,13 @@ export class CatalogData implements vscode.Disposable {
      */
     getRepository(uuid: string): RubicCatalog.RepositorySummary {
         if (this._root == null || uuid == null) { return null; }
-        for (let board of this._root.boards) {
-            let repo = board.repositories.find((repo) => {
-                return (repo.uuid === uuid);
-            });
-            if (repo) { return repo; }
+        for (let catalog of [[DUMMY_CATALOG], this._root.boards]) {
+            for (let board of catalog) {
+                let repo = board.repositories.find((repo) => {
+                    return (repo.uuid === uuid);
+                });
+                if (repo) { return repo; }
+            }
         }
         return null;
     }
