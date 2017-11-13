@@ -32,4 +32,5 @@ before_install:
   - npm run vscode:prepublish
 
 script:
-  - npm run test:offline || ls -lR .vscode-test
+  - rmdir .vscode-test || echo "[INFO] Using cached VSCode binary"
+  - npm run test:offline
