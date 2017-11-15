@@ -22,6 +22,7 @@ env:
   - ELECTRON_RUN_AS_NODE=1
 
 before_install:
+  - rmdir .vscode-test || echo "[INFO] Using cached VSCode binary"
   - if [ $TRAVIS_OS_NAME == "linux" ]; then
       export CXX="g++-4.9" CC="gcc-4.9" DISPLAY=:99.0;
       sh -e /etc/init.d/xvfb start;
@@ -31,8 +32,8 @@ before_install:
   - npm --version
   - npm run pretest
   - npm run vscode:prepublish
-  - ls -lR .vscode-test || true
-  - rmdir .vscode-test || echo "[INFO] Using cached VSCode binary"
 
 script:
   - npm run test:offline
+  - ls -la .vscode-test || true
+  - md5sum .vscode-test/VSCode-linux-x64/code || true
