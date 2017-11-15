@@ -35,7 +35,6 @@ before_install:
 
 script:
   - npm run test:offline
-  - ls -la .vscode-test/VSCode-linux-x64 || true
-  - md5sum .vscode-test/VSCode-linux-x64/code || true
-  - sleep 10
-  - md5sum .vscode-test/VSCode-linux-x64/code || true
+  - if [ $TRAVIS_OS_NAME == "linux" ]; then
+      chmod 755 .vscode-test/VSCode-linux-x64/code;
+    fi
