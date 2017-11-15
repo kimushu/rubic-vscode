@@ -3562,9 +3562,9 @@
       }
     },
     "vscode": {
-      "version": "1.1.6",
-      "from": "vscode@>=1.1.6 <2.0.0",
-      "resolved": "https://registry.npmjs.org/vscode/-/vscode-1.1.6.tgz",
+      "version": "1.1.7",
+      "from": "vscode@latest",
+      "resolved": "https://registry.npmjs.org/vscode/-/vscode-1.1.7.tgz",
       "dev": true,
       "dependencies": {
         "semver": {
