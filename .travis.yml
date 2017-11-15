@@ -30,6 +30,8 @@ before_install:
     fi
   - node --version
   - npm --version
+
+install:
   - npm run pretest
   - npm run vscode:prepublish
 
