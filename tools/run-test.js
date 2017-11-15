@@ -26,7 +26,7 @@ tests.forEach((test) => {
     });
     console.log(`# [${test}] Finished at ${new Date().toString()} (result=${result.status})`);
     if (result.status !== 0) {
-        console.error(`# ${result.error}`);
+        console.error(`# Error: ${result.error}`);
         ++failed;
     }
     console.log("");
