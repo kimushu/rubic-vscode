@@ -162,7 +162,7 @@ export class WakayamaRbBoard extends Board {
             }
             return Promise.resolve()
             .then(() => {
-                return this._recv(" 60");
+                return this._recv("Waiting");
             }).then(() => {
                 return this._send(ascii);
             }).then(() => {
@@ -181,11 +181,11 @@ export class WakayamaRbBoard extends Board {
         ).then(() => {
             return this._send(`F ${filename}\r`);
         }).then(() => {
-            return this._recv(" 60");
+            return this._recv("Waiting");
         }).then(() => {
             return this._send("\r");
         }).then(() => {
-            return this._recv(" 60");
+            return this._recv("Waiting");
         }).then((resp: string) => {
             let lines = resp.split("\r\n");
             let waiting = lines.findIndex((line) => line.startsWith("Waiting"));
