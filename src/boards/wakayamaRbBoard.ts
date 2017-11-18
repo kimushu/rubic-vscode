@@ -19,6 +19,8 @@ const WRBB_MSD_MAX_CAPACITY = 4 * 1024 * 1024;
 const WRBB_PROG_DELAY_MS = 2000;
 const CITRUS_MSD_FILE = "Gadget Renesas Project Home.html";
 const SAKURA_MSD_FILE = "SAKURA BOARD for Gadget Renesas Project Home.html";
+const CHAR_CODE_PROMPT = ">".charCodeAt(0);
+const CHAR_CODE_PROGRESS = ".".charCodeAt(0);
 
 function delay(ms: number): Promise<void> {
     return <any>new Promise((resolve) => {
@@ -145,7 +147,7 @@ export class WakayamaRbBoard extends Board {
         }); // return Promise.resolve().then()...
     }
 
-    writeFile(filename: string, data: Buffer): Promise<void> {
+    writeFile(filename: string, data: Buffer, progress: (message: string) => void): Promise<void> {
         let ascii: Buffer = Buffer.allocUnsafe(data.byteLength * 2);
         let hex: number[] = [0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x41,0x42,0x43,0x44,0x45,0x46];
         for (let byteOffset = 0; byteOffset < data.byteLength; ++byteOffset) {
@@ -169,7 +171,20 @@ export class WakayamaRbBoard extends Board {
                 return this._recv("Saving");
             });
         }).then(() => {
-            return this._recv("\r\n>");
+            let waitWithProgress = () => {
+                return this._recv(1)
+                .then((value: Buffer) => {
+                    let byte = value[0];
+                    if (byte === CHAR_CODE_PROMPT) {
+                        return;
+                    }
+                    if (byte === CHAR_CODE_PROGRESS) {
+                        progress(".");
+                    }
+                    return waitWithProgress();
+                });
+            };
+            return waitWithProgress();
         }).then(() => {
             return;
         }); // return Promise.resolve().then()...

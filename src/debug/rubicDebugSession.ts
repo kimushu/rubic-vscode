@@ -260,9 +260,10 @@ class RubicDebugSession extends DebugSession {
     /**
      * Report message by sending OutputEvent
      * @param output Output message without newline
+     * @param noNewline Omit new line code
      */
-    private _report(output: string): void {
-        this.sendEvent(new OutputEvent(output + "\n"));
+    private _report(output: string, noNewline?: boolean): void {
+        this.sendEvent(new OutputEvent(output + (noNewline ? "" : "\n")));
     }
 
     /**
@@ -362,7 +363,8 @@ class RubicDebugSession extends DebugSession {
                 return promise
                 .then(() => {
                     this._report(
-                        localize("writing-file-x", "Writing file: {0}", file)
+                        localize("writing-file-x", "Writing file: {0}", file) + " ",
+                        true
                     );
                     return pify(fs.readFile)(path.join(workspaceRoot, file));
                 })
@@ -379,9 +381,16 @@ class RubicDebugSession extends DebugSession {
                         if (skip) {
                             ++skipped;
                         } else {
-                            return this._board.writeFile(file, newContent);
+                            return this._board.writeFile(
+                                file, newContent,
+                                (message) => this._report(message, true)
+                            );
                         }
                     });
+                })
+                .finally(() => {
+                    // Print newline
+                    this._report("");
                 });
             }, Promise.resolve())
             .then(() => {

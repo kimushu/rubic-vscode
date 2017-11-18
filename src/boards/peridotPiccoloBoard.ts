@@ -348,8 +348,9 @@ export class PeridotPiccoloBoard extends Board {
      * Write file
      * @param relativePath Relative path of the file to be stored
      * @param data Data to write
+     * @param progress Function to print progress
      */
-    writeFile(relativePath: string, data: Buffer): Promise<void> {
+    writeFile(relativePath: string, data: Buffer, progress: (message: string) => void): Promise<void> {
         return this._rpc.call("fs.open", {
             path: this._getInternalPath(relativePath),
             flags: O_WRONLY | O_CREAT | O_TRUNC

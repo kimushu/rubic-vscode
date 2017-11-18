@@ -137,8 +137,9 @@ export class Board extends EventEmitter {
      * Write file
      * @param relativePath Relative path of the file to be stored
      * @param data Data to write
+     * @param progress Function to print progress
      */
-    writeFile(relativePath: string, data: Buffer): Promise<void> {
+    writeFile(relativePath: string, data: Buffer, progress: (message: string) => void): Promise<void> {
         return Promise.reject(new Error("Not implemented"));
     }
 
