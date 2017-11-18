@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.99.14
+
+* Fix GR-CITRUS file I/O
+* Add progress display for file writing
+
 ## 0.99.13
 
 Hotfix for Rubic 0.99.12
