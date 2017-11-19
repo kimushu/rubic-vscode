@@ -884,7 +884,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 throw new Error("Firmware is not selected");
             }
             if ((params == null) || (params.runtime == null)) {
-                let variation = catalogData.getVariation(sketch.repositoryUuid, sketch.releaseTag, sketch.variationPath);
+                //let variation = catalogData.getVariation(sketch.repositoryUuid, sketch.releaseTag, sketch.variationPath);
                 //RubicProcess.self.showQuickPick();
             }
             // Get firmware data
