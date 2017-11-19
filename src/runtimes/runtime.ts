@@ -76,6 +76,13 @@ export class Runtime {
     }
 
     /**
+     * Get template path
+     */
+    getTemplatePath(): string {
+        return this.info.template;
+    }
+
+    /**
      * Render details for catalog
      */
     renderDetails(): string {

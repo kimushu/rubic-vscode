@@ -260,10 +260,10 @@ class RubicDebugSession extends DebugSession {
     /**
      * Report message by sending OutputEvent
      * @param output Output message without newline
-     * @param noNewline Omit new line code
+     * @param noNewLine Omit new line code
      */
-    private _report(output: string, noNewline?: boolean): void {
-        this.sendEvent(new OutputEvent(output + (noNewline ? "" : "\n")));
+    private _report(output: string, noNewLine?: boolean): void {
+        this.sendEvent(new OutputEvent(output + (noNewLine ? "" : "\n")));
     }
 
     /**

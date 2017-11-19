@@ -59,6 +59,7 @@ export class DuktapeRuntime extends Runtime {
     renderDetails(): string {
         let result: string[] = [];
         let info = <RubicCatalog.Runtime.Duktape>this.info;
+        result.push("## Duktape");
         result.push(`* ${Runtime.LOCALIZED_VERSION} : \`${info.version}\``);
         result.push(`* ${Runtime.LOCALIZED_SUPPORT_LANGS} : ` +
             "JavaScript(ES5) / TypeScript"

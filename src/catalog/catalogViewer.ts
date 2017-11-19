@@ -26,9 +26,10 @@ export const CMD_SHOW_CATALOG = "extension.rubic.showCatalog";
 export const CMD_SELECT_PORT  = "extension.rubic.selectPort";
 
 const URI_CATALOG = Uri.parse("rubic://catalog");
-const CMD_UPDATE_CATALOG = "extension.rubic.updateCatalog";
-const CMD_TEST_CONNECTION  = "extension.rubic.testConnection";
-const CMD_WRITE_FIRMWARE  = "extension.rubic.writeFirmware";
+const CMD_UPDATE_CATALOG    = "extension.rubic.updateCatalog";
+const CMD_TEST_CONNECTION   = "extension.rubic.testConnection";
+const CMD_WRITE_FIRMWARE    = "extension.rubic.writeFirmware";
+const CMD_APPLY_TEMPLATE    = "extension.rubic.applyTemplate";
 
 const CFG_SHOW_PREVIEW = "catalog.showPreview";
 
@@ -82,6 +83,9 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             }),
             commands.registerCommand(CMD_WRITE_FIRMWARE, () => {
                 this._writeFirmware();
+            }),
+            commands.registerCommand(CMD_APPLY_TEMPLATE, (params) => {
+                this._applyTemplate(params);
             })
         );
 
@@ -760,6 +764,19 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             try {
                 let runtime = Runtime.constructRuntime(runtimeInfo);
                 result.push(runtime.renderDetails());
+                if (runtime.getTemplatePath() != null) {
+                    result.push(
+                        `* ${localize("project-template", "Project template")}`,
+                        `<br><button data-command="${CMD_APPLY_TEMPLATE}?runtime=${
+                            runtimeInfo.name
+                        }" class="${[
+                            "catalog-page-button",
+                            "catalog-page-button-blue",
+                        ].join(" ")}">${
+                            localize("apply-template", "Apply template")
+                        }</button>`
+                    );
+                }
             } catch (error) {
                 // Ignore errors
             }
@@ -844,6 +861,31 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                     `${localize("failed-write-firmware", "Failed to write firmware")}: ${reason}`
                 );
             });
+        });
+    }
+
+    /**
+     * Apply runtime template into current workspace
+     */
+    private _applyTemplate(params?: {runtime: string}) {
+        let { catalogData, sketch } = RubicProcess.self;
+        let fullPath: string;
+        return Promise.resolve()
+        .then(() => {
+            if (sketch.repositoryUuid == null || sketch.releaseTag == null || sketch.variationPath == null) {
+                throw new Error("Firmware is not selected");
+            }
+            if ((params == null) || (params.runtime == null)) {
+                let variation = catalogData.getVariation(sketch.repositoryUuid, sketch.releaseTag, sketch.variationPath);
+                //RubicProcess.self.showQuickPick();
+            }
+            // Get firmware data
+            return catalogData.prepareCacheDir(sketch.repositoryUuid, sketch.releaseTag);
+        })
+        .then((cacheDir) => {
+            // Confirm to user
+            let templatePath = params.runtime;
+            fullPath = path.join(CacheStorage.getFullPath(cacheDir), templatePath);
         });
     }
 }
