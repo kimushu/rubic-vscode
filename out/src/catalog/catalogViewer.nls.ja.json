@@ -1,7 +1,6 @@
 {
     "messages": [
         "Rubicボードカタログを開く前に、まず作業するフォルダを開いて下さい",
-        "カタログの読み込みに失敗しました: {0}",
         "カタログを開く",
         "新しいハードウェア構成は保存されていません",
         "{0} に構文エラーがあります。手動で修正してください。",
@@ -45,6 +44,8 @@
         "接続テスト",
         "ファームウェア",
         "ファームウェアをボードに書き込む",
+        "プロジェクトのテンプレート",
+        "テンプレートを適用する",
         "接続テストに成功しました (詳細は「デバッグ コンソール」を確認してください)",
         "接続テストに失敗しました (詳細は「デバッグ コンソール」を確認してください)",
         "ボードにファームウェアを書き込んでよろしいですか？",
@@ -53,7 +54,6 @@
     ],
     "keys": [
         "open-folder-before",
-        "failed-load-catalog-x",
         "open-catalog",
         "hw-config-not-saved",
         "syntax-error-f",
@@ -97,6 +97,8 @@
         "test-connection",
         "firmware",
         "write-firmware",
+        "project-template",
+        "apply-template",
         "conn-test-success",
         "conn-test-failed",
         "confirm-write-firmware",
