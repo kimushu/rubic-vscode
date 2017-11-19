@@ -45,7 +45,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
     private _currentPanel: "board" | "repository" | "release" | "variation" | "details";
     private _pendingSave: boolean;
     private _pendingCache: boolean;
-    private _firstFetch: Promise<boolean | void>;
+    private _firstFetch: Promise<boolean>;
     private _onDidChange = new EventEmitter<Uri>();
     get onDidChange() { return this._onDidChange.event; }
 
@@ -97,9 +97,8 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
 
         this._firstFetch = RubicProcess.self.catalogData.fetch()
         .catch((reason) => {
-            RubicProcess.self.showErrorMessage(
-                localize("failed-load-catalog-x", "Failed to load catalog: {0}", reason)
-            );
+            console.warn("Rubic failed to fetch catalog (at startup):", reason);
+            return false;
         });
 
         let { sketch } = RubicProcess.self;
