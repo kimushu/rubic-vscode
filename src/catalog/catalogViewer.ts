@@ -307,6 +307,14 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                     )
                 );
             }
+        }, (reason) => {
+            console.error("Rubic failed to fetch catalog (triggered by user):", reason);
+            rprocess.showErrorMessage(
+                localize(
+                    "catalog-update-failed",
+                    "Failed to update Rubic catalog. (No internet connection or server is down?)"
+                )
+            );
         });
     }
 

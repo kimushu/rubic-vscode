@@ -3,7 +3,7 @@ import * as fse from "fs-extra";
 import * as path from "path";
 import * as pify from "pify";
 import * as rimraf from "rimraf";
-import { rubicTest } from "../extension";
+import { RubicProcess } from "../processes/rubicProcess";
 
 /**
  * Get user profile directory
@@ -18,17 +18,32 @@ function getUserProfileDir(): string {
     }
 }
 
+let baseDirCache: string;
+
+/**
+ * Get cache base directory
+ */
+function getBaseDir(): string {
+    if (baseDirCache == null) {
+        let testBase: string;
+        if (RubicProcess.self.isHost) {
+            testBase = require("../extension").rubicTest.cacheBaseDir;
+        }
+        baseDirCache = testBase || path.join(getUserProfileDir(), ".rubic", "cache");
+    }
+    return baseDirCache;
+}
+
 export module CacheStorage {
-    const _baseDir = rubicTest.cacheBaseDir || path.join(getUserProfileDir(), ".rubic", "cache");
 
     /** Get full path of cache file */
     export function getFullPath(filename: string): string {
-        return path.join(_baseDir, filename);
+        return path.join(getBaseDir(), filename);
     }
 
     /** Clear all files */
     export function clear(): Promise<void> {
-        return pify(rimraf)(_baseDir);
+        return pify(rimraf)(getBaseDir());
     }
 
     /** writeFile */
