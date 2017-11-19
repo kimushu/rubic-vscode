@@ -15,6 +15,7 @@ import * as CJSON from "comment-json";
 import { CatalogData } from "../catalog/catalogData";
 import { RubicDebugConfigProvider } from "../debug/rubicDebugConfigProvider";
 import * as delay from "delay";
+import { rubicTest } from "../extension";
 
 const localize = nls.loadMessageBundle(__filename);
 
@@ -222,13 +223,27 @@ export class RubicHostProcess extends RubicProcess {
 
     /* Settings */
     readonly getRubicSetting = function(this: RubicHostProcess, path: string): Thenable<any> {
-        return Promise.resolve(workspace.getConfiguration().get<any>(`rubic.${path}`));
+        let fullPath = `rubic.${path}`;
+        if (rubicTest.workspaceSettings) {
+            return Promise.resolve(rubicTest.workspaceSettings[fullPath]);
+        }
+        return Promise.resolve(workspace.getConfiguration().get<any>(fullPath));
     };
     readonly getMementoValue = function<T>(this: RubicHostProcess, key: string, defaultValue?: T): Thenable<T> {
+        if (rubicTest.mementoValues) {
+            if (key in rubicTest.mementoValues) {
+                return rubicTest.mementoValues[key];
+            }
+            return Promise.resolve(defaultValue);
+        }
         return Promise.resolve()
         .then(() => this._context.globalState.get(key, defaultValue));
     };
     readonly setMementoValue = function<T>(this: RubicHostProcess, key: string, value: T): Thenable<void> {
+        if (rubicTest.mementoValues) {
+            rubicTest.mementoValues[key] = value;
+            return Promise.resolve();
+        }
         return this._context.globalState.update(key, value);
     };
 

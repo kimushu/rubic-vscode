@@ -8,6 +8,20 @@ import { CatalogViewer } from "./catalog/catalogViewer";
 import { RubicStatusBar } from "./catalog/rubicStatusBar";
 import { MrubyCompiler } from "./util/mrubyCompiler";
 
+export interface RubicTestContext {
+    workspaceSettings?: {
+        [path: string]: any;
+    };
+    mementoValues?: {
+        [key: string]: any;
+    };
+}
+
+/**
+ * Hooks for integration tests
+ */
+export let rubicTest: RubicTestContext = {};
+
 /**
  * Activate VSCode extension (Entry point of Rubic)
  * @param context Extension context
