@@ -15,6 +15,7 @@ export interface RubicTestContext {
     mementoValues?: {
         [key: string]: any;
     };
+    cacheBaseDir?: string;
 }
 
 /**

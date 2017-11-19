@@ -3,6 +3,7 @@ import * as fse from "fs-extra";
 import * as path from "path";
 import * as pify from "pify";
 import * as rimraf from "rimraf";
+import { rubicTest } from "../extension";
 
 /**
  * Get user profile directory
@@ -18,7 +19,7 @@ function getUserProfileDir(): string {
 }
 
 export module CacheStorage {
-    const _baseDir = path.join(getUserProfileDir(), ".rubic", "cache");
+    const _baseDir = rubicTest.cacheBaseDir || path.join(getUserProfileDir(), ".rubic", "cache");
 
     /** Get full path of cache file */
     export function getFullPath(filename: string): string {
