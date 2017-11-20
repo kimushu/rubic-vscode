@@ -103,7 +103,11 @@
       },
       {
         "command": "extension.rubic.updateCatalog",
-        "title": "%command.updateCatalog.title%"
+        "title": "%command.updateCatalog.title%",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
       }
     ],
     "menus": {
@@ -112,6 +116,13 @@
           "when": "resourceScheme == rubic",
           "command": "extension.rubic.updateCatalog",
           "group": "1_modification"
+        }
+      ],
+      "editor/title": [
+        {
+          "when": "resourceScheme == rubic",
+          "command": "extension.rubic.updateCatalog",
+          "group": "navigation"
         }
       ]
     },
