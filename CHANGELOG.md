@@ -4,6 +4,7 @@
 
 * Fix GR-CITRUS file I/O
 * Add progress display for file writing
+* Add catalog update button into editor title
 
 ## 0.99.13
 
