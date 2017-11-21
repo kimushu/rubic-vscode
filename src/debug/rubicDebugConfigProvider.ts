@@ -11,6 +11,7 @@ import * as nls from "vscode-nls";
 import { CMD_SHOW_CATALOG } from "../catalog/catalogViewer";
 
 const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
+const { RUBIC_DEBUG_SERVER_PORT } = process.env;
 
 /**
  * Substitute variables for VSCode
@@ -99,6 +100,9 @@ export class RubicDebugConfigProvider implements DebugConfigurationProvider {
         // Add private data to debug adapter process
         let { workspaceRoot, extensionRoot } = RubicProcess.self;
         config.__private = { workspaceRoot, extensionRoot };
+        if (RUBIC_DEBUG_SERVER_PORT != null) {
+            config.debugServer = RUBIC_DEBUG_SERVER_PORT;
+        }
 
         if ((this._debugHooks == null) || (config.request === "attach")) {
             return config;
