@@ -10,6 +10,7 @@
   "command.updateCatalog.title": "Update catalog",
   "debug.rubic.label": "Rubic Debugger",
   "debug.rubic.attribute.workspaceRoot.description": "Path of the workspace",
+  "debug.rubic.attribute.boardData.description": "Board specific parameters",
   "debug.rubic.launch.program.description": "Path of the program to launch on board",
   "debug.rubic.launch.debugPort.description": "Port number for external debugger",
   "debug.rubic.attach.action.description": "Action to do (One of \"download\", \"upload\" and \"getinfo\")",

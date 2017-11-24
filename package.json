@@ -164,6 +164,10 @@
                 "type": "string",
                 "description": "%debug.rubic.attribute.workspaceRoot.description%"
               },
+              "boardData": {
+                "type": "object",
+                "description": "%debug.rubic.attribute.boardData.description%"
+              },
               "program": {
                 "type": "string",
                 "description": "%debug.rubic.launch.program.description%"
@@ -183,6 +187,10 @@
               "workspaceRoot": {
                 "type": "string",
                 "description": "%debug.rubic.attribute.workspaceRoot.description%"
+              },
+              "boardData": {
+                "type": "object",
+                "description": "%debug.rubic.attribute.boardData.description%"
               },
               "action": {
                 "type": "string",

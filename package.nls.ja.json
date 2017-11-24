@@ -10,6 +10,7 @@
   "command.updateCatalog.title": "カタログを更新する",
   "debug.rubic.label": "Rubic デバッガ",
   "debug.rubic.attribute.workspaceRoot.description": "ワークスペースのパス",
+  "debug.rubic.attribute.boardData.description": "ボード固有のパラメータ",
   "debug.rubic.launch.program.description": "ボード上で実行するプログラムへのパス",
   "debug.rubic.launch.debugPort.description": "外部デバッガ用のポート番号",
   "debug.rubic.attach.action.description": "実行するアクション (\"download\", \"upload\", \"getinfo\" のいずれか)",
