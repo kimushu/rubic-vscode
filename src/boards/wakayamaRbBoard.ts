@@ -11,7 +11,6 @@ import { RubicProcess } from "../processes/rubicProcess";
 import * as dedent from "dedent";
 
 const localize = nls.loadMessageBundle(__filename);
-const DEBUG = false;
 
 const WRBB_RESET_DELAY_MS = 2000;
 const WRBB_RESET_MAX_RETRIES = 5;
@@ -404,7 +403,9 @@ export class WakayamaRbBoard extends Board {
 
     private _send(data: string|Buffer): Promise<void> {
         let buf = Buffer.from(<any>data);
-        if (DEBUG) { console.log("_send():", buf); }
+        if (this.boardData.debugCommunication > 0) {
+            RubicProcess.self.printDebug("_send():", buf);
+        }
         return this._portCall("write", buf);
     }
 
@@ -412,7 +413,7 @@ export class WakayamaRbBoard extends Board {
         if (this._waiter) {
             let reject = this._waiter.reject;
             this._waiter = null;
-            reject(Error("Operation cancelled"));
+            reject(new Error("Operation cancelled"));
         }
         return this._portCall("drain").then(() => {
             return new Promise<string|Buffer>((resolve, reject) => {
@@ -426,14 +427,18 @@ export class WakayamaRbBoard extends Board {
                 );
                 if (typeof(trig) === "number") {
                     waiter.length = trig;
-                    if (DEBUG) { console.log("_recv():", trig); }
+                    if (this.boardData.debugCommunication > 0) {
+                        RubicProcess.self.printDebug("_recv()[length]:", trig);
+                    }
                 } else {
                     if (typeof(trig) === "string") {
                         waiter.string = true;
                     }
                     waiter.token = Buffer.from(<any>trig);
                     waiter.offset = 0;
-                    if (DEBUG) { console.log("_recv():", waiter.token); }
+                    if (this.boardData.debugCommunication > 0) {
+                        RubicProcess.self.printDebug("_recv()[token]:", waiter.token);
+                    }
                 }
                 this._waiter = waiter;
                 this._dataHandler(null);
@@ -451,7 +456,9 @@ export class WakayamaRbBoard extends Board {
             buffer = this._received = Buffer.concat([this._received, raw]);
         }
 
-        if (DEBUG) { console.log("_dataHandler():", raw); }
+        if (this.boardData.debugCommunication > 1) {
+            RubicProcess.self.printDebug("_dataHandler():", raw);
+        }
         let waiter = this._waiter;
         if (!buffer || !waiter) { return; }
         if (typeof(waiter.length) !== "undefined") {
@@ -478,7 +485,9 @@ export class WakayamaRbBoard extends Board {
             part = part.toString();
         }
         this._received = buffer.slice(waiter.length);
-        if (DEBUG) { console.log("_dataHandler:resolve():", part); }
+        if (this.boardData.debugCommunication > 1) {
+            RubicProcess.self.printDebug("_dataHandler:resolve():", part);
+        }
         resolve(part);
     }
 
