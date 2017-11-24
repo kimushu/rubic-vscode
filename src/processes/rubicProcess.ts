@@ -272,6 +272,11 @@ export class RubicProcess {
     readonly clearOutput: () => Thenable<void>;
 
     /**
+     * Print debug text to Rubic output
+     */
+    readonly printDebug: (message?: any, ...params: any[]) => void;
+
+    /**
      * Dispose object
      */
     readonly dispose: () => Thenable<void>;

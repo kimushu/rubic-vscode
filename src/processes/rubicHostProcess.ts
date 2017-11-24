@@ -170,6 +170,9 @@ export class RubicHostProcess extends RubicProcess {
         }
         return Promise.resolve();
     };
+    readonly printDebug = function (this: RubicHostProcess, message?: any, ...params: any[]): void {
+        console.log("[HOST]", message, params);
+    };
 
     /* Debug process management */
     readonly registerDebugHook = function(this: RubicHostProcess, listener: RubicDebugHook): void {
@@ -402,6 +405,9 @@ export class RubicHostProcess extends RubicProcess {
                 return this.printOutput(args.text, args.preserveFocus);
             case "clearOutput":
                 return this.clearOutput();
+            case "printDebug":
+                console.log("[DAP]", args.text);
+                break;
         }
         return Promise.reject(
             new Error(`unsupported request type: ${type}`)

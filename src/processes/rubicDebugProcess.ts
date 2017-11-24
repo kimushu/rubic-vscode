@@ -6,6 +6,7 @@ import {
 import { DebugSession } from "vscode-debugadapter";
 import { Sketch } from "../sketch";
 require("promise.prototype.finally").shim();
+import * as util from "util";
 
 interface RubicDebugSession extends DebugSession {
     sendHostRequest(request: string, args: any, withResponse: boolean): Thenable<any>;
@@ -84,6 +85,16 @@ export class RubicDebugProcess extends RubicProcess {
     };
     readonly clearOutput = function (this: RubicDebugProcess): Thenable<void> {
         return this._request("clearOutput", {});
+    };
+    readonly printDebug = function (this: RubicDebugProcess, message?: any, ...params: any[]): void {
+        let text: string;
+        text = [message].concat(params).map((value) => {
+            if (typeof(value) === "string") {
+                return value;
+            }
+            return util.inspect(value);
+        }).join(" ");
+        this._debugSession.sendHostRequest("printDebug", {text}, false);
     };
 
     /* Debug process management */
