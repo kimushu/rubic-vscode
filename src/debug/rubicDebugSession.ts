@@ -21,19 +21,23 @@ interface Disposable {
     dispose(): any;
 }
 
+interface BoardDataArguments {
+    boardData?: any;
+}
+
 interface BoardPathArguments {
     boardClass?: string;
     boardPath?: string;
 }
 
-interface RubicLaunchRequestArguments extends DebugProtocol.LaunchRequestArguments, BoardPathArguments {
+interface RubicLaunchRequestArguments extends DebugProtocol.LaunchRequestArguments, BoardPathArguments, BoardDataArguments {
     noTransfer?: boolean;
     format?: boolean;
     program: string;
     debugPort?: number;
 }
 
-interface RubicAttachRequestArguments extends DebugProtocol.AttachRequestArguments {
+interface RubicAttachRequestArguments extends DebugProtocol.AttachRequestArguments, BoardDataArguments {
 }
 
 interface GetInfoArguments extends BoardPathArguments {
@@ -270,7 +274,7 @@ class RubicDebugSession extends DebugSession {
      * Construct board instance
      * @param args Arguments passed as debug configuration
      */
-    private _constructBoard(args: BoardPathArguments): Promise<void> {
+    private _constructBoard(args: BoardPathArguments & BoardDataArguments): Promise<void> {
         let { sketch } = RubicProcess.self;
         let boardClass = (args.boardClass != null) ? args.boardClass : sketch.boardClass;
         let constructor = Board.getConstructor(boardClass);
@@ -280,6 +284,7 @@ class RubicDebugSession extends DebugSession {
                 throw new Error(`No board class named: ${boardClass}`);
             }
             this._board = new constructor();
+            this._board.boardData = args.boardData || {};
             this.subscriptions.push(this._board);
         });
     }

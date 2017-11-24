@@ -66,6 +66,7 @@ export interface BoardConstructor {
 
 export class Board extends EventEmitter {
     private static _classes: {[className: string]: BoardConstructor} = {};
+    public boardData: any;
 
     protected constructor() {
         super();

@@ -71,7 +71,8 @@ export class RubicDebugConfigProvider implements DebugConfigurationProvider {
     }
 
     resolveDebugConfiguration(folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
-        if (!RubicProcess.self.sketch.isHardwareFixed) {
+        let { sketch, catalogData } = RubicProcess.self;
+        if (!sketch.isHardwareFixed) {
             let openMsg = localize("open-catalog", "Open catalog");
             RubicProcess.self.showInformationMessage(
                 localize("choose-cfg-before-debug", "Before debugging, choose your board and firmware from Rubic catalog"),
@@ -103,6 +104,19 @@ export class RubicDebugConfigProvider implements DebugConfigurationProvider {
         if (RUBIC_DEBUG_SERVER_PORT != null) {
             config.debugServer = RUBIC_DEBUG_SERVER_PORT;
         }
+
+        // Merge boardData
+        let repo = catalogData.getRepository(sketch.repositoryUuid);
+        let release = catalogData.getRelease(sketch.repositoryUuid, sketch.releaseTag);
+        let variation = catalogData.getVariation(sketch.repositoryUuid, sketch.releaseTag, sketch.variationPath);
+        config.boardData = Object.assign(
+            {},
+            (repo ? repo.cache.boardData : null),
+            (release ? release.cache.boardData : null),
+            (variation ? variation.boardData : null),
+            sketch.boardData,
+            config.boardData
+        );
 
         if ((this._debugHooks == null) || (config.request === "attach")) {
             return config;
