@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.99.15
+
+* Add debug mode for GR-CITRUS
+
 ## 0.99.14
 
 * Fix GR-CITRUS file I/O
