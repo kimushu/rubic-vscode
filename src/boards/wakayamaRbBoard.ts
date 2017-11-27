@@ -410,10 +410,14 @@ export class WakayamaRbBoard extends Board {
     }
 
     private _recv(trig: string|Buffer|number): Promise<string|Buffer> {
+        let printDebug = (this.boardData.debugCommunication > 0) ? (...args) => {
+            RubicProcess.self.printDebug("_recv():", ...args);
+        } : () => {};
         if (this._waiter) {
             let reject = this._waiter.reject;
             this._waiter = null;
             reject(new Error("Operation cancelled"));
+            printDebug("[reject]");
         }
         return this._portCall("drain").then(() => {
             return new Promise<string|Buffer>((resolve, reject) => {
@@ -427,18 +431,14 @@ export class WakayamaRbBoard extends Board {
                 );
                 if (typeof(trig) === "number") {
                     waiter.length = trig;
-                    if (this.boardData.debugCommunication > 0) {
-                        RubicProcess.self.printDebug("_recv()[length]:", trig);
-                    }
+                    printDebug("[length]", trig);
                 } else {
                     if (typeof(trig) === "string") {
                         waiter.string = true;
                     }
                     waiter.token = Buffer.from(<any>trig);
                     waiter.offset = 0;
-                    if (this.boardData.debugCommunication > 0) {
-                        RubicProcess.self.printDebug("_recv()[token]:", waiter.token);
-                    }
+                    printDebug("[token]", waiter.token);
                 }
                 this._waiter = waiter;
                 this._dataHandler(null);
@@ -447,6 +447,9 @@ export class WakayamaRbBoard extends Board {
     }
 
     private _dataHandler(raw: Buffer) {
+        let printDebug = (this.boardData.debugCommunication > 0) ? (...args) => {
+            RubicProcess.self.printDebug("_dataHandler():", ...args);
+        } : () => {};
         let buffer: Buffer;
         if (!raw) {
             buffer = this._received;
@@ -457,7 +460,7 @@ export class WakayamaRbBoard extends Board {
         }
 
         if (this.boardData.debugCommunication > 1) {
-            RubicProcess.self.printDebug("_dataHandler():", raw);
+            printDebug("[recv]", raw);
         }
         let waiter = this._waiter;
         if (!buffer || !waiter) { return; }
@@ -481,13 +484,11 @@ export class WakayamaRbBoard extends Board {
         let resolve = waiter.resolve;
         global.clearTimeout(waiter.timerId);
         let part: Buffer|string = Buffer.from(buffer.slice(0, waiter.length));
+        printDebug("[done]", part);
         if (waiter.string) {
             part = part.toString();
         }
         this._received = buffer.slice(waiter.length);
-        if (this.boardData.debugCommunication > 1) {
-            RubicProcess.self.printDebug("_dataHandler:resolve():", part);
-        }
         resolve(part);
     }
 

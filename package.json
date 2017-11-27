@@ -320,6 +320,8 @@
     "compile:watch": "tsc --watch -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "pretest": "npm install",
+    "vscode-cache:latest": "node tools/vscode-cache.js --latest",
+    "vscode-cache:mark": "node tools/vscode-cache.js --mark",
     "test": "npm-run-all vscode:prepublish test:*",
     "test:offline": "node tools/run-test.js non-activation@non-rubic auto-activation@empty catalog@empty launch-setup",
     "test:gr-citrus": "node tools/run-test.js gr-citrus@gr-citrus-small gr-citrus@gr-citrus-large",

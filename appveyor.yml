@@ -10,12 +10,16 @@ cache:
 install:
   - ps: Install-Product node 7.9.0 x64
   - npm install -g npm@4 --silent
-
-build_script:
   - node --version
   - npm --version
   - npm run pretest
   - npm run vscode:prepublish
 
+build_script:
+  - npm run --silent vscode-cache:latest
+
 test_script:
   - npm run test:offline
+
+after_test:
+  - npm run --silent vscode-cache:mark
