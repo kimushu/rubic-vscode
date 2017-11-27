@@ -38,5 +38,5 @@ before_script:
 script:
   - npm run test:offline
 
-after_script:
+before_cache:
   - npm run --silent vscode-cache:mark
