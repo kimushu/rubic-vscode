@@ -876,6 +876,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
      * Apply runtime template into current workspace
      */
     private _applyTemplate(params?: {runtime: string}) {
+        /*
         let { catalogData, sketch } = RubicProcess.self;
         let fullPath: string;
         return Promise.resolve()
@@ -895,5 +896,6 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
             let templatePath = params.runtime;
             fullPath = path.join(CacheStorage.getFullPath(cacheDir), templatePath);
         });
+        */
     }
 }
