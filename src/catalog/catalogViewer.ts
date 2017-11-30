@@ -561,6 +561,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 title: toLocalizedString(repo.cache.name),
                 selected: (repo.uuid === repositoryUuid),
                 preview: repo.cache.preview,
+                official: repo.official,
                 description: toLocalizedString(repo.cache.description),
                 details: repo.owner
             });
