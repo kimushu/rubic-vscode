@@ -358,3 +358,82 @@ img.catalog-image-64 {
 .vscode-light .icon-gear {
     background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cg fill='%23424242'%3E%3Cpath d='M12.714 9.603c-.07.207-.15.407-.246.601l1.017 2.139a6.976 6.976 0 0 1-1.142 1.143l-2.14-1.018a4.797 4.797 0 0 1-.601.247l-.795 2.235c-.265.03-.534.05-.807.05-.272 0-.541-.02-.806-.05l-.795-2.235a4.874 4.874 0 0 1-.602-.247l-2.14 1.017a7.022 7.022 0 0 1-1.143-1.143l1.017-2.139a5.094 5.094 0 0 1-.245-.6L1.05 8.807C1.02 8.542 1 8.273 1 8s.02-.542.05-.807l2.236-.795c.07-.207.15-.407.246-.601L2.516 3.658a7.016 7.016 0 0 1 1.143-1.142l2.14 1.017c.193-.096.394-.176.602-.247l.793-2.236C7.459 1.02 7.728 1 8 1c.273 0 .542.02.808.05l.795 2.236c.207.07.407.15.601.246l2.14-1.017a6.97 6.97 0 0 1 1.142 1.142l-1.017 2.139c.096.194.176.394.246.601l2.236.795c.029.266.049.535.049.808s-.02.542-.05.807l-2.236.796zM8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6z'/%3E%3Ccircle cx='8' cy='8' r='1.5'/%3E%3C/g%3E%3C/svg%3E") no-repeat;
 }
+div.context-menu {
+    position: absolute;
+    z-index: 1000;
+    cursor: default;
+}
+body.platform-win div.context-menu {
+    border: 1px solid ThreeDFace;
+    background-color: Window;
+    color: MenuText;
+    font-size: 9pt;
+    box-shadow: 5px 5px 2px -3px rgba(0,0,0,0.4);
+}
+body.platform-mac div.context-menu {
+    border: 1px solid ThreeDFace;
+    border-radius: 6px;
+    background-color: Window; /* background opacity x0.9 */
+    color: WindowText;
+    font-size: 9pt;
+    box-shadow: 0px 4px 18px 0px rgba(0,0,0,0.3);
+}
+body.platform-lin div.context-menu {
+    border: 1px solid ThreeDFace;
+    background-color: Window;
+    color: WindowText;
+    font-size: 10px;
+    box-shadow: 0px 2px 8px 3px rgba(0,0,0,0.3);
+}
+body.platform-win div.context-menu ul {
+    margin: 0;
+    padding: 2px 0px;
+}
+body.platform-mac div.context-menu ul {
+    margin: 0;
+    padding: 4px 0px;
+}
+body.platform-lin div.context-menu ul {
+    margin: 0;
+    padding: 2px 0px;
+}
+div.context-menu li {
+    list-style: none;
+}
+body.platform-win div.context-menu li {
+    padding: 4px 26px;
+}
+body.platform-mac div.context-menu li {
+    padding: 0px 21px;
+}
+body.platform-lin div.context-menu li {
+    padding: 4px 27px;
+}
+body.platform-win div.context-menu li:not(.divider):hover {
+    background-color: ButtonHighlight; /* background opacity x0.6 */
+    color: HighlightText;
+}
+body.platform-mac div.context-menu li:not(.divider):hover {
+    background-color: ActiveBorder;
+    color: MenuText;
+}
+body.platform-lin div.context-menu li:not(.divider):hover {
+    background-color: Highlight;
+    color: HighlightText;
+}
+body.platform-win div.context-menu li.divider {
+    border-top: 1px solid ButtonHighlight;
+    margin: 5px 1px 5px 1px;
+    padding: 0;
+}
+body.platform-mac div.context-menu li.divider {
+    border-top: 2px solid ThreeDFace;
+    margin: 5px 1px 5px 1px;
+    padding: 0;
+    opacity: 0.4;
+}
+body.platform-lin div.context-menu li.divider {
+    border-top: 1px solid ThreeDFace;
+    margin: 5px 1px 5px 1px;
+    padding: 0;
+}
