@@ -1,6 +1,8 @@
 interface CatalogTemplateRoot {
     /** Path of extension */
     extensionPath: string;
+    /** Short name of platform (win/mac/lin) */
+    platformShortName: string;
     /** Command name for communication */
     commandEntry: string;
     /** Show preview items */
@@ -77,9 +79,11 @@ interface CatalogTemplateTopic {
 
 interface CatalogTemplateMenu {
     /** Localized title */
-    title: string;
-    /** Link address */
-    url: string;
+    title?: string;
+    /** Action name */
+    action?: string;
+    /** URL to jump */
+    url?: string;
 }
 
 interface CatalogTemplatePage {

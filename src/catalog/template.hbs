@@ -9,7 +9,7 @@
   <script src="lib/spin.min.js"></script>
 </head>
 
-<body>
+<body class="platform-{{platformShortName}}">
   <div class="catalog-wrapper{{#unless showPreview}} catalog-hide-previews{{/unless}}{{#if unofficial}} catalog-unofficial{{/if}}">
     {{#each panels}}
     <div class="catalog-panel{{#if opened}} catalog-panel-opened{{/if}}"
@@ -76,13 +76,19 @@
           </div>
           {{/if}}
           {{#if menus}}
-          <div class="catalog-item-config icon-gear">&nbsp;</div>
-          <ul class="catalog-popup-menu">
-          {{#each menus}}
-            <li><a href="{{url}}">{{title}}</a></li>
-          {{/each}}
-          </ul>
-          {{/if}}
+          <!--<div class="catalog-item-config icon-gear">&nbsp;</div>-->
+          <div class="context-menu" style="display: none">
+            <ul>
+            {{#each menus}}
+              {{#if title}}
+                <li{{#if action}} data-action="{{action}}"{{/if}}{{#if url}} data-url="{{url}}"{{/if}}>{{title}}</li>
+              {{else}}
+                <li class="divider"></li>
+              {{/if}}
+            {{/each}}
+            </ul>
+          </div>
+          {{/if}}{{!--menus--}}
         </div>
         {{else}}{{!--each items--}}
         <div class="catalog-item-none">{{@root.localized.no_item}}</div>

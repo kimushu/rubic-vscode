@@ -33,6 +33,9 @@ const CMD_APPLY_TEMPLATE    = "extension.rubic.applyTemplate";
 
 const CFG_SHOW_PREVIEW = "catalog.showPreview";
 
+const LOCALIZED_FAV = localize("add-favorite", "Add to favorites");
+const LOCALIZED_UNFAV = localize("remove-favorite", "Remove from favorites");
+
 interface CatalogSelection {
     boardClass: string;
     repositoryUuid: string;
@@ -68,7 +71,11 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         context.subscriptions.push(
             commands.registerCommand(CMD_SHOW_CATALOG, (params) => {
                 if (params) {
-                    this._updateCatalogView(params);
+                    if (params.contextMenu) {
+                        this._contextMenuHandler(params.contextMenu, params.panelId, params.itemId);
+                    } else {
+                        this._updateCatalogView(params);
+                    }
                 } else {
                     this._showCatalogView();
                 }
@@ -182,6 +189,13 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 this._showSaveMessage();
             }
         });
+    }
+
+    /**
+     * showCatalog command receiver for context menu selection
+     */
+    private _contextMenuHandler(action: string, panelId: string, itemId: string) {
+        console.log({ action, panelId, itemId });
     }
 
     /**
@@ -412,6 +426,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
 
         let vars: CatalogTemplateRoot = {
             extensionPath: Uri.file(RubicProcess.self.extensionRoot).toString(),
+            platformShortName: null,
             commandEntry: CMD_SHOW_CATALOG,
             showPreview: null,
             unofficial: catalogData.custom,
@@ -448,6 +463,17 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 pages: [],
             }]
         };
+        switch (process.platform) {
+        case "win32":
+            vars.platformShortName = "win";
+            break;
+        case "darwin":
+            vars.platformShortName = "mac";
+            break;
+        default:
+            vars.platformShortName = "lin";
+            break;
+        }
         if (this._currentPanel == null) {
             if (this._currentSelection.boardClass == null) {
                 this._currentPanel = "board";
@@ -504,36 +530,56 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         let { sketch } = RubicProcess.self;
         let { boardClass } = this._currentSelection;
         let selectedBoard: RubicCatalog.Board;
-        panel.disabled = false;
-        panel.initialItemId = boardClass;
-        panel.savedItemId = sketch.loaded ? sketch.boardClass : "";
-        panel.items = [];
-        for (let board of catalogData.boards) {
-            if (board.class === boardClass) {
-                selectedBoard = board;
-            } else if (board.disabled) {
-                continue;
+        return Promise.resolve(RubicProcess.self.getMementoValue("boardFavorites", []))
+        .then((favorites) => {
+            panel.disabled = false;
+            panel.initialItemId = boardClass;
+            panel.savedItemId = sketch.loaded ? sketch.boardClass : "";
+            panel.items = [];
+            for (let board of catalogData.boards) {
+                if (board.class === boardClass) {
+                    selectedBoard = board;
+                } else if (board.disabled) {
+                    continue;
+                }
+                let menus: CatalogTemplateMenu[] = [];
+                let website = toLocalizedString(board.website);
+                if (website != null) {
+                    menus.push({
+                        title: localize("go-website-board", "Go to the website for this board"),
+                        url: website,
+                    });
+                }
+                if (menus.length > 0) {
+                    menus.push({});
+                }
+                if (favorites.indexOf(board.class) < 0) {
+                    menus.push({title: LOCALIZED_FAV, action: "fav"});
+                } else {
+                    menus.push({title: LOCALIZED_UNFAV, action: "unfav"});
+                }
+                panel.items.push({
+                    id: board.class,
+                    title: toLocalizedString(board.name),
+                    selected: (board.class === boardClass),
+                    icon: board.icon,
+                    preview: board.preview,
+                    description: toLocalizedString(board.description),
+                    details: toLocalizedString(board.author),
+                    topics: (board.topics || []).map((topic) => ({
+                        title: toLocalizedString(topic.name),
+                        color: topic.color
+                    })),
+                    menus,
+                });
             }
-            panel.items.push({
-                id: board.class,
-                title: toLocalizedString(board.name),
-                selected: (board.class === boardClass),
-                icon: board.icon,
-                preview: board.preview,
-                description: toLocalizedString(board.description),
-                details: toLocalizedString(board.author),
-                topics: (board.topics || []).map((topic) => ({
-                    title: toLocalizedString(topic.name),
-                    color: topic.color
-                })),
-            });
-        }
-        if ((boardClass != null) && (selectedBoard == null)) {
-            RubicProcess.self.showWarningMessage(localize("board-x-not-found",
-                "No board named '{0}'", this._currentSelection.boardClass
-            ));
-        }
-        return Promise.resolve(selectedBoard);
+            if ((boardClass != null) && (selectedBoard == null)) {
+                RubicProcess.self.showWarningMessage(localize("board-x-not-found",
+                    "No board named '{0}'", this._currentSelection.boardClass
+                ));
+            }
+            return selectedBoard;
+        });
     }
 
     /**
@@ -548,30 +594,49 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
         let { sketch } = RubicProcess.self;
         let { repositoryUuid } = this._currentSelection;
         let selectedRepo: RubicCatalog.RepositorySummary;
-        panel.disabled = false;
-        panel.initialItemId = repositoryUuid;
-        panel.savedItemId = sketch.loaded ? sketch.repositoryUuid : "";
-        panel.items = [];
-        for (let repo of board.repositories) {
-            if (repo.uuid === repositoryUuid) {
-                selectedRepo = repo;
+        return Promise.resolve(RubicProcess.self.getMementoValue("repositoryFavorites", []))
+        .then((favorites) => {
+            panel.disabled = false;
+            panel.initialItemId = repositoryUuid;
+            panel.savedItemId = sketch.loaded ? sketch.repositoryUuid : "";
+            panel.items = [];
+            for (let repo of board.repositories) {
+                if (repo.uuid === repositoryUuid) {
+                    selectedRepo = repo;
+                }
+                let menus: CatalogTemplateMenu[] = [];
+                if (repo.host === "github") {
+                    menus.push({
+                        title: localize("go-github-repo", "Go to the GitHub for this repository"),
+                        url: `https://github.com/${repo.owner}/${repo.repo}/tree/${repo.branch}`,
+                    });
+                }
+                if (menus.length > 0) {
+                    menus.push({});
+                }
+                if (favorites.indexOf(repo.uuid) < 0) {
+                    menus.push({title: LOCALIZED_FAV, action: "fav"});
+                } else {
+                    menus.push({title: LOCALIZED_UNFAV, action: "unfav"});
+                }
+                panel.items.push({
+                    id: repo.uuid,
+                    title: toLocalizedString(repo.cache.name),
+                    selected: (repo.uuid === repositoryUuid),
+                    preview: repo.cache.preview,
+                    official: repo.official,
+                    description: toLocalizedString(repo.cache.description),
+                    details: repo.owner,
+                    menus,
+                });
             }
-            panel.items.push({
-                id: repo.uuid,
-                title: toLocalizedString(repo.cache.name),
-                selected: (repo.uuid === repositoryUuid),
-                preview: repo.cache.preview,
-                official: repo.official,
-                description: toLocalizedString(repo.cache.description),
-                details: repo.owner
-            });
-        }
-        if ((repositoryUuid != null) && (selectedRepo == null)) {
-            RubicProcess.self.showWarningMessage(localize("repo-x-not-found",
-                "No repository named '{0}'", this._currentSelection.repositoryUuid
-            ));
-        }
-        return Promise.resolve(selectedRepo);
+            if ((repositoryUuid != null) && (selectedRepo == null)) {
+                RubicProcess.self.showWarningMessage(localize("repo-x-not-found",
+                    "No repository named '{0}'", this._currentSelection.repositoryUuid
+                ));
+            }
+            return selectedRepo;
+        });
     }
 
     /**
@@ -599,6 +664,13 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                 return catalogData.prepareCacheDir(repositoryUuid, rel.tag, false);
             })
             .then((cacheDir) => {
+                let menus: CatalogTemplateMenu[] = [];
+                if (repo.host === "github") {
+                    menus.push({
+                        title: localize("go-github-rel", "Go to the GitHub for this release"),
+                        url: `https://github.com/${repo.owner}/${repo.repo}/releases/tag/${rel.tag}`,
+                    });
+                }
                 panel.items.push({
                     id: rel.tag,
                     title: toLocalizedString(rel.cache.name || {en: rel.name}),
@@ -609,6 +681,7 @@ export class CatalogViewer implements TextDocumentContentProvider, Disposable {
                         localize("release-date", "Release date")
                         } : ${new Date(rel.published_at).toLocaleDateString()}${
                         cacheDir ? " (" + localize("downloaded", "Downloaded") + ")" : ""}`,
+                    menus
                 });
             });
         }, Promise.resolve())

@@ -1,5 +1,7 @@
 {
     "messages": [
+        "お気に入りに追加する",
+        "お気に入りから削除する",
         "Rubicボードカタログを開く前に、まず作業するフォルダを開いて下さい",
         "カタログを開く",
         "新しいハードウェア構成は保存されていません",
@@ -29,8 +31,11 @@
         "リリース",
         "バリエーション",
         "詳細",
+        "このボードのウェブサイトを開く",
         "{0} という名前のボードが見つかりません",
+        "このリポジトリのGitHubページを開く",
         "{0} という名前のリポジトリが見つかりません",
+        "このリリースのGitHubページを開く",
         "タグ",
         "リリース日",
         "ダウンロード済み",
@@ -54,6 +59,8 @@
         "ファームウェアの書き込みに失敗しました"
     ],
     "keys": [
+        "add-favorite",
+        "remove-favorite",
         "open-folder-before",
         "open-catalog",
         "hw-config-not-saved",
@@ -83,8 +90,11 @@
         "release",
         "variation",
         "details",
+        "go-website-board",
         "board-x-not-found",
+        "go-github-repo",
         "repo-x-not-found",
+        "go-github-rel",
         "tag",
         "release-date",
         "downloaded",

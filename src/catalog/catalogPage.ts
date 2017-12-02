@@ -149,11 +149,9 @@ const sendCommand = (() => {
         }
         return newElement;
     }
-    /*
     function getParentElement(element: HTMLElement, className: string): HTMLElement {
         return _getElement(element, className, "parentElement");
     }
-    */
     function getNextElement(element: HTMLElement, className: string): HTMLElement {
         return _getElement(element, className, "nextElementSibling");
     }
@@ -167,10 +165,8 @@ const sendCommand = (() => {
     function getPrevElement(element: HTMLElement, className: string): HTMLElement {
         return _getElement(element, className, "previousElementSibling");
     }
-})();
 
-// Register event handler for page navs
-(() => {
+    // Register event handler for page navs
     function getArray(className: string) {
         return Array.from(document.getElementsByClassName(className));
     }
@@ -186,10 +182,8 @@ const sendCommand = (() => {
             link.blur();
         });
     }    
-})();
 
-// Register event handler for page buttons
-(() => {
+    // Register event handler for page buttons
     for (let button of <HTMLButtonElement[]>Array.from(document.getElementsByClassName("catalog-page-button"))) {
         let { command } = button.dataset;
         if (command != null) {
@@ -198,4 +192,91 @@ const sendCommand = (() => {
             };
         }
     }
+
+    // Register context menu handler for items
+    let activeContextMenu: HTMLDivElement;
+    let backdrop: HTMLDivElement;
+
+    function closeContextMenu() {
+        if (activeContextMenu) {
+            activeContextMenu.style.display = "none";
+            activeContextMenu = null;
+        }
+        if (backdrop) {
+            backdrop.style.display = "none";
+        }
+    }
+
+    // Define utility function for context menu
+    function openContextMenu(menu: HTMLDivElement, x: number, y: number) {
+        closeContextMenu();
+        activeContextMenu = menu;
+        let wrapper = <HTMLDivElement>document.getElementsByClassName("catalog-wrapper")[0];
+        const menuMargin = 4;
+        menu.style.display = "block";
+        if ((x + menu.clientWidth + menuMargin) > wrapper.clientWidth) {
+            x -= menu.clientWidth;
+        }
+        if ((y + menu.clientHeight + menuMargin) > wrapper.clientHeight) {
+            y -= menu.clientHeight;
+        }
+        menu.style.left = `${x}px`;
+        menu.style.top = `${y}px`;
+        menu.setAttribute("tabindex", "0");
+        menu.focus();
+
+        if (!backdrop) {
+            backdrop = document.createElement("div");
+            backdrop.classList.add("context-menu-backdrop");
+            backdrop.onclick = backdrop.oncontextmenu = (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                closeContextMenu();
+            };
+        }
+        menu.parentElement.appendChild(backdrop);
+        backdrop.style.display = "block";
+    }
+
+    for (let item of <HTMLDivElement[]>Array.from(document.getElementsByClassName("catalog-item"))) {
+        let menu = <HTMLDivElement>item.getElementsByClassName("context-menu")[0];
+        if (menu == null) {
+            continue;
+        }
+        item.oncontextmenu = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openContextMenu(menu, event.pageX, event.pageY);
+        };
+        menu.onclick = (event) => {
+            let target = <HTMLElement>event.target;
+            while ((target) && (target !== menu) && (target.tagName !== "LI")) {
+                target = target.parentElement;
+            }
+            event.stopPropagation();
+            if (!target) {
+                return;
+            }
+            let { action, url } = target.dataset;
+            if (!action && !url) {
+                return;
+            }
+            closeContextMenu();
+            if (url) {
+                let a = document.createElement("a");
+                a.href = url;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                return;
+            }
+            let itemElement = getParentElement(menu, "catalog-item");
+            let { itemId } = itemElement.dataset;
+            let panelElement = getParentElement(menu, "catalog-panel");
+            let { panelId } = panelElement.dataset;
+            sendCommand({ contextMenu: action, itemId, panelId });
+        };
+    }
+    document.body.oncontextmenu = closeContextMenu;
+    document.body.onmouseleave = closeContextMenu;
 })();
