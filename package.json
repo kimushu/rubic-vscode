@@ -249,6 +249,8 @@
     ]
   },
   "activationEvents": [
+    "onDebugInitialConfigurations",
+    "onDebugResolve:rubic",
     "onCommand:extension.rubic.showCatalog",
     "onCommand:extension.rubic.guessProgramName",
     "workspaceContains:.vscode/rubic.json"
