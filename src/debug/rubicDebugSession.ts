@@ -429,7 +429,7 @@ class RubicDebugSession extends DebugSession {
                 this._report(
                     force ?
                     localize("program-forcedly-stopped", "Program forcedly stopped") :
-                    localize("program-ended", "Program ended") + ` ${result}`
+                    localize("program-ended", "Program ended") + (result != null ? ` ${result}` : "")
                 );
                 this.sendEvent(new TerminatedEvent());
             });
