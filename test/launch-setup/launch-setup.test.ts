@@ -18,17 +18,24 @@ suite("launch.json setup test", function() {
         rimraf(launchJson, done);
     });
 
-    test("launch.json can be created by Rubic at the first debug", function() {
-        this.timeout(10000);
-        return vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], <any>{ type: "rubic" })
+    test("launch.json can be created by Rubic at the first debug", function(done) {
+        this.timeout(15000);
+        vscode.debug.startDebugging(vscode.workspace.workspaceFolders[0], <any>{ type: "rubic" })
         .then((succeeded) => {
             assert(succeeded);
-            let json = CJSON.parse(fs.readFileSync(launchJson, "utf8"));
-            assert.strictEqual(json.configurations.length, 1);
-            assert.strictEqual(json.configurations[0].type, "rubic");
-            assert.strictEqual(json.configurations[0].request, "launch");
-            assert.strictEqual(json.configurations[0].name, "Launch");
-        });
+            setTimeout(() => {
+                try {
+                    let json = CJSON.parse(fs.readFileSync(launchJson, "utf8"));
+                    assert.strictEqual(json.configurations.length, 1);
+                    assert.strictEqual(json.configurations[0].type, "rubic");
+                    assert.strictEqual(json.configurations[0].request, "launch");
+                    assert.strictEqual(json.configurations[0].name, "Launch");
+                    done();
+                } catch (error) {
+                    done(error);
+                }
+            }, 5000);
+        }, (reason) => done);
     });
 
 });
