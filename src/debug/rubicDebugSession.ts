@@ -530,8 +530,8 @@ class RubicDebugSession extends DebugSession {
     private _writeFirmware(args: WriteFirmwareArguments): Promise<boolean> {
         let followInstMessage = `${localize(
             "follow-inst",
-            "Please follow instructions showed on the top of window"
-        )} $(arrow-up)`;
+            "Please follow instructions showed in notification area at the bottom right"
+        )} $(arrow-right)`;
         return Promise.resolve(RubicProcess.self.withProgress({
             location: { Window: true },
             title: localize("firmware-update", "Firmware update")
