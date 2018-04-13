@@ -124,6 +124,8 @@ export class WakayamaRbBoard extends Board {
         }
         return Promise.resolve(
         ).then(() => {
+            return this._requestBreak();
+        }).then(() => {
             return this._send("H\r");
         }).then(() => {
             return this._recv("H [ENTER])\r\n>");
@@ -156,6 +158,8 @@ export class WakayamaRbBoard extends Board {
         }
         return Promise.resolve(
         ).then(() => {
+            return this._requestBreak();
+        }).then(() => {
             return this._send(`U ${filename} ${ascii.byteLength}\r`);
         }).then(() => {
             if (data.byteLength === 0) {
@@ -193,6 +197,8 @@ export class WakayamaRbBoard extends Board {
         let len: number = NaN;
         return Promise.resolve(
         ).then(() => {
+            return this._requestBreak();
+        }).then(() => {
             return this._send(`F ${filename}\r`);
         }).then(() => {
             return this._recv("Waiting");
@@ -230,6 +236,8 @@ export class WakayamaRbBoard extends Board {
     enumerateFiles(dir: string): Promise<string[]> {
         return Promise.resolve(
         ).then(() => {
+            return this._requestBreak();
+        }).then(() => {
             return this._send("L\r");
         }).then(() => {
             return this._recv("\r\n>");
@@ -298,6 +306,8 @@ export class WakayamaRbBoard extends Board {
     formatStorage(): Promise<void> {
         return Promise.resolve(
         ).then(() => {
+            return this._requestBreak();
+        }).then(() => {
             return this._send("Z\r");
         }).then(() => {
             return this._recv("\r\n>");
@@ -309,6 +319,8 @@ export class WakayamaRbBoard extends Board {
     runProgram(filename: string): Promise<void> {
         return Promise.resolve(
         ).then(() => {
+            return this._requestBreak();
+        }).then(() => {
             return this._send(`R ${filename}\r`);
         }).then(() => {
             // Skip "R xxx" line
@@ -323,7 +335,7 @@ export class WakayamaRbBoard extends Board {
                     if (resp.match(/^WAKAYAMA\.RB .*H \[ENTER\]\)\r\n$/)) {
                         stdout.push(null);
                         this._stdio = null;
-                        this.emit("stop");
+                        this.emit("stop", false);
                     } else {
                         stdout.push(resp);
                     }
@@ -344,6 +356,29 @@ export class WakayamaRbBoard extends Board {
 
     isRunning(): Promise<boolean> {
         return Promise.resolve(!!this._stdio);
+    }
+
+    stopProgram(): Promise<void> {
+        if (this.isRunning()) {
+            this.emit("stop", true);
+        }
+        return this._requestBreak();
+    }
+
+    private _requestBreak(): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this._port.set({brk: true}, (error) => {
+                if (error != null) {
+                    return reject(error);
+                }
+                this._port.set({brk: false}, (error) => {
+                    if (error != null) {
+                        return reject(error);
+                    }
+                    return resolve();
+                });
+            });
+        });
     }
 
     protected getConfigXmlPath(): string {
