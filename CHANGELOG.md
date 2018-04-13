@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.99.16
+
+* Support program abort on GR-CITRUS
+* Improve some messages for new VSCode notification UI
+
 ## 0.99.15
 
 * Add debug mode for GR-CITRUS
