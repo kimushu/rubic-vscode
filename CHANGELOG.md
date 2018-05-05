@@ -5,6 +5,14 @@
 * Support program abort on GR-CITRUS
 * Improve some messages for new VSCode notification UI
 
+## 0.99.17
+
+* Add DTR=off signal for GR-CITRUS abort (workaround for macOS)
+
+## 0.99.16
+
+* Add BREAK signal for GR-CITRUS abort
+
 ## 0.99.15
 
 * Add debug mode for GR-CITRUS
