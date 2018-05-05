@@ -367,11 +367,11 @@ export class WakayamaRbBoard extends Board {
 
     private _requestBreak(): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this._port.set({brk: true}, (error) => {
+            this._port.set({brk: true, dtr: false}, (error) => {
                 if (error != null) {
                     return reject(error);
                 }
-                this._port.set({brk: false}, (error) => {
+                this._port.set({brk: false, dtr: true}, (error) => {
                     if (error != null) {
                         return reject(error);
                     }
