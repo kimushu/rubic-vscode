@@ -10,7 +10,6 @@ import { EventEmitter } from "vscode";
 import { Board, BoardCandidate, BoardStdioStream, BoardInformation, BoardConstructor, BoardResult, BoardStorageInfo } from "./board";
 import { enumerateRemovableDisks } from "../util/diskEnumerator";
 import { ProgressReporter, vscode } from "../extension";
-import { bin2hex } from "../util/bin2hex";
 import { FileTransferError, NotSupportedError } from "../util/errors";
 import { SerialBoard } from "./serialBoard";
 
@@ -109,7 +108,7 @@ export class WakayamaRbBoard extends SerialBoard {
         case WrbbStorageType.WRBB_STORAGE_INTERNAL:
             if (this.boardData.useHexForWriting) {
                 cmd = "U";
-                data = bin2hex(data);
+                data = Buffer.from(data.toString("hex"));
             } else {
                 cmd = "W";
             }
@@ -175,13 +174,9 @@ export class WakayamaRbBoard extends SerialBoard {
         if ((ascii == null) || (ascii.length !== (length * 2))) {
             throw new FileTransferError("Invalid data length");
         }
-        let buffer = Buffer.alloc(length);
-        for (let byteOffset = 0; byteOffset < length; ++byteOffset) {
-            let byte = parseInt(ascii.substr(byteOffset * 2, 2), 16);
-            if (isNaN(byte)) {
-                throw new FileTransferError(`Invalid hex data at byte ${byteOffset}`);
-            }
-            buffer[byteOffset] = byte;
+        let buffer = Buffer.from(ascii, "hex");
+        if (buffer.byteLength !== length) {
+            throw new FileTransferError("Junk data in hex");
         }
         return buffer;
     }
