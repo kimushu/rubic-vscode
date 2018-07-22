@@ -1,5 +1,9 @@
-import { EventEmitter } from "events";
 import * as stream from "stream";
+import { ProgressReporter } from "../extension";
+import { AssertionError } from "assert";
+import { NotSupportedError } from "../util/errors";
+
+import vscode_types = require("vscode");
 
 export interface BoardCandidate {
     /** Board class name */
@@ -17,8 +21,6 @@ export interface BoardCandidate {
 }
 
 export interface BoardInformation {
-    /** Path of the board */
-    path: string;
     /** Serial number */
     serialNumber?: string;
     /** UUID of the repository */
@@ -31,13 +33,39 @@ export interface BoardInformation {
     firmwareId?: string;
 }
 
+export interface BoardStorageInfo {
+    /** Localized name */
+    localizedName: string;
+    /** Mount point path */
+    mountPoint: string;
+    /** Is external storage (Add-on board, SD-card etc.) */
+    external?: boolean;
+    /** Is read-only storage */
+    readOnly?: boolean;
+}
+
+export interface BoardFileDigest {
+    type: "crc32" | "md5" | "sha1";
+    value: any;
+}
+
+export interface BoardResult {
+    /** Exit code */
+    code?: number;
+
+    /** Error object */
+    error?: Error;
+}
+
 export interface BoardStdioStream {
-    /** stdin (PC -> board) */
-    stdin?: stream.Writable;
-    /** stdout (board -> PC) */
-    stdout: stream.Readable;
-    /** stderr (board -> PC) */
-    stderr?: stream.Readable;
+    /** A stream for stdin (PC -> board) */
+    readonly stdin?: stream.Writable;
+
+    /** A stream for stdout (board -> PC) */
+    readonly stdout: stream.Readable;
+
+    /** A stream for stderr (board -> PC) */
+    readonly stderr?: stream.Readable;
 }
 
 export interface BoardDebugStream {
@@ -48,9 +76,9 @@ export interface BoardDebugStream {
 export interface BoardConstructor {
     /**
      * Enumerate boards
-     * @return An array of scanned boards
+     * @return A thenable that resolves to an array of scanned boards
      */
-    list: () => Promise<BoardCandidate[]>;
+    list: () => Thenable<BoardCandidate[]>;
 
     /**
      * Get localized board name
@@ -59,21 +87,20 @@ export interface BoardConstructor {
     getBoardName: () => string;
 
     /**
-     * Constructor
+     * Construct board instance
      */
     new (): Board;
 }
 
-export class Board extends EventEmitter {
+/**
+ * Abstract board class
+ */
+export class Board {
     private static _classes: {[className: string]: BoardConstructor} = {};
-    public boardData: any;
-
-    protected constructor() {
-        super();
-    }
 
     /**
      * Register board class
+     * @param constructor Constructor function of the board to be registered
      */
     static addConstructor(constructor: BoardConstructor) {
         this._classes[constructor.name] = constructor;
@@ -81,16 +108,20 @@ export class Board extends EventEmitter {
 
     /**
      * Get constructor of Board
+     * @param className The name of board class
      */
     static getConstructor(className: string): BoardConstructor {
         return this._classes[className];
     }
 
+    /** The auxiliary data to be passed to the board (board specific) */
+    public boardData: any;
+
     /**
-     * Check if the board is connected or not
+     * Construct board instance
      */
-    get isConnected(): boolean {
-        throw new Error("Not implemented");
+    protected constructor() {
+        this.boardData = undefined;
     }
 
     /**
@@ -104,140 +135,187 @@ export class Board extends EventEmitter {
     /**
      * Dispose object
      */
-    dispose() {
-        return this.disconnect()
-        .catch(() => {})
-        .then(() => {
-            this.removeAllListeners();
-        });
+    dispose(): any {
+        return this.disconnect();
     }
 
     /**
      * Connect to board
      * @param path Path of the board
      */
-    connect(path: string): Promise<void> {
-        return Promise.reject(new Error("Not implemented"));
+    connect(path: string): Thenable<void> {
+        throw new AssertionError();
     }
+
+    /**
+     * Check if the board is connected or not
+     */
+    get isConnected(): boolean {
+        throw new AssertionError();
+    }
+
+    /**
+     * An event to signal a board has been disconnected.
+     */
+    get onDidDisconnect(): vscode_types.Event<void> { throw new NotSupportedError(); }
 
     /**
      * Disconnect from board
      */
-    disconnect(): Promise<void> {
-        return Promise.reject(new Error("Not implemented"));
+    disconnect(): Thenable<void> {
+        throw new AssertionError();
     }
 
     /**
      * Get board information
+     * @return A thenable that resolves to board information
      */
-    getInfo(): Promise<BoardInformation> {
-        return Promise.reject(new Error("Not implemented"));
+    getInfo(): Thenable<BoardInformation> {
+        throw new AssertionError();
+    }
+
+    /**
+     * Get storage information
+     * @return A thenable that resolves to array of storage information
+     */
+    getStorageInfo(): Thenable<BoardStorageInfo[]> {
+        throw new AssertionError();
     }
 
     /**
      * Write file
-     * @param relativePath Relative path of the file to be stored
+     * @param filePath Full path of the file to be written
      * @param data Data to write
-     * @param progress Function to print progress
+     * @param progress Object for progress reporting
      */
-    writeFile(relativePath: string, data: Buffer, progress: (message: string) => void): Promise<void> {
-        return Promise.reject(new Error("Not implemented"));
+    writeFile(filePath: string, data: Buffer, progress?: ProgressReporter): Thenable<void> {
+        throw new AssertionError();
     }
 
     /**
      * Read file
-     * @param relativePath Relative path of the file to be read
-     * @return Read data
+     * @param filePath Full path of the file to be read
+     * @param progress Object for progress reporting
+     * @return A thenable that resolves to read data
      */
-    readFile(relativePath: string): Promise<Buffer> {
-        return Promise.reject(new Error("Not supported"));
+    readFile(filePath: string, progress?: ProgressReporter): Thenable<Buffer> {
+        return Promise.reject(new NotSupportedError());
+    }
+
+    /**
+     * Read file digest
+     * @param filePath Full path of the file to be read
+     * @return A thenable that resolves to digest information
+     */
+    readFileDigest(filePath: string): Thenable<BoardFileDigest> {
+        return Promise.reject(new NotSupportedError());
     }
 
     /**
      * Enumerate files
-     * @param relativePath Relative path of directory
-     * @return An array of relative path of found files
+     * @param dirPath Full path of directory (Wildcards not accepted)
+     * @param recursive Set true to search recursively
+     * @return A thenable that resolves to an array of full path of files found
      */
-    enumerateFiles(relativePath: string): Promise<string[]> {
-        return Promise.reject(new Error("Not supported"));
+    enumerateFiles(dirPath: string, recursive?: boolean): Thenable<string[]> {
+        return Promise.reject(new NotSupportedError());
     }
 
     /**
-     * Format internal storage
+     * Remove file
+     * @param filePath Full path of the file to be read
      */
-    formatStorage(): Promise<void> {
-        return Promise.reject(new Error("Not supported"));
+    removeFile(filePath: string): Thenable<void> {
+        return Promise.reject(new NotSupportedError());
+    }
+
+    /**
+     * Format storage
+     * @param mountPoint Full path of mount point (directory) to be formatted
+     */
+    formatStorage(mountPoint: string): Thenable<void> {
+        return Promise.reject(new NotSupportedError());
     }
 
     /**
      * Program firmware
-     * @param filename Full path of firmware file
-     * @param boardPath Board path
-     * @param reporter Progress indication callback
+     * @param buffer Firmware data
+     * @param reporter Object for progress reporting
+     * @return A thenable that resolves to boolean value
+     *         (true: succeeded, false: aborted by user)
      */
-    writeFirmware(filename: string, boardPath: string, reporter: (message?: string) => void): Promise<boolean> {
-        return Promise.reject(new Error("Not supported"));
+    writeFirmware(buffer: Buffer, progress?: ProgressReporter): Thenable<boolean> {
+        return Promise.reject(new NotSupportedError());
     }
 
     /**
-     * Run program
-     * @param relativePath Relative path of the file to be executed
+     * Start program
+     * @param filePath A full path of the file to be executed
      */
-    runProgram(relativePath: string): Promise<void> {
-        return Promise.reject(new Error("Not supported"));
+    startProgram(filePath: string): Thenable<void> {
+        return Promise.reject(new NotSupportedError());
     }
 
     /**
-     * Get program running state
+     * Check if a program is running or not
      */
-    isRunning(): Promise<boolean> {
-        return Promise.reject(new Error("Not supported"));
+    get isRunning(): boolean {
+        throw new NotSupportedError();
     }
 
     /**
-     * Stop program
+     * An event to signal a program has been finished.
      */
-    stopProgram(): Promise<void> {
-        return Promise.reject(new Error("Not supported"));
+    get onDidFinish(): vscode_types.Event<BoardResult> { throw new NotSupportedError(); }
+
+    /**
+     * Abort program
+     * @param code A code passed to onDidFinished event
+     */
+    abortProgram(code?: number): Thenable<void> {
+        return Promise.reject(new NotSupportedError());
     }
 
     /**
      * Get standard I/O streams
      */
-    getStdioStream(): Promise<BoardStdioStream> {
-        return Promise.reject(new Error("Not supported"));
+    getStdioStream(): Thenable<BoardStdioStream> {
+        return Promise.reject(new NotSupportedError());
     }
 
     /**
      * Get debug streams
      */
-    getDebugStream(): Promise<BoardDebugStream> {
-        return Promise.reject(new Error("Not supported"));
+    getDebugStream(): Thenable<BoardDebugStream> {
+        return Promise.reject(new NotSupportedError());
     }
 
     /**
      * Reset board
      */
-    reset(): Promise<void> {
-        return Promise.reject(new Error("Not supported"));
+    reset(): Thenable<void> {
+        return Promise.reject(new NotSupportedError());
     }
 
     /**
-     * Get auto start program setting
+     * Get boot program setting
      */
-    getAutoStartProgram(): Promise<string> {
-        return Promise.reject(new Error("Not supported"));
+    getBootProgramPath(): Thenable<string> {
+        return Promise.reject(new NotSupportedError());
     }
 
     /**
-     * Set auto start program setting
-     * @param relativePath Relative path of the file to be executed
+     * Set boot program setting
+     * @param filePath A full path of the file to be executed
      */
-    setAutoStartProgram(relativePath: string): Promise<void> {
-        return Promise.reject(new Error("Not supported"));
+    setBootProgramPath(filePath: string): Thenable<void> {
+        return Promise.reject(new NotSupportedError());
     }
 }
 
-require("./peridotPiccoloBoard");
+require("./dummyBoard");
+// require("./peridotPiccoloBoard");
 require("./wakayamaRbBoard");
 require("./grCitrusBoard");
+require("./pyBoard");
+require("./m5stack");
