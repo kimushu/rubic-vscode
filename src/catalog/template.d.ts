@@ -1,12 +1,16 @@
-interface CatalogTemplateRoot {
-    /** Path of extension */
-    extensionPath: string;
-    /** Command name for communication */
-    commandEntry: string;
-    /** Show preview items */
-    showPreview: boolean;
+/**
+ * Stores data for passed via handlebars
+ */
+interface CatalogRenderDescriptor {
+    /** Uri of extension root for local resources */
+    baseUri: string;
+
+    /** Name of workspace folder */
+    folderName: string;
+
     /** Disable "official" badge */
-    unofficial: boolean;
+    unofficial?: boolean;
+
     /** Localized texts */
     localized: {
         official: string;
@@ -15,71 +19,83 @@ interface CatalogTemplateRoot {
         website: string;
         loading: string;
         changed: string;
-        not_selected: string;
-        no_item: string;
+        notSelected: string;
+        noItem: string;
     };
-    /** List of panels */
-    panels: CatalogTemplatePanel[];
+
+    /** Panels */
+    panels: CatalogPanelRenderDescriptor[];
 }
 
-interface CatalogTemplatePanel {
-    /** ID ot panel */
-    id: string;
+interface CatalogPanelRenderDescriptor {
+    /** ID of panel */
+    panelId: string;
+
     /** Localized title */
-    title: string;
-    /** Whether the panel is opened */
-    opened?: boolean;
-    /** Whether the panel is disabled */
-    disabled?: boolean;
-    /** ID of saved selection */
-    savedItemId?: string;
-    /** ID of initial selection */
-    initialItemId?: string;
-    /** List of items */
-    items?: CatalogTemplateItem[];
-    /** List of pages */
-    pages?: CatalogTemplatePage[];
+    localizedTitle: string;
+
+    /** Are icons used */
+    withIcons?: boolean;
+
+    /** Are html pages used */
+    withPages?: boolean;
 }
 
-interface CatalogTemplateItem {
+/**
+ * Stores data passed via message passing
+ */
+interface CatalogItemDescriptor {
     /** ID of item */
-    id: string;
+    itemId: string;
+
     /** Localized title (1st line) */
-    title: string;
-    /** Selected */
-    selected?: boolean;
+    localizedTitle: string;
+    
     /** Icon URL (relative path from extension folder) */
     icon?: string;
+
     /** Show "Official" badge */
     official?: boolean;
+
     /** Show "Preview" badge */
     preview?: boolean;
+
     /** Show "Obsolete" badge */
     obsolete?: boolean;
+
     /** Localized description (2nd line) */
-    description?: string;
+    localizedDescription?: string;
+
     /** Localized details (3rd line) */
-    details?: string;
+    localizedDetails?: string;
+
     /** Topics badge */
-    topics?: CatalogTemplateTopic[];
+    topics?: CatalogTopicDescriptor[];
+
     /** Menu items */
-    menus?: CatalogTemplateMenu[];
+    menus?: CatalogMenuDescriptor[];
 }
 
-interface CatalogTemplateTopic {
+interface CatalogTopicDescriptor {
     /** Localized title */
-    title: string;
+    localizedTitle: string;
+
     /** Color name */
     color: string;
+
     /** Tooltip text */
-    tooltip?: string;
+    localizedTooltip?: string;
 }
 
-interface CatalogTemplateMenu {
+interface CatalogMenuDescriptor {
     /** Localized title */
-    title: string;
+    localizedTitle: string;
+
     /** Link address */
     url: string;
+
+    /** Command name */
+    command: string;
 }
 
 interface CatalogTemplatePage {
