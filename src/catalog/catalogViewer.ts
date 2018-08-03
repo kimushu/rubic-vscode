@@ -12,10 +12,12 @@ import { Sketch } from "../sketch";
 import * as MarkdownIt from "markdown-it";
 import { Runtime } from "../runtimes/runtime";
 import { SystemComposition } from "../util/systemComposition";
-require("promise.prototype.finally").shim();
+import { extensionContext, vscode } from "../extension";
+import { CacheStorage } from "../util/cacheStorage";
+import * as path from "path";
+import * as dedent from "dedent";
 
 import HandlebarsType = require("handlebars");
-import { extensionContext, vscode } from "../extension";
 const handlebars: typeof HandlebarsType = require("./handlebars");
 require("./webview/catalog.hbs");
 const localize = nls.loadMessageBundle(__filename);
@@ -243,29 +245,9 @@ export class CatalogViewer implements Disposable {
     private _getCacheHandler(message: WebViewCommunication.GetCacheRequest): Thenable<void> {
         const key: string[] = [];
         return this._getCatalogData()
-        .then((catalogData) => {
-            const items: CatalogItemDescriptor[] = [];
+        .then((catalogData): any => {
             if (message.panelId === "board") {
-                catalogData.boards.forEach((board) => {
-                    if (board.disabled) {
-                        return;
-                    }
-                    items.push({
-                        itemId: board.class,
-                        localizedTitle: toLocalizedString(board.name),
-                        official: false,
-                        preview: !!board.preview,
-                        obsolete: false,
-                        icon: board.icon,
-                        topics: board.topics.map((topic) => ({
-                            color: topic.color || "gray",
-                            localizedTitle: toLocalizedString(topic.name)
-                        })),
-                        localizedDescription: toLocalizedString(board.description),
-                        localizedDetails: toLocalizedString(board.author),
-                    });
-                });
-                return items;
+                return this._generateBoardCache(catalogData);
             }
             key.push(message.key[0]);
             const board = catalogData.getBoard(message.key[0]);
@@ -273,22 +255,7 @@ export class CatalogViewer implements Disposable {
                 return;
             }
             if (message.panelId === "repository") {
-                board.repositories.forEach((repo) => {
-                    if (repo.disabled) {
-                        return;
-                    }
-                    let repoCache = repo.cache;
-                    items.push({
-                        itemId: repo.uuid,
-                        localizedTitle: repo.repo,
-                        localizedDescription: (repoCache != null) ? toLocalizedString(repoCache.description) : undefined,
-                        localizedDetails: repo.owner,
-                        official: !!repo.official,
-                        preview: (repoCache != null) ? !!repoCache.preview : false,
-                        obsolete: false,
-                    });
-                });
-                return items;
+                return this._generateRepositoryCache(board);
             }
             key.push(message.key[1]);
             const repo = board.getRepository(message.key[1]);
@@ -296,25 +263,7 @@ export class CatalogViewer implements Disposable {
                 return;
             }
             if (message.panelId === "release") {
-                repo.cache.releases.forEach((rel) => {
-                    const tagTitle = localize("tag", "Tag");
-                    const relDateTitle = localize("release-date", "Release date");
-                    // const downloadedTitle = localize("downloaded", "Downloaded");
-                    const relCache = rel.cache;
-                    items.push({
-                        itemId: rel.tag,
-                        localizedTitle: (relCache.name != null ?
-                            toLocalizedString(relCache.name) : rel.name),
-                        localizedDescription: (relCache.description != null ?
-                            toLocalizedString(relCache.description) : rel.description),
-                        localizedDetails: `${tagTitle} : ${rel.tag} / ${relDateTitle} : ${
-                            new Date(rel.published_at).toLocaleDateString()}`,
-                        official: false,
-                        preview: !!rel.preview,
-                        obsolete: false,
-                    });
-                });
-                return items;
+                return this._generateReleaseCache(repo);
             }
             key.push(message.key[2]);
             const rel = repo.getRelease(message.key[2]);
@@ -322,35 +271,17 @@ export class CatalogViewer implements Disposable {
                 return;
             }
             if (message.panelId === "variation") {
-                rel.cache.variations.forEach((vari) => {
-                    let topics: CatalogTopicDescriptor[] = [];
-                    for (let runtimeInfo of (vari.runtimes || [])) {
-                        try {
-                            let runtime = Runtime.constructRuntime(runtimeInfo);
-                            if (runtime != null) {
-                                topics.push(...runtime.getCatalogTopics());
-                            }
-                        } catch (error) {
-                            // Ignore errors
-                        }
-                    } 
-                    items.push({
-                        itemId: vari.path,
-                        localizedTitle: toLocalizedString(vari.name),
-                        localizedDescription: toLocalizedString(vari.description),
-                        official: false,
-                        preview: !!vari.preview,
-                        topics,
-                    });
-                });
-                return items;
+                return this._generateVariationCache(rel);
             }
             key.push(message.key[3]);
             const vari = rel.getVariation(message.key[3]);
             if (vari == null) {
                 return;
             }
-            // TODO
+            if (message.panelId === "details") {
+                return this._generateDetailsCache(vari);
+            }
+            throw new Error(`Unknown panelId: ${message.panelId}`);
         })
         .then((data) => {
             this._postCommand({
@@ -358,6 +289,170 @@ export class CatalogViewer implements Disposable {
                 panelId: message.panelId,
                 key, data,
             });
+        });
+    }
+
+    private _generateBoardCache(catalogData: CatalogData): CatalogItemDescriptor[] {
+        const items: CatalogItemDescriptor[] = [];
+        catalogData.boards.forEach((board) => {
+            if (board.disabled) {
+                return;
+            }
+            items.push({
+                itemId: board.class,
+                localizedTitle: toLocalizedString(board.name),
+                official: false,
+                preview: !!board.preview,
+                obsolete: false,
+                icon: board.icon,
+                topics: board.topics.map((topic) => ({
+                    color: topic.color || "gray",
+                    localizedTitle: toLocalizedString(topic.name)
+                })),
+                localizedDescription: toLocalizedString(board.description),
+                localizedDetails: toLocalizedString(board.author),
+            });
+        });
+        return items;
+    }
+
+    private _generateRepositoryCache(board: CatalogData.Board): CatalogItemDescriptor[] {
+        const items: CatalogItemDescriptor[] = [];
+        board.repositories.forEach((repo) => {
+            if (repo.disabled) {
+                return;
+            }
+            let repoCache = repo.cache;
+            items.push({
+                itemId: repo.uuid,
+                localizedTitle: repo.repo,
+                localizedDescription: (repoCache != null) ? toLocalizedString(repoCache.description) : undefined,
+                localizedDetails: repo.owner,
+                official: !!repo.official,
+                preview: (repoCache != null) ? !!repoCache.preview : false,
+                obsolete: false,
+            });
+        });
+        return items;
+    }
+
+    private _generateReleaseCache(repo: CatalogData.Repository): CatalogItemDescriptor[] {
+        const items: CatalogItemDescriptor[] = [];
+        repo.cache!.releases!.forEach((rel) => {
+            const tagTitle = localize("tag", "Tag");
+            const relDateTitle = localize("release-date", "Release date");
+            // const downloadedTitle = localize("downloaded", "Downloaded");
+            const relCache = rel.cache;
+            items.push({
+                itemId: rel.tag,
+                localizedTitle: (relCache.name != null ?
+                    toLocalizedString(relCache.name) : rel.name),
+                localizedDescription: (relCache.description != null ?
+                    toLocalizedString(relCache.description) : rel.description),
+                localizedDetails: `${tagTitle} : ${rel.tag} / ${relDateTitle} : ${new Date(rel.published_at).toLocaleDateString()}`,
+                official: false,
+                preview: !!rel.preview,
+                obsolete: false,
+            });
+        });
+        return items;
+    }
+
+    private _generateVariationCache(rel: CatalogData.Release): CatalogItemDescriptor[] {
+        const items: CatalogItemDescriptor[] = [];
+        rel.cache.variations.forEach((vari) => {
+            let topics: CatalogTopicDescriptor[] = [];
+            for (let runtimeInfo of (vari.runtimes || [])) {
+                try {
+                    let runtime = Runtime.constructRuntime(runtimeInfo);
+                    if (runtime != null) {
+                        topics.push(...runtime.getCatalogTopics());
+                    }
+                }
+                catch (error) {
+                    // Ignore errors
+                }
+            }
+            items.push({
+                itemId: vari.path,
+                localizedTitle: toLocalizedString(vari.name),
+                localizedDescription: toLocalizedString(vari.description),
+                official: false,
+                preview: !!vari.preview,
+                topics,
+            });
+        });
+        return items;
+    }
+
+    private _generateDetailsCache(vari: CatalogData.Variation): Thenable<CatalogPageDescriptor[]> {
+        const pages: CatalogPageDescriptor[] = [];
+        return Promise.resolve()
+        .then(() => {
+            if (vari.hasCache) {
+                return vari.cachePath;
+            }
+            return vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: localize("downloading-firm", "Downloading firmware"),
+                cancellable: false,
+            }, (progress) => {
+                return vari.release.download({
+                    report: (message) => progress.report({ message }),
+                });
+            });
+        })
+        .then((cachePath) => {
+            const stat = CacheStorage.statSync(cachePath);
+            const sizeText = (stat.size >= 1024) ? `${Math.round(stat.size / 1024)} kB` : `${stat.size} bytes`;
+            const md = new MarkdownIt("default", { html: true });
+            pages.push({
+                localizedTitle: localize("conn_and_firmware", "Connection & Firmware"),
+                content: md.render(dedent`
+                    ## ${localize("connection", "Connection")}
+                    * <button data-button-id="port" class="${
+                        ["", "-green", "-dropdown"].map((s) => `catalog-page-button${s}`).join(" ")
+                    }">${
+                        null || localize("no-port", "No selected port")
+                    }</button><button data-button-id="test" class="${
+                        ["", "-blue"].map((s) => `catalog-page-button${s}`).join(" ")
+                    }">${localize("test-connection", "Test connection")}</button>
+                    ## ${localize("firmware", "Firmware")}
+                    * ${vari.path} (${sizeText})<br><button data-button-id="writeFirmware" class="${
+                        ["", "-blue"].map((s) => `catalog-page-button${s}`).join(" ")
+                    }">${localize("write-firmware", "Write firmware to board")}</button>
+                `),
+            });
+            const lines: string[] = [];
+            (vari.runtimes || []).forEach((runtimeInfo) => {
+                try {
+                    const runtime = Runtime.constructRuntime(runtimeInfo);
+                    lines.push(runtime.renderDetails());
+                    if (runtime.getTemplatePath() != null) {
+                        lines.push(dedent`
+                        * ${localize("code-template", "Code template")}
+                        <br><button data-button-id="template" data-button-data="${runtimeInfo.name}" class="${
+                            ["", "-blue"].map((s) => `catalog-page-button${s}`).join(" ")
+                        }>${localize("apply-template", "Apply template")}</button>
+                        `);
+                    }
+                } catch (error) {
+                    // Ignore errors
+                }
+            });
+            if (lines.length > 0) {
+                pages.push({
+                    localizedTitle: localize("runtimes", "Runtimes"),
+                    content: md.render(lines.join("\n")),
+                });
+            }
+            if (vari.document != null) {
+                pages.push({
+                    localizedTitle: localize("document", "Document"),
+                    content: md.render(toLocalizedString(vari.document)),
+                });
+            }
+            return pages;
         });
     }
 

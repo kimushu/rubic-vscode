@@ -54,6 +54,9 @@ class CatalogViewerPanel {
     /** true if DOM elements needs update */
     private _needsElementUpdate: boolean = false;
 
+    /** Active page index (only for panels with pages) */
+    private _pageIndex?: number;
+
     /** Current selection */
     private _selection: string[];
 
@@ -183,9 +186,18 @@ class CatalogViewerPanel {
      * Remove all DOM elements in this panel
      */
     private _removeElements(): void {
-        const templ = $("#template-list-item");
-        const list = this._panel.find(".catalog-list");
-        list.find(".catalog-item").not(templ).remove();
+        if (this._withPages) {
+            const templTab = $("#template-page-tab");
+            const tabs = this._panel.find(".catalog-pages-nav li");
+            tabs.not(templTab).remove();
+            const templPage = $("#template-page-content");
+            const pages = this._panel.find(".catalog-page-container");
+            pages.not(templPage).remove();
+        } else {
+            const templ = $("#template-list-item");
+            const list = this._panel.find(".catalog-list");
+            list.find(".catalog-item").not(templ).remove();
+        }
     }
 
     /**
@@ -199,6 +211,7 @@ class CatalogViewerPanel {
         if (keyDiffer || (this._cacheData == null)){
             this._removeElements();
             this._needsElementUpdate = true;
+            this._pageIndex = undefined;
             if (request) {
                 postRequest({
                     request: "getCache",
@@ -225,6 +238,7 @@ class CatalogViewerPanel {
         } else {
             this._createListElements();
         }
+        this._setLoading(false);
         this._needsElementUpdate = false;
     }
 
@@ -237,7 +251,6 @@ class CatalogViewerPanel {
         const list = this._panel.find(".catalog-list");
         if (items == null) {
             this.report("warn", "_createListElements", "No cache data");
-            this._setLoading(false);
             return;
         }
         /* Add items */
@@ -270,7 +283,6 @@ class CatalogViewerPanel {
             newItem.show();
         });
         this._updateListElementStates();
-        this._setLoading(false);
     }
 
     /**
@@ -293,7 +305,76 @@ class CatalogViewerPanel {
      * Create DOM elements for pages
      */
     private _createPageElements(): void {
-        
+        const pages = <CatalogPageDescriptor[] | undefined>this._cacheData;
+        const templTab = $("#template-page-tab");
+        const templPage = $("#template-page-content");
+        const nav = this._panel.find(".catalog-pages-nav > ul");
+        const container = this._panel.find(".catalog-pages");
+        if (pages == null) {
+            this.report("warn", "_createPageElements", "No cache data");
+            return;
+        }
+        /* Add pages */
+        this.report("debug", "_createPageElements", `Constructing ${pages.length} page(s)`);
+        pages.forEach((page, index) => {
+            /* Add tab */
+            const newTab = < JQuery<HTMLLIElement> >templTab.clone().prop("id", "");
+            newTab[0].dataset.pageIndex = index.toString();
+            const link = newTab.find("a");
+            link[0].title = "";
+            link.text(page.localizedTitle).click((event) => {
+                event.stopPropagation();
+                return this._tabClickHandler(event);
+            });
+            nav.append(newTab);
+            newTab.show();
+
+            /* Add content */
+            const newPage = < JQuery<HTMLDivElement> >templPage.clone().prop("id", "");
+            newPage[0].dataset.pageIndex = index.toString();
+            newPage.find(".markdown").html(page.content);
+            container.append(newPage);
+        });
+        /* Add button actions */
+        (< JQuery<HTMLButtonElement> >$(".catalog-page-button"))
+        .unbind("click").click((event) => {
+            event.stopPropagation();
+            return this._buttonClickHandler(event);
+        });
+        this._updatePageElementStates();
+    }
+
+    /**
+     * Handler for page tab click
+     * @param event Event data
+     */
+    private _tabClickHandler(event: JQuery.Event<HTMLLIElement>): void {
+        const { parentElement } = event.currentTarget;
+        const pageIndexString = (parentElement != null) ? parentElement.dataset.pageIndex : undefined;
+        if (pageIndexString == null) {
+            this.report("warn", "_tabClickHandler", "Page index not found");
+            return;
+        }
+        const pageIndex = parseInt(pageIndexString);
+        if (isNaN(pageIndex)) {
+            this.report("warn", "_tabClickHandler", "Invalid page index:", pageIndexString);
+            return;
+        }
+        this._pageIndex = pageIndex;
+        this._updatePageElementStates();
+    }
+
+    /**
+     * Handler for page button click
+     * @param event Event data
+     */
+    private _buttonClickHandler(event: JQuery.Event<HTMLButtonElement>): void {
+        const { buttonId, buttonData } = event.currentTarget.dataset;
+        if (buttonId == null) {
+            this.report("warn", "_buttonClickHandler", "Button ID not found", event);
+            return;
+        }
+        postRequest({ request: "button", buttonId, buttonData });
     }
 
     /**
@@ -327,6 +408,21 @@ class CatalogViewerPanel {
     }
 
     private _updatePageElementStates(): void {
+        const tabs = this._panel.find(".catalog-pages-nav li");
+        const pages = this._panel.find(".catalog-page-container");
+
+        if (this._pageIndex == null) {
+            this._pageIndex = 0;
+        } else if (this._pageIndex >= pages.length) {
+            this.report("warn", "_updatePageElementStates", `Page index is out of range: ${this._pageIndex}`);
+            this._pageIndex = 0;
+        }
+        const currentTab = tabs.filter(`[data-page-index=${this._pageIndex}]`);
+        tabs.not(currentTab).find("a").removeClass("disabled");
+        currentTab.find("a").addClass("disabled");
+        const currentPage = pages.filter(`[data-page-index=${this._pageIndex}]`);
+        pages.not(currentPage).removeClass("active");
+        currentPage.addClass("active");
     }
 }
 

@@ -13,7 +13,7 @@
 <body>
   <div class="catalog-wrapper{{#if unofficial}} catalog-unofficial{{/if}}">
     {{#each panels}}
-    <div class="catalog-panel{{#if withIcons}} catalog-panel-with-icons{{/if}}{{#if @index}} catalog-panel-disabled{{/if}}" id="catalog-panel-{{panelId}}" data-panel-id="{{panelId}}" {{#if withPages}}data-panel-with-pages="1"{{else}}data-nale-with-items="1"{{/if}} style="margin-top: calc(28px * {{@index}}); margin-bottom: calc(1px + 28px * ({{../panels.length}} - {{@index}} - 1));">
+    <div class="catalog-panel{{#if withIcons}} catalog-panel-with-icons{{/if}}{{#if @index}} catalog-panel-disabled{{/if}}{{#if withPages}} catalog-panel-with-pages{{/if}}" id="catalog-panel-{{panelId}}" data-panel-id="{{panelId}}" {{#if withPages}}data-panel-with-pages="1"{{else}}data-nale-with-items="1"{{/if}} style="margin-top: calc(28px * {{@index}}); margin-bottom: calc(1px + 28px * ({{../panels.length}} - {{@index}} - 1));">
       <div class="catalog-header icon-triangle">
         <span class="catalog-header-title">{{localizedTitle}}
           {{#unless withPages}}
@@ -33,16 +33,12 @@
       <div class="catalog-pages">
         <div class="catalog-pages-nav">
           <ul>
-            {{#unless @index}}
-            <li id="template-page-tab" style="display: none;" role="presentation"><a href="#" data-pidx="{{@index}}" class="catalog-page-link"></a></li>
-            {{/unless}}{{!--@index--}}
+            <li id="template-page-tab" style="display: none;" role="presentation"><a href="#" class="catalog-page-link" title=""></a></li>
           </ul>
         </div>
-        {{#unless @index}}
-        <div id="template-page-content" style="display: none;" class="catalog-page-container">
+        <div id="template-page-content" class="catalog-page-container">
           <div class="markdown"></div>
         </div>
-        {{/unless}}{{!--@index--}}
       </div>
       {{else}}{{!--withPages--}}
       <div class="catalog-list">

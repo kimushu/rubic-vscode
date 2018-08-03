@@ -98,11 +98,9 @@ interface CatalogMenuDescriptor {
     command: string;
 }
 
-interface CatalogTemplatePage {
+interface CatalogPageDescriptor {
     /** Localized title */
-    title: string;
-    /** Is active */
-    active?: boolean;
+    localizedTitle: string;
     /** Content */
     content: string;
 }

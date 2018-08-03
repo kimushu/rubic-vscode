@@ -494,7 +494,7 @@ export namespace CatalogData {
         getVariation(variationPath?: string): Variation | undefined;
         readonly hasCache: boolean;
         readonly cacheDir: string;
-        download(progress: (text: string) => void, force?: boolean): Thenable<string>;
+        download(progress: ProgressReporter, force?: boolean): Thenable<string>;
     }
 
     export interface Variation extends RubicCatalog.VariationV1 {

@@ -38,5 +38,10 @@ declare namespace WebViewCommunication {
         request: "setSelection";
         selection: string[];
     }
-    type Request = ConsoleRequest | ReadyRequest | GetCacheRequest | SetSelectionRequest;
+    interface ButtonRequest {
+        request: "button";
+        buttonId: string;
+        buttonData?: string;
+    }
+    type Request = ConsoleRequest | ReadyRequest | GetCacheRequest | SetSelectionRequest | ButtonRequest;
 }
