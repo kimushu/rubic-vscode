@@ -1,6 +1,5 @@
 ///<reference path="catalogViewer.d.ts" />
 import * as nls from "vscode-nls";
-import { Board } from "../boards/board";
 import {
     Disposable,
     EventEmitter, ExtensionContext,
@@ -14,7 +13,6 @@ import { Runtime } from "../runtimes/runtime";
 import { SystemComposition } from "../util/systemComposition";
 import { extensionContext, vscode } from "../extension";
 import { CacheStorage } from "../util/cacheStorage";
-import * as path from "path";
 import * as dedent from "dedent";
 
 import HandlebarsType = require("handlebars");
@@ -27,7 +25,7 @@ export const CMD_SELECT_PORT  = "extension.rubic.selectPort";
 
 export class CatalogViewer implements Disposable {
     /**
-     * Activate sketch-related features
+     * Activate catalog viewer related features
      */
     static activateExtension(context: ExtensionContext): any {
         context.subscriptions.push(
@@ -42,8 +40,11 @@ export class CatalogViewer implements Disposable {
         .then(() => {
             const workspaces = (vscode.workspace.workspaceFolders || []).length;
             if (workspaces === 0) {
-                /* TODO */
-                throw new Error("not implemented");
+                vscode.window.showErrorMessage(localize(
+                    "open-folder-first",
+                    "Open a folder to place files before opening Rubic board catalog"
+                ));
+                return;
             } else if (workspaces === 1) {
                 return vscode.workspace.workspaceFolders![0];
             } else {
@@ -58,6 +59,10 @@ export class CatalogViewer implements Disposable {
         .then((workspaceFolder) => {
             if (workspaceFolder == null) {
                 return false;
+            }
+            sketch = Sketch.find(workspaceFolder)!;
+            if (sketch != null) {
+                return true;
             }
             sketch = new Sketch(workspaceFolder);
             return sketch.open(true);
@@ -203,13 +208,12 @@ export class CatalogViewer implements Disposable {
                 break;
             case "ready":
                 return this._readyHandler(message);
-                break;
             case "getCache":
                 return this._getCacheHandler(message);
-                break;
             case "setSelection":
                 return this._setSelectionHandler(message);
-                break;
+            case "button":
+                return this._buttonHandler(message);
             }
             console.warn("Unexpected request from WebView:", message);
         })
@@ -292,6 +296,10 @@ export class CatalogViewer implements Disposable {
         });
     }
 
+    /**
+     * Generate cache for board list
+     * @param catalogData Catalog data
+     */
     private _generateBoardCache(catalogData: CatalogData): CatalogItemDescriptor[] {
         const items: CatalogItemDescriptor[] = [];
         catalogData.boards.forEach((board) => {
@@ -316,6 +324,10 @@ export class CatalogViewer implements Disposable {
         return items;
     }
 
+    /**
+     * Generate cache for repository list
+     * @param board Target board
+     */
     private _generateRepositoryCache(board: CatalogData.Board): CatalogItemDescriptor[] {
         const items: CatalogItemDescriptor[] = [];
         board.repositories.forEach((repo) => {
@@ -336,6 +348,10 @@ export class CatalogViewer implements Disposable {
         return items;
     }
 
+    /**
+     * Generate cache for release list
+     * @param repo Target repository
+     */
     private _generateReleaseCache(repo: CatalogData.Repository): CatalogItemDescriptor[] {
         const items: CatalogItemDescriptor[] = [];
         repo.cache!.releases!.forEach((rel) => {
@@ -358,6 +374,10 @@ export class CatalogViewer implements Disposable {
         return items;
     }
 
+    /**
+     * Generate cache for variation list
+     * @param rel Target release
+     */
     private _generateVariationCache(rel: CatalogData.Release): CatalogItemDescriptor[] {
         const items: CatalogItemDescriptor[] = [];
         rel.cache.variations.forEach((vari) => {
@@ -385,6 +405,10 @@ export class CatalogViewer implements Disposable {
         return items;
     }
 
+    /**
+     * Generate cache for detail pages
+     * @param vari Target variation
+     */
     private _generateDetailsCache(vari: CatalogData.Variation): Thenable<CatalogPageDescriptor[]> {
         const pages: CatalogPageDescriptor[] = [];
         return Promise.resolve()
@@ -413,7 +437,7 @@ export class CatalogViewer implements Disposable {
                     * <button data-button-id="port" class="${
                         ["", "-green", "-dropdown"].map((s) => `catalog-page-button${s}`).join(" ")
                     }">${
-                        null || localize("no-port", "No selected port")
+                        this.sketch.boardPath || localize("no-port", "No selected port")
                     }</button><button data-button-id="test" class="${
                         ["", "-blue"].map((s) => `catalog-page-button${s}`).join(" ")
                     }">${localize("test-connection", "Test connection")}</button>
@@ -475,6 +499,14 @@ export class CatalogViewer implements Disposable {
             JSON.stringify(message.selection)
         );
         return this._syncSelections(true);
+    }
+
+    /**
+     * Process button request
+     * @param message Message from WebView
+     */
+    private _buttonHandler(message: WebViewCommunication.ButtonRequest): Thenable<void> {
+        return Promise.resolve();
     }
 
     private _syncSelections(current: boolean, saved: boolean = false): Thenable<void> {
