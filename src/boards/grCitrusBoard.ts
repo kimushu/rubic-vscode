@@ -13,7 +13,7 @@ export class GrCitrusBoard extends WakayamaRbBoard {
      * A list of USB serial VendorID / ProductID list
      */
     protected static usbSerialIdList = [
-        { vendorId: 0x2a50, productId: 0x0277 },    // Akizuki
+        { vendorId: 0x2a50, productId: 0x0277 },    // Akizuki denshi
     ];
 
     /**

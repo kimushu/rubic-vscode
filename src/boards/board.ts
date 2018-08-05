@@ -110,7 +110,7 @@ export class Board {
      * Get constructor of Board
      * @param className The name of board class
      */
-    static getConstructor(className: string): BoardConstructor {
+    static getConstructor(className: string): BoardConstructor | undefined {
         return this._classes[className];
     }
 

@@ -41,8 +41,9 @@ export class WakayamaRbBoard extends SerialBoard {
     private _info: BoardInformation | null = null;
     private _stdio: BoardStdioStream | null = null;
     private _abortCode?: number;
-    private _DRAIN_INTERVAL_MS = 250;
     private _onDidFinish: EventEmitter<BoardResult>;
+
+    protected autoDrainInterval = 250;
 
     /**
      * A list of USB serial VendorID / ProductID list
