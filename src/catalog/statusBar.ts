@@ -67,7 +67,7 @@ export class StatusBar implements Disposable {
             this._sbiPort.hide();
             return;
         }
-        if (sketch == null) {
+        if ((sketch == null) || (!sketch.hasConfig)) {
             // No sketch
             this._sbiBoard.hide();
             this._sbiPort.hide();
