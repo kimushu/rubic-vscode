@@ -1,9 +1,12 @@
 import { DebugProtocol } from "vscode-debugprotocol";
 import { IPC as NodeIPC } from "node-ipc";
-import { ExtensionContext, DebugConfigurationProvider, WorkspaceFolder, CancellationToken, ProviderResult, DebugConfiguration } from "vscode";
+import { ExtensionContext, WorkspaceFolder, CancellationToken, ProviderResult, DebugConfiguration } from "vscode";
 import { vscode } from "../extension";
 import { Socket } from "net";
 import { AssertionError } from "assert";
+import { Sketch } from "../sketch";
+import { CatalogViewer } from "../catalog/catalogViewer";
+
 import * as nls from "vscode-nls";
 const localize = nls.loadMessageBundle(__filename);
 
@@ -44,7 +47,20 @@ export class DebugServer {
             ));
             return undefined;
         }
-        const server = new DebugServer();
+        const sketch = Sketch.find(folder);
+        if (sketch == null) {
+            vscode.window.showInformationMessage(localize(
+                "setup-first",
+                "Please setup board configuration before starting debugging with Rubic"
+            ), localize("open-catalog", "Open catalog"))
+            .then((choice) => {
+                if (choice != null) {
+                    CatalogViewer.open(folder);
+                }
+            });
+            return undefined;
+        }
+        const server = new DebugServer(sketch);
         server.startServer();
         this._servers[server.id] = server;
         if (debugConfiguration.boardData == null) {
@@ -72,8 +88,9 @@ export class DebugServer {
 
     /**
      * Construct instance
+     * @param sketch The instance of Sketch associated to this debug server
      */
-    private constructor() {
+    private constructor(readonly sketch: Sketch) {
         this.id = `DebugServer@${Math.random().toString(36).substr(2)}`;
         this._ipc.config.appspace = "kimushu.rubic";
         this._ipc.config.id = this.id;
@@ -113,6 +130,7 @@ export class DebugServer {
         server.on("shutdown", () => {
             this.stopServer();
             delete DebugServer._servers[this.id];
+            console.log(`Disposing debug server (id=${this.id})`);
         });
     }
 
