@@ -1,13 +1,8 @@
-// vscode-nls should be configured before loading all other modules
-import * as nls from "vscode-nls";
-const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
-
 import { DebugSession } from "vscode-debugadapter";
 import { DebugProtocol } from "vscode-debugprotocol";
 import { IPC as NodeIPC } from "node-ipc";
 import { AssertionError } from "assert";
 import { Socket } from "net";
-import * as fs from "fs";
 
 const ipc = new NodeIPC();
 ipc.config.appspace = "kimushu.rubic";
@@ -44,10 +39,8 @@ class RubicDebugSession extends DebugSession {
                     return reject(new Error("Failed to connect IPC server"));
                 }
                 this._ipcClient.on("response", (response: DebugProtocol.Response) => {
-                    fs.appendFileSync("r:/session.log", `response: ${response.command}\n`);
                     this.sendResponse(response);
                     if (response.command === "disconnect") {
-                        fs.appendFileSync("r:/session.log", "after disconnect\n");
                         this.shutdown();
                     }
                 });
@@ -78,7 +71,6 @@ class RubicDebugSession extends DebugSession {
      * @param args Arguments
      */
     private _forward(command: string, response: DebugProtocol.Response, args: any): void {
-        fs.appendFileSync("r:/session.log", `forward: ${command}\n`);
         let thenable: Thenable<void>;
         switch (command) {
         case "launch":
@@ -98,7 +90,6 @@ class RubicDebugSession extends DebugSession {
     }
 
     shutdown(): void {
-        fs.appendFileSync("r:/session.log", `shutdown\n`);
         if (this._ipcClient != null) {
             this._ipcClient.emit("shutdown");
             ipc.disconnect(this._serverId!);
