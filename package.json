@@ -127,16 +127,9 @@
       ]
     },
     "menus": {
-      "editor/title/context": [
-        {
-          "when": "resourceScheme == rubic",
-          "command": "extension.rubic.updateCatalog",
-          "group": "1_modification"
-        }
-      ],
       "editor/title": [
         {
-          "when": "resourceScheme == rubic",
+          "when": "rubicCatalogFocus",
           "command": "extension.rubic.updateCatalog",
           "group": "navigation"
         }

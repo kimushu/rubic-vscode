@@ -22,6 +22,7 @@ require("./webview/catalog.hbs");
 const localize = nls.loadMessageBundle(__filename);
 
 export const CMD_SHOW_CATALOG = "extension.rubic.showCatalog";
+export const CMD_UPDATE_CATALOG = "extension.rubic.updateCatalog";
 export const CMD_SELECT_PORT  = "extension.rubic.selectPort";
 
 export class CatalogViewer implements Disposable {
@@ -30,7 +31,8 @@ export class CatalogViewer implements Disposable {
      */
     static activateExtension(context: ExtensionContext): any {
         context.subscriptions.push(
-            vscode.commands.registerCommand(CMD_SHOW_CATALOG, this._showCatalog, this)
+            vscode.commands.registerCommand(CMD_SHOW_CATALOG, this._showCatalog, this),
+            vscode.commands.registerCommand(CMD_UPDATE_CATALOG, this._updateCatalog, this)
         );
     }
 
@@ -62,6 +64,10 @@ export class CatalogViewer implements Disposable {
         .catch((reason) => {
             console.warn(`[${func_name}] unexpected rejection:`, reason);
         });
+    }
+
+    private static _updateCatalog(): void {
+
     }
 
     static open(workspaceFolder?: WorkspaceFolder): Thenable<CatalogViewer> {
@@ -182,8 +188,16 @@ export class CatalogViewer implements Disposable {
                 (promise, disposable) => promise.then(() => disposable.dispose()),
                 Promise.resolve()
             );
-        }, disposables);
+        }, this, disposables);
+        this._webview.onDidChangeViewState((event) => {
+            this._setFocusState(event.webviewPanel.active);
+        }, this, disposables);
+        this._setFocusState(this._webview.active);
         this._webview.webview.html = handlebars.templates["catalog.hbs"](this._renderDescriptor);
+    }
+
+    private _setFocusState(state: boolean) {
+        vscode.commands.executeCommand("setContext", "rubicCatalogFocus", state);
     }
 
     /**
