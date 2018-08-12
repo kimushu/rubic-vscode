@@ -6,9 +6,10 @@ import {
     commands, window, workspace
 } from "vscode";
 import * as path from "path";
-import { RubicDebugHook, RubicProcess } from "../processes/rubicProcess";
+// import { RubicDebugHook, RubicProcess } from "../processes/rubicProcess";
 import * as nls from "vscode-nls";
 import { CMD_SHOW_CATALOG } from "../catalog/catalogViewer";
+import { DebugServer } from "./debugServer";
 
 const localize = nls.config(process.env.VSCODE_NLS_CONFIG)(__filename);
 const { RUBIC_DEBUG_SERVER_PORT } = process.env;
@@ -23,9 +24,9 @@ function substituteVariables(input: string): string {
     return input.replace(/\$\{(\w+)\}/g, (match, name) => {
         switch (name) {
             case "workspaceRoot":
-                return workspace.workspaceFolders[0].uri.fsPath;
+                return workspace.workspaceFolders![0].uri.fsPath;
             case "workspaceRootFolderName":
-                return path.basename(workspace.workspaceFolders[0].name);
+                return path.basename(workspace.workspaceFolders![0].name);
             case "file":
                 if (fileName != null) {
                     return fileName;
@@ -33,7 +34,7 @@ function substituteVariables(input: string): string {
                 break;
             case "relativeFile":
                 if (fileName != null) {
-                    return path.relative(workspace.rootPath, fileName);
+                    return path.relative(workspace.rootPath!, fileName);
                 }
                 break;
             case "fileBasename":
@@ -67,11 +68,12 @@ function substituteVariables(input: string): string {
  * Debug configuration provider for "rubic" type debugger
  */
 export class RubicDebugConfigProvider implements DebugConfigurationProvider {
-    constructor(private _debugHooks: RubicDebugHook[]) {
+    constructor() {
     }
 
     resolveDebugConfiguration(folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
-        let { sketch, catalogData } = RubicProcess.self;
+        DebugServer
+/*        let { sketch, catalogData } = RubicProcess.self;
         if (!sketch.isHardwareFixed) {
             let openMsg = localize("open-catalog", "Open catalog");
             RubicProcess.self.showInformationMessage(
@@ -141,5 +143,6 @@ export class RubicDebugConfigProvider implements DebugConfigurationProvider {
             // Abort debugging
             return undefined;
         });
+        */
     }
 }

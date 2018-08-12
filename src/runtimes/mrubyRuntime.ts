@@ -7,11 +7,11 @@ const localize = nls.loadMessageBundle(__filename);
 export class MrubyRuntime extends Runtime {
     static readonly id = "mruby";
 
-    enumerateExecutables(workspaceRoot: string): Promise<ExecutableCandidate[]> {
+    enumerateExecutables(workspaceRoot: string): Thenable<ExecutableCandidate[]> {
         let globOptions = { cwd: workspaceRoot };
         return Promise.all([
-            <Promise<string[]>>pify(glob)("**/*.mrb", globOptions),
-            <Promise<string[]>>pify(glob)("**/*.rb", globOptions),
+            <Thenable<string[]>>pify(glob)("**/*.mrb", globOptions),
+            <Thenable<string[]>>pify(glob)("**/*.rb", globOptions),
         ])
         .then(([mrbList, rbList]) => {
             let list: ExecutableCandidate[] = [];
@@ -41,13 +41,13 @@ export class MrubyRuntime extends Runtime {
         }
     }
 
-    getCatalogTopics(): CatalogTemplateTopic[] {
+    getCatalogTopics(): CatalogTopicDescriptor[] {
         let info = <RubicCatalog.Runtime.Mruby>this.info;
-        let topics: CatalogTemplateTopic[] = [];
+        let topics: CatalogTopicDescriptor[] = [];
         topics.push({
-            title: "mruby",
+            localizedTitle: "mruby",
             color: "red",
-            tooltip: (
+            localizedTooltip: (
                 (info.version != null)
                 ? `${Runtime.LOCALIZED_VERSION}: ${info.version}`
                 : null
@@ -55,9 +55,9 @@ export class MrubyRuntime extends Runtime {
         });
         for (let gem of (info.mrbgems || [])) {
             topics.push({
-                title: gem.name,
+                localizedTitle: gem.name,
                 color: "gray",
-                tooltip: gem.description
+                localizedTooltip: gem.description
             });
         }
         return topics;

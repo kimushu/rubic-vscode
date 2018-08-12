@@ -42,7 +42,7 @@ export class CatalogViewer implements Disposable {
             if (workspaces === 0) {
                 vscode.window.showErrorMessage(localize(
                     "open-folder-first",
-                    "Open a folder to place files before opening Rubic board catalog"
+                    "Please open a folder to place files before opening Rubic board catalog"
                 ));
                 return;
             } else if (workspaces === 1) {

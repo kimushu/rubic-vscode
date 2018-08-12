@@ -2,6 +2,7 @@ import * as stream from "stream";
 import { ProgressReporter } from "../extension";
 import { AssertionError } from "assert";
 import { NotSupportedError } from "../util/errors";
+import * as md5 from "md5";
 
 import vscode_types = require("vscode");
 
@@ -208,7 +209,13 @@ export class Board {
      * @return A thenable that resolves to digest information
      */
     readFileDigest(filePath: string): Thenable<BoardFileDigest> {
-        return Promise.reject(new NotSupportedError());
+        return this.readFile(filePath)
+        .then((buffer) => {
+            return <BoardFileDigest>{
+                type: "md5",
+                value: md5(buffer)
+            };
+        });
     }
 
     /**

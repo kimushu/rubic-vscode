@@ -71,7 +71,7 @@ export class Runtime {
     /**
      * Get catalog topics of this runtime
      */
-    getCatalogTopics(): CatalogTemplateTopic[] {
+    getCatalogTopics(): CatalogTopicDescriptor[] {
         return [];
     }
 

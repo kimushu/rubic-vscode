@@ -5,16 +5,16 @@ import * as glob from "glob";
 export class DuktapeRuntime extends Runtime {
     static readonly id = "duktape";
 
-    initializeTasks(): Promise<void> {
+    initializeTasks(): Thenable<void> {
         // FIXME
         return Promise.resolve();
     }
 
-    enumerateExecutables(workspaceRoot: string): Promise<ExecutableCandidate[]> {
+    enumerateExecutables(workspaceRoot: string): Thenable<ExecutableCandidate[]> {
         let globOptions = { cwd: workspaceRoot };
         return Promise.all([
-            <Promise<string[]>>pify(glob)("**/*.js", globOptions),
-            <Promise<string[]>>pify(glob)("**/*.ts", globOptions),
+            <Thenable<string[]>>pify(glob)("**/*.js", globOptions),
+            <Thenable<string[]>>pify(glob)("**/*.ts", globOptions),
         ])
         .then(([jsList, tsList]) => {
             let list: ExecutableCandidate[] = [];
@@ -44,15 +44,15 @@ export class DuktapeRuntime extends Runtime {
         }
     }
 
-    getCatalogTopics(): CatalogTemplateTopic[] {
+    getCatalogTopics(): CatalogTopicDescriptor[] {
         let info = <RubicCatalog.Runtime.Duktape>this.info;
-        let topics: CatalogTemplateTopic[] = [];
-        let tooltip = "Duktape";
+        let topics: CatalogTopicDescriptor[] = [];
+        let localizedTooltip = "Duktape";
         if (info.version != null) {
-            tooltip += ` (${Runtime.LOCALIZED_VERSION}: ${info.version})`;
+            localizedTooltip += ` (${Runtime.LOCALIZED_VERSION}: ${info.version})`;
         }
-        topics.push({ title: "JavaScript (ES5)", color: "yellow", tooltip });
-        topics.push({ title: "TypeScript", color: "blue", tooltip });
+        topics.push({ localizedTitle: "JavaScript (ES5)", color: "yellow", localizedTooltip });
+        topics.push({ localizedTitle: "TypeScript", color: "blue", localizedTooltip });
         return topics;
     }
 

@@ -2,42 +2,103 @@
 import * as nls from "vscode-nls";
 nls.config(process.env.VSCODE_NLS_CONFIG);
 
+// Do not import other local modules here to avoid recursive module inclusion.
+import vscode_types = require("vscode");
 import { ExtensionContext } from "vscode";
-import { RubicHostProcess } from "./processes/rubicHostProcess";
-import { CatalogViewer } from "./catalog/catalogViewer";
-import { RubicStatusBar } from "./catalog/rubicStatusBar";
-import { MrubyCompiler } from "./util/mrubyCompiler";
-
-export interface RubicTestContext {
-    workspaceSettings?: {
-        [path: string]: any;
-    };
-    mementoValues?: {
-        [key: string]: any;
-    };
-    cacheBaseDir?: string;
-}
+import * as path from "path";
 
 /**
- * Hooks for integration tests
+ * Rubic extension entry point class.
+ * This class is used for exporting with getter functions.
  */
-export let rubicTest: RubicTestContext = {};
+module RubicExtension {
+    let _extensionContext: vscode_types.ExtensionContext;
 
-/**
- * Activate VSCode extension (Entry point of Rubic)
- * @param context Extension context
- */
-export function activate(context: ExtensionContext): any {
-    console.log(`Loading Rubic from "${context.extensionPath}"`);
-    context.subscriptions.push(new RubicHostProcess(context));
-    context.subscriptions.push(new CatalogViewer(context));
-    context.subscriptions.push(new RubicStatusBar(context));
-    context.subscriptions.push(new MrubyCompiler(context));
+    /**
+     * vscode module instance (This may be hooked when testing Rubic)
+     */
+    export let vscode: typeof vscode_types;
+    Object.defineProperty(RubicExtension, "vscode", {
+        get: () => {
+            let value = (rubicTestContext && rubicTestContext.vscode) || require("vscode");
+            Object.defineProperty(RubicExtension, "vscode", { value, configurable: false });
+            return value;
+        },
+        configurable: true,
+        enumerable: true,
+    });
+
+    /**
+     * Extension context (This may be hooked when testing Rubic)
+     */
+    export let extensionContext: vscode_types.ExtensionContext;
+    Object.defineProperty(RubicExtension, "extensionContext", {
+        get: () => {
+            return (rubicTestContext && rubicTestContext.extensionContext) || _extensionContext;
+        },
+        enumerable: true,
+    });
+
+    /**
+     * For Rubic tests
+     */
+    export let rubicTestContext: {
+        cacheDir?: string;
+        vscode?: typeof vscode_types;
+        extensionContext?: ExtensionContext;
+    } | undefined;
+
+    /**
+     * Version string of Rubic
+     */
+    export const RUBIC_VERSION = require(path.join(__dirname, "..", "..", "package.json")).version;
+
+    /**
+     * VSCode context name that indicates whether Rubic is enabled in current window
+     */
+    export const RUBIC_ENABLED_CONTEXT = "rubic.isEnabled";
+
+    /**
+     * Update "Rubic enabled" context value for switching VSCode contribution points
+     * @param value new context value
+     */
+    export function updateRubicEnabledContext(value: boolean) {
+        vscode.commands.executeCommand("setContext", RUBIC_ENABLED_CONTEXT, value);
+    }
+
+    /**
+     * Activate VSCode extension (Entry point of Rubic)
+     * (Notice: This method is called by VSCode WITHOUT this binding)
+     * @param context Extension context
+     */
+    export function activate(this: void, context: vscode_types.ExtensionContext): any {
+        console.log(`Starting Rubic ${RUBIC_VERSION} from ${context.extensionPath}`);
+        _extensionContext = context;
+        const { Sketch } = require("./sketch");
+        const { CatalogViewer } = require("./catalog/catalogViewer");
+        const { StatusBar } = require("./catalog/statusBar");
+        const { DebugServer } = require("./debug/debugServer");
+        return Promise.all([
+            Sketch.activateExtension(context),
+            CatalogViewer.activateExtension(context),
+            StatusBar.activateExtension(context),
+            DebugServer.activateExtension(context),
+        ]);
+    }
+
+    /**
+     * Deactivate VSCode extension
+     */
+    export function deactivate(this: void): any {
+        RubicExtension.updateRubicEnabledContext(false);
+    }
 }
 
-/**
- * Deactivate VSCode extension
- */
-export function deactivate(): any {
-    // Nothing to do
+namespace RubicExtension {
+    export interface ProgressReporter {
+        report(localizedMessage: string): void;
+        advance?(): void;
+    }
 }
+
+export = RubicExtension;

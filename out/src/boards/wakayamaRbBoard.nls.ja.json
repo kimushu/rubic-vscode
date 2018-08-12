@@ -1,8 +1,7 @@
 {
     "messages": [
         "Wakayama.rb ボード",
-        "ファームウェアの検出に失敗しました",
-        "ファイルの読み込みに失敗しました",
+        "内蔵フラッシュ",
         "{0}をPCから切断せず、そのまま待機してください",
         "{0}のリセットスイッチを押して下さい",
         "はい、スイッチを押しました",
@@ -15,8 +14,7 @@
     ],
     "keys": [
         "board-name",
-        "failed-detect",
-        "read-error",
+        "internal-flash",
         "warn-x",
         "push-reset-button-x",
         "push-done",

@@ -5,10 +5,10 @@ import * as glob from "glob";
 export class LuaRuntime extends Runtime {
     static readonly id = "lua";
 
-    enumerateExecutables(workspaceRoot: string): Promise<ExecutableCandidate[]> {
+    enumerateExecutables(workspaceRoot: string): Thenable<ExecutableCandidate[]> {
         let globOptions = { cwd: workspaceRoot };
         return Promise.all([
-            <Promise<string[]>>pify(glob)("**/*.lua", globOptions)
+            <Thenable<string[]>>pify(glob)("**/*.lua", globOptions)
         ])
         .then(([luaList]) => {
             let list: ExecutableCandidate[] = [];
@@ -27,13 +27,13 @@ export class LuaRuntime extends Runtime {
         }
     }
 
-    getCatalogTopics(): CatalogTemplateTopic[] {
+    getCatalogTopics(): CatalogTopicDescriptor[] {
         let info = <RubicCatalog.Runtime.Lua>this.info;
-        let topics: CatalogTemplateTopic[] = [];
+        let topics: CatalogTopicDescriptor[] = [];
         topics.push({
-            title: "Lua",
+            localizedTitle: "Lua",
             color: "blue",
-            tooltip: (
+            localizedTooltip: (
                 (info.version != null)
                 ? `${Runtime.LOCALIZED_VERSION}: ${info.version}`
                 : null
