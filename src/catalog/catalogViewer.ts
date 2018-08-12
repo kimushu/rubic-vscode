@@ -4,7 +4,8 @@ import {
     Disposable,
     EventEmitter, ExtensionContext,
     Uri, ViewColumn,
-    WebviewPanel
+    WebviewPanel,
+    WorkspaceFolder
 } from "vscode";
 import { CatalogData, toLocalizedString } from "./catalogData";
 import { Sketch } from "../sketch";
@@ -35,7 +36,6 @@ export class CatalogViewer implements Disposable {
 
     private static _showCatalog(): void {
         const func_name = "CatalogViewer._showCatalog";
-        let sketch: Sketch;
         Promise.resolve()
         .then(() => {
             const workspaces = (vscode.workspace.workspaceFolders || []).length;
@@ -57,6 +57,17 @@ export class CatalogViewer implements Disposable {
             }
         })
         .then((workspaceFolder) => {
+            return this.open(workspaceFolder);
+        })
+        .catch((reason) => {
+            console.warn(`[${func_name}] unexpected rejection:`, reason);
+        });
+    }
+
+    static open(workspaceFolder?: WorkspaceFolder): Thenable<CatalogViewer> {
+        let sketch: Sketch;
+        return Promise.resolve()
+        .then(() => {
             if (workspaceFolder == null) {
                 return false;
             }
@@ -71,9 +82,6 @@ export class CatalogViewer implements Disposable {
             if (opened && sketch != null) {
                 return sketch.showCatalog();
             }
-        })
-        .catch((reason) => {
-            console.warn(`[${func_name}] unexpected rejection:`, reason);
         });
     }
 
