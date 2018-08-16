@@ -1,10 +1,10 @@
 {
   "name": "rubic",
-  "version": "0.99.17",
+  "version": "0.99.18",
   "publisher": "kimushu",
   "engines": {
-    "vscode": "^1.17.0",
-    "node": "^7.9.0"
+    "vscode": "^1.26.0",
+    "node": "^8.9.3"
   },
   "license": "MIT",
   "displayName": "Rubic",
@@ -334,7 +334,7 @@
     "handlebars:runtime": "shx cp node_modules/handlebars/dist/handlebars.runtime.min.js out/src/catalog/handlebars.js",
     "handlebars:stylesheets": "shx cp src/catalog/*.css out/src/catalog/",
     "clean": "rimraf out/**/*.js out/**/*.js.map out/**/*.nls.json",
-    "binary": "node tools/serialport-prebuild.js 1.7.3",
+    "binary": "node tools/serialport-prebuild.js 2.0.5",
     "package": "vsce package",
     "release": "yarn --ignore-engines run package",
     "schema": "npm-run-all -p schema:*",
