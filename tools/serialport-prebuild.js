@@ -23,6 +23,7 @@ const EL_VERSIONS = process.argv.slice(2);
 const ELECTRON_VERSION_MAP = {
     "1.6.6": {node: "7.4.0", modules: "53"},
     "1.7.3": {node: "7.9.0", modules: "54"},
+    "2.0.5": {node: "8.9.3", modules: "57"},
 };
 
 EL_VERSIONS.reduce((promise, elVer) => {
