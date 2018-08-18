@@ -15,6 +15,8 @@ declare namespace V1_0_x {
             /** Board data override */
             boardData?: any;
         };
+        /** Constant connection flag */
+        constantConnection?: boolean;
         /** File transfer settings */
         transfer?: {
             /** List of files or glob patterns to be transfered to the board */

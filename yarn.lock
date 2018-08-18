@@ -4337,20 +4337,16 @@ vinyl@^2.0.1, vinyl@^2.0.2:
     remove-trailing-separator "^1.0.1"
     replace-ext "^1.0.0"
 
-vscode-debugadapter@^1.24.0:
-  version "1.30.0"
-  resolved "https://registry.yarnpkg.com/vscode-debugadapter/-/vscode-debugadapter-1.30.0.tgz#50fc435e5a3cd5f399721820d4522d7b776e573d"
+vscode-debugadapter@^1.25.0:
+  version "1.31.0"
+  resolved "https://registry.yarnpkg.com/vscode-debugadapter/-/vscode-debugadapter-1.31.0.tgz#f0f9183a5dccfb3da912f28fb3f1d0b14fec34f3"
   dependencies:
     mkdirp "^0.5.1"
-    vscode-debugprotocol "1.30.0"
+    vscode-debugprotocol "1.31.0"
 
-vscode-debugprotocol@1.30.0:
-  version "1.30.0"
-  resolved "https://registry.yarnpkg.com/vscode-debugprotocol/-/vscode-debugprotocol-1.30.0.tgz#ece6d8559733e87bc7a2147b385899777a92af69"
-
-vscode-debugprotocol@^1.24.0:
-  version "1.29.0"
-  resolved "https://registry.yarnpkg.com/vscode-debugprotocol/-/vscode-debugprotocol-1.29.0.tgz#520030db8486f7d9e1f889ece82538efe7ec6fac"
+vscode-debugprotocol@1.31.0, vscode-debugprotocol@^1.25.0:
+  version "1.31.0"
+  resolved "https://registry.yarnpkg.com/vscode-debugprotocol/-/vscode-debugprotocol-1.31.0.tgz#8467eeabeea65f52da5ac03b03c18e10e8b95eb4"
 
 vscode-nls-dev@^2.1.3:
   version "2.1.6"
