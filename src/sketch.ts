@@ -324,6 +324,29 @@ export class Sketch implements Disposable {
     }
 
     /**
+     * Get constant connection flag
+     */
+    get constantConnect(): boolean | undefined {
+        if (this._data != null) {
+            return this._data.constantConnection;
+        }
+        return undefined;
+    }
+
+    /**
+     * Set constant connection flag
+     */
+    set constantConnection(newValue: boolean) {
+        if (this._data == null) {
+            this._data = {} as any;
+        }
+        if (this._data!.constantConnection !== newValue) {
+            this._data!.constantConnection = newValue;
+            this._setModified();
+        }
+    }
+
+    /**
      * Get latest saved Rubic version
      */
     getLatestSaved(): string | undefined {
