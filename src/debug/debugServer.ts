@@ -1,6 +1,6 @@
 import { DebugProtocol } from "vscode-debugprotocol";
 import { IPC as NodeIPC } from "node-ipc";
-import { ExtensionContext, WorkspaceFolder, CancellationToken, ProviderResult, DebugConfiguration } from "vscode";
+import { ExtensionContext, WorkspaceFolder, CancellationToken, ProviderResult, DebugConfiguration, Disposable } from "vscode";
 import { vscode } from "../extension";
 import { Socket } from "net";
 import { AssertionError } from "assert";
@@ -9,6 +9,11 @@ import { CatalogViewer } from "../catalog/catalogViewer";
 
 import * as nls from "vscode-nls";
 const localize = nls.loadMessageBundle(__filename);
+
+interface RubicLaunchRequestArguments {
+    boardPath: string;
+    __rubicServerId: string;
+}
 
 /**
  * Debug server for extension host process
@@ -81,6 +86,9 @@ export class DebugServer {
     /** VSCode debug session ID */
     private _sessionId?: string;
 
+    /** Disposable */
+    protected _disposables: Disposable[] = [];
+
     /**
      * Get VSCode debug session ID
      */
@@ -91,6 +99,9 @@ export class DebugServer {
      * @param sketch The instance of Sketch associated to this debug server
      */
     private constructor(readonly sketch: Sketch) {
+        if (sketch.board == null) {
+            throw new Error("No board");
+        }
         this.id = `DebugServer@${Math.random().toString(36).substr(2)}`;
         this._ipc.config.appspace = "kimushu.rubic";
         this._ipc.config.id = this.id;
@@ -102,8 +113,10 @@ export class DebugServer {
      * Extend debug arguments with communication information
      * @param args Debug arguments
      */
-    extendLaunchArgs(args: any): any {
-        const newArgs = Object.assign({}, args);
+    extendLaunchArgs(args: any): RubicLaunchRequestArguments & DebugConfiguration {
+        const newArgs = Object.assign({
+            boardPath: this.sketch.boardPath
+        }, args);
         newArgs.__rubicServerId = this.id;
         return newArgs;
     }
@@ -118,8 +131,25 @@ export class DebugServer {
     }
 
     stopServer(): void {
-        console.log(`Stopping debug server (id=${this.id})`);
-        this._ipc.server.stop();
+        if (this._ipc.server != null) {
+            console.log(`Stopping debug server (id=${this.id})`);
+            this._ipc.server.stop();
+        }
+    }
+
+    dispose(): Thenable<void> {
+        this.stopServer();
+        const disposables = this._disposables;
+        this._disposables = [];
+        return disposables.reduce((promise, disposable) => {
+            return promise.then(() => {
+                return disposable.dispose();
+            }).catch(() => {});
+        }, Promise.resolve())
+        .then(() => {
+            delete DebugServer._servers[this.id];
+            console.log(`Disposing debug server (id=${this.id})`);
+        });
     }
 
     private _service(): void {
@@ -128,119 +158,87 @@ export class DebugServer {
             this._dispatchRequest(data, socket);
         });
         server.on("shutdown", () => {
-            this.stopServer();
-            delete DebugServer._servers[this.id];
-            console.log(`Disposing debug server (id=${this.id})`);
+            this.dispose();
         });
     }
 
     private _dispatchRequest(data: { command: string, response: any, args: any }, socket: Socket): void {
         const { server } = this._ipc;
         const { command, response, args } = data;
-        let thenable: Thenable<void>;
         if ((command === "launch") || (command === "attach")) {
             this._sessionId = data.args.__sessionId;
             this._socket = socket;
         }
-        switch (command) {
-        case "disconnect":
-            thenable = this.disconnectRequest(response, args);
-            break;
-        case "launch":
-            thenable = this.launchRequest(response, args);
-            break;
-        case "attach":
-            thenable = this.attachRequest(response, args);
-            break;
-        case "restart":
-            thenable = this.restartRequest(response, args);
-            break;
-        case "setBreakPoints":
-            thenable = this.setBreakPointsRequest(response, args);
-            break;
-        case "setFunctionBreakPoints":
-            thenable = this.setFunctionBreakPointsRequest(response, args);
-            break;
-        case "setExceptionBreakPoints":
-            thenable = this.setExceptionBreakPointsRequest(response, args);
-            break;
-        case "configurationDone":
-            thenable = this.configurationDoneRequest(response, args);
-            break;
-        case "continue":
-            thenable = this.continueRequest(response, args);
-            break;
-        case "next":
-            thenable = this.nextRequest(response, args);
-            break;
-        case "stepIn":
-            thenable = this.stepInRequest(response, args);
-            break;
-        case "stepOut":
-            thenable = this.stepOutRequest(response, args);
-            break;
-        case "stepBack":
-            thenable = this.stepBackRequest(response, args);
-            break;
-        case "reverseContinue":
-            thenable = this.reverseContinueRequest(response, args);
-            break;
-        case "restartFrame":
-            thenable = this.restartFrameRequest(response, args);
-            break;
-        case "goto":
-            thenable = this.gotoRequest(response, args);
-            break;
-        case "pause":
-            thenable = this.pauseRequest(response, args);
-            break;
-        case "source":
-            thenable = this.sourceRequest(response, args);
-            break;
-        case "threads":
-            thenable = this.threadsRequest(response);
-            break;
-        case "terminateThreads":
-            thenable = this.terminateThreadsRequest(response, args);
-            break;
-        case "stackTrace":
-            thenable = this.stackTraceRequest(response, args);
-            break;
-        case "scopes":
-            thenable = this.scopesRequest(response, args);
-            break;
-        case "variables":
-            thenable = this.variablesRequest(response, args);
-            break;
-        case "setVariable":
-            thenable = this.setVariableRequest(response, args);
-            break;
-        case "setExpression":
-            thenable = this.setExpressionRequest(response, args);
-            break;
-        case "evaluate":
-            thenable = this.evaluateRequest(response, args);
-            break;
-        case "stepInTargets":
-            thenable = this.stepInTargetsRequest(response, args);
-            break;
-        case "gotoTargets":
-            thenable = this.gotoTargetsRequest(response, args);
-            break;
-        case "completions":
-            thenable = this.completionsRequest(response, args);
-            break;
-        case "exceptionInfo":
-            thenable = this.exceptionInfoRequest(response, args);
-            break;
-        case "loadedSources":
-            thenable = this.loadedSourcesRequest(response, args);
-            break;
-        default:
-            thenable = Promise.reject(new Error(`Unknown request: ${command}`));
-            break;
-        }
-        thenable.then(() => {
+        Promise.resolve()
+        .then(() => {
+            switch (command) {
+            case "disconnect":
+                return this.disconnectRequest(response, args);
+            case "launch":
+                return this.launchRequest(response, args);
+            case "attach":
+                return this.attachRequest(response, args);
+            case "restart":
+                return this.restartRequest(response, args);
+            case "setBreakPoints":
+                return this.setBreakPointsRequest(response, args);
+            case "setFunctionBreakPoints":
+                return this.setFunctionBreakPointsRequest(response, args);
+            case "setExceptionBreakPoints":
+                return this.setExceptionBreakPointsRequest(response, args);
+            case "configurationDone":
+                return this.configurationDoneRequest(response, args);
+            case "continue":
+                return this.continueRequest(response, args);
+            case "next":
+                return this.nextRequest(response, args);
+            case "stepIn":
+                return this.stepInRequest(response, args);
+            case "stepOut":
+                return this.stepOutRequest(response, args);
+            case "stepBack":
+                return this.stepBackRequest(response, args);
+            case "reverseContinue":
+                return this.reverseContinueRequest(response, args);
+            case "restartFrame":
+                return this.restartFrameRequest(response, args);
+            case "goto":
+                return this.gotoRequest(response, args);
+            case "pause":
+                return this.pauseRequest(response, args);
+            case "source":
+                return this.sourceRequest(response, args);
+            case "threads":
+                return this.threadsRequest(response);
+            case "terminateThreads":
+                return this.terminateThreadsRequest(response, args);
+            case "stackTrace":
+                return this.stackTraceRequest(response, args);
+            case "scopes":
+                return this.scopesRequest(response, args);
+            case "variables":
+                return this.variablesRequest(response, args);
+            case "setVariable":
+                return this.setVariableRequest(response, args);
+            case "setExpression":
+                return this.setExpressionRequest(response, args);
+            case "evaluate":
+                return this.evaluateRequest(response, args);
+            case "stepInTargets":
+                return this.stepInTargetsRequest(response, args);
+            case "gotoTargets":
+                return this.gotoTargetsRequest(response, args);
+            case "completions":
+                return this.completionsRequest(response, args);
+            case "exceptionInfo":
+                return this.exceptionInfoRequest(response, args);
+            case "loadedSources":
+                return this.loadedSourcesRequest(response, args);
+            default:
+                throw new Error(`Unknown request: ${command}`);
+            }
+        })
+        .then(() => {
             response.success = true;
             delete response.message;
         }, (reason) => {
@@ -265,7 +263,7 @@ export class DebugServer {
         return Promise.resolve();
     }
 
-    protected launchRequest(response: DebugProtocol.LaunchResponse, args: DebugProtocol.LaunchRequestArguments): Thenable<void> {
+    protected launchRequest(response: DebugProtocol.LaunchResponse, args: RubicLaunchRequestArguments & DebugProtocol.LaunchRequestArguments): Thenable<void> {
         return Promise.resolve();
     }
 

@@ -97,6 +97,7 @@ export class SerialBoard extends Board {
         const printDebug = (this.serialDebugLevel > 0) ? (...args) => {
             console.log(`[${this.constructor.name}.prototype.connect]`, ...args);
         } : () => {};
+        this._path = path;
         this._port = new SerialPort(path, {
             autoOpen: false,
             baudRate: 115200,
@@ -143,6 +144,7 @@ export class SerialBoard extends Board {
             printDebug("Disconnecting");
             await pify(this._port.close).call(this._port);
         } finally {
+            this._path = undefined;
             this._port = null;
         }
     }

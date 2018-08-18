@@ -9,6 +9,7 @@ import { EventEmitter, workspace, WorkspaceFolder, Uri, Disposable, ExtensionCon
 import { RUBIC_VERSION, updateRubicEnabledContext } from "./extension";
 import { SystemComposition } from "./util/systemComposition";
 import { CatalogViewer } from "./catalog/catalogViewer";
+import { Board } from "./boards/board";
 
 const RUBIC_JSON  = "rubic.json";
 const SKETCH_ENCODING = "utf8";
@@ -97,6 +98,7 @@ export class Sketch implements Disposable {
     private _onDidChange = new EventEmitter<Sketch>();
     private _onDidReload = new EventEmitter<Sketch>();
     private _onDidClose = new EventEmitter<Sketch>();
+    private _onDidBoardChange = new EventEmitter<Sketch>();
     private _rubicFile: string;
     private _launchFile: string;
     private _disposables: Disposable[] = [];
@@ -105,6 +107,7 @@ export class Sketch implements Disposable {
     private _modified: boolean;
     private _data?: V1_0_x.Top & {"//^": string[]};
     private _catViewer?: CatalogViewer;
+    private _board?: Board;
 
     /**
      * Name of folder
@@ -135,6 +138,11 @@ export class Sketch implements Disposable {
      * An event to signal a sketch has been closed.
      */
     get onDidClose() { return this._onDidClose.event; }
+
+    /**
+     * An event to signal a board has been changed
+     */
+    get onDidBoardChange() { return this._onDidBoardChange.event; }
 
     /**
      * Catalog viewer for this sketch (may be undefined)
@@ -231,6 +239,10 @@ export class Sketch implements Disposable {
      */
     dispose(): any {
         this.close();
+        if (this._board != null) {
+            this._board.dispose();
+            this._board = undefined;
+        }
         let disposables = this._disposables;
         this._disposables = [];
         return disposables.reduce(
@@ -278,11 +290,19 @@ export class Sketch implements Disposable {
         if (this._data!.hardware == null) {
             this._data!.hardware = {} as any;
         }
-        this._data!.hardware!.boardClass = newComposition.boardClassName!;
-        this._data!.hardware!.repositoryUuid = newComposition.repositoryUuid!;
-        this._data!.hardware!.releaseTag = newComposition.releaseTag!;
-        this._data!.hardware!.variationPath = newComposition.variationPath!;
+        this._data!.hardware.boardClass = newComposition.boardClassName!;
+        this._data!.hardware.repositoryUuid = newComposition.repositoryUuid!;
+        this._data!.hardware.releaseTag = newComposition.releaseTag!;
+        this._data!.hardware.variationPath = newComposition.variationPath!;
         this._setModified();
+        this._updateBoardInstance();
+    }
+
+    /**
+     * Get board instance
+     */
+    get board(): Board | undefined {
+        return this._board;
     }
 
     /**
@@ -386,6 +406,7 @@ export class Sketch implements Disposable {
             this._data = CJSON.parse(content);
             this._modified = false;
             this._state = SketchState.SKETCH_VALID;
+            this._updateBoardInstance();
             updateRubicEnabledContext(true);
         }, () => {
             this._state = SketchState.SKETCH_NOT_EXISTS;
@@ -401,5 +422,27 @@ export class Sketch implements Disposable {
             this._modified = true;
             this._onDidChange.fire(this);
         }
+    }
+
+    private _updateBoardInstance(): void {
+        const { boardClass } = this.getSystemComposition();
+        if ((this._board != null) &&
+            (boardClass != null) &&
+            (this._board.constructor.name === boardClass.name)) {
+            /* No change */
+            return;
+        }
+        if (this._board != null) {
+            /* Dispose old board instance */
+            this._board.dispose();
+            this._board = undefined;
+        }
+        if (boardClass == null) {
+            /* No board */
+            return;
+        }
+        /* Construct new board instance */
+        this._board = new boardClass();
+        this._onDidBoardChange.fire(this);
     }
 }

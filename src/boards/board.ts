@@ -118,6 +118,9 @@ export class Board {
     /** The auxiliary data to be passed to the board (board specific) */
     public boardData: any;
 
+    /** Current path */
+    protected _path?: string;
+
     /**
      * Construct board instance
      */
@@ -138,6 +141,13 @@ export class Board {
      */
     dispose(): any {
         return this.disconnect();
+    }
+
+    /**
+     * Get board path
+     */
+    get path(): string | undefined {
+        return this._path;
     }
 
     /**
