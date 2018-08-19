@@ -10,11 +10,6 @@ import { CatalogViewer } from "../catalog/catalogViewer";
 import * as nls from "vscode-nls";
 const localize = nls.loadMessageBundle(__filename);
 
-interface RubicLaunchRequestArguments {
-    boardPath: string;
-    __rubicServerId: string;
-}
-
 /**
  * Debug server for extension host process
  * (This communicates with debug adapter process via node-ipc)
@@ -98,10 +93,7 @@ export class DebugServer {
      * Construct instance
      * @param sketch The instance of Sketch associated to this debug server
      */
-    private constructor(readonly sketch: Sketch) {
-        if (sketch.board == null) {
-            throw new Error("No board");
-        }
+    protected constructor(readonly sketch: Sketch) {
         this.id = `DebugServer@${Math.random().toString(36).substr(2)}`;
         this._ipc.config.appspace = "kimushu.rubic";
         this._ipc.config.id = this.id;
@@ -113,14 +105,15 @@ export class DebugServer {
      * Extend debug arguments with communication information
      * @param args Debug arguments
      */
-    extendLaunchArgs(args: any): RubicLaunchRequestArguments & DebugConfiguration {
-        const newArgs = Object.assign({
-            boardPath: this.sketch.boardPath
+    extendLaunchArgs(args: any): any {
+        return Object.assign({
+            __rubicServerId: this.id
         }, args);
-        newArgs.__rubicServerId = this.id;
-        return newArgs;
     }
 
+    /**
+     * Start server
+     */
     startServer(): void {
         if (this._ipc.server) {
             return;
@@ -130,6 +123,9 @@ export class DebugServer {
         this._ipc.server!.start();
     }
 
+    /**
+     * Stop server
+     */
     stopServer(): void {
         if (this._ipc.server != null) {
             console.log(`Stopping debug server (id=${this.id})`);
@@ -137,6 +133,9 @@ export class DebugServer {
         }
     }
 
+    /**
+     * Dispose object
+     */
     dispose(): Thenable<void> {
         this.stopServer();
         const disposables = this._disposables;
@@ -263,7 +262,7 @@ export class DebugServer {
         return Promise.resolve();
     }
 
-    protected launchRequest(response: DebugProtocol.LaunchResponse, args: RubicLaunchRequestArguments & DebugProtocol.LaunchRequestArguments): Thenable<void> {
+    protected launchRequest(response: DebugProtocol.LaunchResponse, args: DebugProtocol.LaunchRequestArguments): Thenable<void> {
         return Promise.resolve();
     }
 
