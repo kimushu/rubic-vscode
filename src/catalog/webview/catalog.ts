@@ -22,14 +22,13 @@ function postRequest(request: WebViewCommunication.Request): void {
 }
 
 interface IRemoteConsole {
-    debug(...messages): void;
     log(...messages): void;
     info(...messages): void;
     warn(...messages): void;
     error(...messages): void;
 }
 const rconsole: IRemoteConsole = <any>{};
-["debug", "log", "info", "warn", "error"].forEach((level) => {
+["log", "info", "warn", "error"].forEach((level) => {
     rconsole[level] = (...messages) => {
         postRequest({ request: "console", level, messages });
     };
@@ -112,7 +111,7 @@ class CatalogViewerPanel {
      * @param func A name of sender function
      * @param messages Messages
      */
-    report(level: "debug" | "log" | "info" | "warn" | "error", func: string, ...messages): void {
+    report(level: "log" | "info" | "warn" | "error", func: string, ...messages): void {
         rconsole[level](`[${this.constructor.name}(${this.panelId}).${func}]`, ...messages);
     }
 
@@ -254,7 +253,7 @@ class CatalogViewerPanel {
             return;
         }
         /* Add items */
-        this.report("debug", "_createListElements", `Constructing ${items.length} item(s)`);
+        this.report("log", "_createListElements", `Constructing ${items.length} item(s)`);
         items.forEach((item) => {
             const newItem = < JQuery<HTMLDivElement> >templ.clone().prop("id", "");
             newItem[0].dataset.panelId = this.panelId;
@@ -315,7 +314,7 @@ class CatalogViewerPanel {
             return;
         }
         /* Add pages */
-        this.report("debug", "_createPageElements", `Constructing ${pages.length} page(s)`);
+        this.report("log", "_createPageElements", `Constructing ${pages.length} page(s)`);
         pages.forEach((page, index) => {
             /* Add tab */
             const newTab = < JQuery<HTMLLIElement> >templTab.clone().prop("id", "");
@@ -463,4 +462,4 @@ class CatalogViewerWebview {
     }
 }
 
-console.debug("instance:", CatalogViewerWebview.instance);
+console.log("instance:", CatalogViewerWebview.instance);

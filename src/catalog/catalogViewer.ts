@@ -220,7 +220,6 @@ export class CatalogViewer implements Disposable {
             switch (message.request) {
             case "console":
                 switch (message.level) {
-                case "debug":
                 case "log":
                 case "info":
                 case "warn":
@@ -517,7 +516,7 @@ export class CatalogViewer implements Disposable {
             }
         }
         this._selected = newSelection;
-        console.debug(
+        console.log(
             `[${this.constructor.name}.prototype._setSelectionHandler]`,
             JSON.stringify(message.selection)
         );

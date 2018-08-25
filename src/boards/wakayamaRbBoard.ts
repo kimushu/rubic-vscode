@@ -470,7 +470,7 @@ export class WakayamaRbBoard extends SerialBoard {
                 .then(() => {
                     reject(new NotSupportedError());
                 }, (reason) => {
-                    console.debug(
+                    console.log(
                         `[${this.constructor.name}.prototype._mountDrive]`,
                         "Ignore error during reset",
                         reason
