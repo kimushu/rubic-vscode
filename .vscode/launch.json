@@ -44,16 +44,11 @@
             "request": "launch",
             "protocol": "inspector",
             "cwd": "${workspaceRoot}",
-            "program": "${workspaceRoot}/out/src/debug/rubicDebugSession.js",
+            "program": "${workspaceRoot}/out/src/debug/debugSession.js",
             "args": ["--server=4711"],
             "sourceMaps": true,
             "outFiles": ["${workspaceRoot}/out/**/*.js"],
-            "windows": {
-                "runtimeExecutable": "C:\\Program Files\\Microsoft VS Code\\Code.exe"
-            },
-            "osx": {
-                "runtimeExecutable": "/Applications/Visual Studio Code.app/Contents/MacOS/Electron"
-            },
+            "runtimeExecutable": "${execPath}",
             "env": {
                 "DEBUG": "canarium:*",
                 "ELECTRON_RUN_AS_NODE": "1"
