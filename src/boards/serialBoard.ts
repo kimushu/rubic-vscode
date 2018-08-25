@@ -1,10 +1,9 @@
 import * as SerialPort from "serialport";
-import * as pify from "pify";
 import * as util from "util";
 import { Board, BoardCandidate, BoardConstructor } from "./board";
 import { AssertionError } from "assert";
 import { TimeoutError } from "../util/errors";
-import { vscode } from "../extension";
+import { promisify } from "util";
 
 export interface UsbSerialId {
     vendorId: number;
@@ -24,9 +23,8 @@ interface SerialWaiter {
 /**
  * Abstract board with serial communication
  */
-export class SerialBoard extends Board {
+export abstract class SerialBoard extends Board {
     private _port: SerialPort | null = null;
-    private _onDidDisconnect = new vscode.EventEmitter<void>();
     private _waiter: SerialWaiter | null = null;
     private _received: Buffer = Buffer.alloc(0);
 
@@ -51,7 +49,7 @@ export class SerialBoard extends Board {
      */
     public static list(): Thenable<BoardCandidate[]> {
         let { judgePort, usbSerialIdList } = this;
-        return pify(SerialPort.list).call(SerialPort)
+        return promisify(SerialPort.list).call(SerialPort)
         .then((ports: SerialPort.PortConfig[]) => {
             let result: BoardCandidate[] = [];
             ports.forEach((portConfig) => {
@@ -108,7 +106,7 @@ export class SerialBoard extends Board {
         this._port.on("close", this._closeHandler.bind(this));
         try {
             printDebug("Opening port ");
-            await pify(this._port.open).call(this._port);
+            await promisify(this._port.open).call(this._port);
             printDebug("Authenticating board");
             await this.serialAuth();
         } catch (reason) {
@@ -126,11 +124,6 @@ export class SerialBoard extends Board {
     }
 
     /**
-     * An event to signal a board has been disconnected.
-     */
-    get onDidDisconnect() { return this._onDidDisconnect.event; }
-
-    /**
      * Disconnect from board
      */
     async disconnect(): Promise<void> {
@@ -142,7 +135,7 @@ export class SerialBoard extends Board {
         } : () => {};
         try {
             printDebug("Disconnecting");
-            await pify(this._port.close).call(this._port);
+            await promisify(this._port.close).call(this._port);
         } finally {
             this._path = undefined;
             this._port = null;
@@ -191,7 +184,7 @@ export class SerialBoard extends Board {
                 message: "Not connected @ serialSend"
             }));
         }
-        return pify(this._port.write).call(this._port, buffer);
+        return promisify(this._port.write).call(this._port, buffer);
     }
 
     /**
@@ -232,7 +225,7 @@ export class SerialBoard extends Board {
                 message: "Not connected @ serialRecv"
             });
         }
-        await pify(this._port.drain).call(this._port);
+        await promisify(this._port.drain).call(this._port);
         return new Promise<string | Buffer>((resolve, reject) => {
             const waiter: SerialWaiter = {
                 resolve: (value) => {
@@ -314,7 +307,7 @@ export class SerialBoard extends Board {
         }
         this._waiter = null;
         printDebug("Flushing");
-        await pify(this._port.flush).call(this._port);
+        await promisify(this._port.flush).call(this._port);
         this._received = Buffer.alloc(0);
     }
 

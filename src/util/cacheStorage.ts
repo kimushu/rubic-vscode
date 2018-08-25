@@ -1,10 +1,10 @@
 import * as fs from "fs";
 import * as fse from "fs-extra";
 import * as path from "path";
-import * as pify from "pify";
 import * as rimraf from "rimraf";
 import { rubicTestContext, vscode } from "../extension";
 import { AssertionError } from "assert";
+import { promisify } from "util";
 
 /**
  * Get user profile directory
@@ -42,20 +42,21 @@ export module CacheStorage {
 
     /** Clear all files */
     export function clear(): Thenable<void> {
-        return pify(rimraf)(getBaseDir());
+        return promisify(rimraf)(getBaseDir());
     }
 
     /** writeFile */
     export function writeFile(filename: string, data: any): Thenable<void> {
         let fullPath = getFullPath(filename);
-        return pify(fse.ensureDir)(path.dirname(fullPath)).then(() => {
-            return pify(fse.writeFile)(fullPath, data);
+        return promisify(fse.ensureDir)(path.dirname(fullPath))
+        .then(() => {
+            return promisify(fse.writeFile as any)(fullPath, data);
         });
     }
 
     /** readFile */
     export function readFile(filename: string, encoding?: string): Thenable<string|Buffer> {
-        return pify(fse.readFile)(getFullPath(filename), encoding);
+        return promisify(fse.readFile as any)(getFullPath(filename), encoding);
     }
 
     /** readFileSync */
@@ -65,7 +66,7 @@ export module CacheStorage {
 
     /** stat */
     export function stat(filename: string): Thenable<fs.Stats> {
-        return pify(fse.stat)(getFullPath(filename));
+        return promisify(fse.stat)(getFullPath(filename));
     }
 
     /** statSync */
@@ -80,7 +81,8 @@ export module CacheStorage {
 
     /** Remove file */
     export function unlink(filename: string): Thenable<void> {
-        return pify(fse.unlink)(getFullPath(filename));
+        return promisify(fse.unlink)(getFullPath(filename))
+        .then(() => {});
     }
 
     /** Watch file */

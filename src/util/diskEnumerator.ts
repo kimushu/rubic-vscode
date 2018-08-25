@@ -1,5 +1,5 @@
 import { exec } from "child_process";
-import * as pify from "pify";
+import { promisify } from "util";
 
 export interface DiskInfo {
     path: string;
@@ -35,7 +35,7 @@ export function enumerateRemovableDisks(minimumSize: number = 0, maximumSize: nu
  * Disk enumerator for win32 environment
  */
 function enumerateDisksWin32(): Promise<DiskInfo[]> {
-    return pify(exec)("wmic logicaldisk get Caption,DriveType,FreeSpace,Size").then((stdout: string) => {
+    return promisify(exec)("wmic logicaldisk get Caption,DriveType,FreeSpace,Size").then((stdout: string) => {
         let result: DiskInfo[] = [];
         stdout.split("\r\r\n").forEach((line) => {
             let col = line.split(/\s+/);
@@ -59,7 +59,7 @@ function enumerateDisksWin32(): Promise<DiskInfo[]> {
  * Disk enumerator for UNIX(mac/Linux) environment
  */
 function enumerateDisksUnix(): Promise<DiskInfo[]> {
-    return pify(exec)("df -k -P").then((stdout: string) => {
+    return promisify(exec)("df -k -P").then((stdout: string) => {
         let result: DiskInfo[] = [];
         stdout.split("\n").forEach((line) => {
             let col = line.split(/\s+/);

@@ -49,4 +49,11 @@ export class BoardDebugServer extends DebugServer {
             })
         );
     }
+
+    protected async disconnectRequest(response: DebugProtocol.DisconnectResponse, args: DebugProtocol.DisconnectArguments): Promise<void> {
+        const { board } = this.sketch;
+        if ((board != null) && (board.isConnected)) {
+            await board.disconnect();
+        }
+    }
 }

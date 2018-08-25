@@ -31,7 +31,15 @@ export class SystemComposition {
             (this.variationPath != null);
     }
 
-    /** `true` if all composition equals */
+    /**
+     * Construct instance
+     */
+    constructor() {
+    }
+
+    /**
+     * Returns `true` if all composition equals
+     */
     compare(another: SystemComposition): boolean {
         return (this.boardClassName === another.boardClassName) &&
             (this.repositoryUuid === another.repositoryUuid) &&

@@ -56,7 +56,7 @@ export class Runtime {
      * Enumerate executables
      * @param workspaceRoot Root path of workspace
      */
-    enumerateExecutables(workspaceRoot: string): Promise<ExecutableCandidate[]> {
+    enumerateExecutables(workspaceRoot: string): Thenable<ExecutableCandidate[]> {
         return Promise.resolve([]);
     }
 
@@ -64,8 +64,8 @@ export class Runtime {
      * Get executable file name
      * @param filename File name of source
      */
-    getExecutableFile(filename: string): string {
-        return null;
+    getExecutableFile(filename: string): string | undefined {
+        return;
     }
 
     /**
@@ -78,7 +78,7 @@ export class Runtime {
     /**
      * Get template path
      */
-    getTemplatePath(): string {
+    getTemplatePath(): string | undefined {
         return this.info.template;
     }
 

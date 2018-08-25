@@ -70,25 +70,15 @@ export class CatalogViewer implements Disposable {
 
     }
 
-    static open(workspaceFolder?: WorkspaceFolder): Thenable<CatalogViewer> {
-        let sketch: Sketch;
-        return Promise.resolve()
-        .then(() => {
-            if (workspaceFolder == null) {
-                return false;
-            }
-            sketch = Sketch.find(workspaceFolder)!;
-            if (sketch != null) {
-                return true;
-            }
-            sketch = new Sketch(workspaceFolder);
-            return sketch.open(true);
-        })
-        .then((opened) => {
-            if (opened && sketch != null) {
-                return sketch.showCatalog();
-            }
-        });
+    static async open(workspaceFolder?: WorkspaceFolder): Promise<CatalogViewer | undefined> {
+        if (workspaceFolder == null) {
+            return;
+        }
+        let sketch = await Sketch.find(workspaceFolder, true);
+        if (sketch == null) {
+            return;
+        }
+        return sketch.showCatalog();
     }
 
     private _webview: WebviewPanel | null = null;

@@ -1,5 +1,5 @@
 import { Runtime, ExecutableCandidate } from "./runtime";
-import * as pify from "pify";
+import { promisify } from "util";
 import * as glob from "glob";
 
 export class LuaRuntime extends Runtime {
@@ -8,7 +8,7 @@ export class LuaRuntime extends Runtime {
     enumerateExecutables(workspaceRoot: string): Thenable<ExecutableCandidate[]> {
         let globOptions = { cwd: workspaceRoot };
         return Promise.all([
-            <Thenable<string[]>>pify(glob)("**/*.lua", globOptions)
+            <Thenable<string[]>>promisify(glob)("**/*.lua", globOptions)
         ])
         .then(([luaList]) => {
             let list: ExecutableCandidate[] = [];
@@ -21,7 +21,7 @@ export class LuaRuntime extends Runtime {
         });
     }
 
-    getExecutableFile(file: string): string {
+    getExecutableFile(file: string): string | undefined {
         if (file.match(/\.lua$/)) {
             return file;
         }
@@ -36,7 +36,7 @@ export class LuaRuntime extends Runtime {
             localizedTooltip: (
                 (info.version != null)
                 ? `${Runtime.LOCALIZED_VERSION}: ${info.version}`
-                : null
+                : undefined
             )
         });
         return topics;

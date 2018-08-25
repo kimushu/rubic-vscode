@@ -156,10 +156,6 @@
   version "8.10.21"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-8.10.21.tgz#12b3f2359b27aa05a45d886c8ba1eb8d1a77e285"
 
-"@types/pify@^3.0.2":
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/@types/pify/-/pify-3.0.2.tgz#1bc75dac43e31dba981c37e0a08edddc1b49cd39"
-
 "@types/promise.prototype.finally@^2.0.2":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@types/promise.prototype.finally/-/promise.prototype.finally-2.0.2.tgz#68fefb8f0e23f21893a33740c931c79f44be3499"

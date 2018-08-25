@@ -1,5 +1,5 @@
 import { Runtime, ExecutableCandidate } from "./runtime";
-import * as pify from "pify";
+import { promisify } from "util";
 import * as glob from "glob";
 
 export class DuktapeRuntime extends Runtime {
@@ -13,13 +13,16 @@ export class DuktapeRuntime extends Runtime {
     enumerateExecutables(workspaceRoot: string): Thenable<ExecutableCandidate[]> {
         let globOptions = { cwd: workspaceRoot };
         return Promise.all([
-            <Thenable<string[]>>pify(glob)("**/*.js", globOptions),
-            <Thenable<string[]>>pify(glob)("**/*.ts", globOptions),
+            <Thenable<(string | null)[]>>promisify(glob)("**/*.js", globOptions),
+            <Thenable<string[]>>promisify(glob)("**/*.ts", globOptions),
         ])
         .then(([jsList, tsList]) => {
             let list: ExecutableCandidate[] = [];
             tsList.forEach((ts) => {
                 let js = this.getExecutableFile(ts);
+                if (js == null) {
+                    return;
+                }
                 list.push({ relPath: js, relSource: ts });
                 let i = jsList.indexOf(js);
                 if (i >= 0) {
@@ -35,7 +38,7 @@ export class DuktapeRuntime extends Runtime {
         });
     }
 
-    getExecutableFile(file: string): string {
+    getExecutableFile(file: string): string | undefined {
         if (file.match(/\.js$/)) {
             return file;
         }

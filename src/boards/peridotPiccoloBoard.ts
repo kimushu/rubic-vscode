@@ -2,7 +2,7 @@ import { BoardCandidate, Board, BoardInformation, BoardStdioStream, BoardDebugSt
 import * as md5 from "md5";
 import * as delay from "delay";
 import * as path from "path";
-import * as pify from "pify";
+import { promisify } from "util";
 import * as fs from "fs";
 import * as nls from "vscode-nls";
 import * as decompress from "decompress";
@@ -446,7 +446,7 @@ export class PeridotPiccoloBoard extends Board {
     writeFirmware(filename: string, boardPath: string, reporter: (message?: string) => void): Promise<boolean> {
         let binaries: PiccoloBinaries;
 
-        return pify(fs.readFile)(filename)
+        return promisify(fs.readFile)(filename)
         .then((zip) => {
             return decompress(zip);
         })
@@ -554,7 +554,7 @@ export class PeridotPiccoloBoard extends Board {
         };
 
         let timeout = true;
-        return pify(fs.readFile)(WRITER_ELF_PATH)
+        return promisify(fs.readFile)(WRITER_ELF_PATH)
         .then((buffer)=> {
             writerElf = buffer;
         })

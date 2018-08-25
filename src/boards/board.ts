@@ -2,9 +2,8 @@ import * as stream from "stream";
 import { ProgressReporter } from "../extension";
 import { AssertionError } from "assert";
 import { NotSupportedError } from "../util/errors";
-import * as md5 from "md5";
-
-import vscode_types = require("vscode");
+import { Digest } from "../util/digest";
+import { CancellationToken, Disposable, Event, EventEmitter } from "vscode";
 
 export interface BoardCandidate {
     /** Board class name */
@@ -43,11 +42,6 @@ export interface BoardStorageInfo {
     external?: boolean;
     /** Is read-only storage */
     readOnly?: boolean;
-}
-
-export interface BoardFileDigest {
-    type: "crc32" | "md5" | "sha1";
-    value: any;
 }
 
 export interface BoardResult {
@@ -96,7 +90,7 @@ export interface BoardConstructor {
 /**
  * Abstract board class
  */
-export class Board {
+export abstract class Board implements Disposable {
     private static _classes: {[className: string]: BoardConstructor} = {};
 
     /**
@@ -121,6 +115,9 @@ export class Board {
     /** Current path */
     protected _path?: string;
 
+    /** Disconnect event */
+    protected _onDidDisconnect = new EventEmitter<void>();
+
     /**
      * Construct board instance
      */
@@ -139,8 +136,10 @@ export class Board {
     /**
      * Dispose object
      */
-    dispose(): any {
-        return this.disconnect();
+    dispose(): void {
+        if (this.isConnected) {
+            this.disconnect();
+        }
     }
 
     /**
@@ -154,9 +153,7 @@ export class Board {
      * Connect to board
      * @param path Path of the board
      */
-    connect(path: string): Thenable<void> {
-        throw new AssertionError();
-    }
+    abstract connect(path: string): Thenable<void>;
 
     /**
      * Check if the board is connected or not
@@ -168,63 +165,55 @@ export class Board {
     /**
      * An event to signal a board has been disconnected.
      */
-    get onDidDisconnect(): vscode_types.Event<void> { throw new NotSupportedError(); }
+    get onDidDisconnect(): Event<void> { return this._onDidDisconnect.event; }
 
     /**
      * Disconnect from board
      */
-    disconnect(): Thenable<void> {
-        throw new AssertionError();
-    }
+    abstract disconnect(): Thenable<void>;
 
     /**
      * Get board information
      * @return A thenable that resolves to board information
      */
-    getInfo(): Thenable<BoardInformation> {
-        throw new AssertionError();
-    }
+    abstract getInfo(): Thenable<BoardInformation>;
 
     /**
      * Get storage information
      * @return A thenable that resolves to array of storage information
      */
-    getStorageInfo(): Thenable<BoardStorageInfo[]> {
-        throw new AssertionError();
-    }
+    abstract getStorageInfo(): Thenable<BoardStorageInfo[]>;
 
     /**
      * Write file
      * @param filePath Full path of the file to be written
      * @param data Data to write
      * @param progress Object for progress reporting
+     * @param token A cancellation token
      */
-    writeFile(filePath: string, data: Buffer, progress?: ProgressReporter): Thenable<void> {
-        throw new AssertionError();
-    }
+    abstract writeFile(filePath: string, data: Buffer, progress?: ProgressReporter, token?: CancellationToken): Thenable<void>;
 
     /**
      * Read file
      * @param filePath Full path of the file to be read
      * @param progress Object for progress reporting
+     * @param token A cancellation token
      * @return A thenable that resolves to read data
      */
-    readFile(filePath: string, progress?: ProgressReporter): Thenable<Buffer> {
+    readFile(filePath: string, progress?: ProgressReporter, token?: CancellationToken): Thenable<Buffer> {
         return Promise.reject(new NotSupportedError());
     }
 
     /**
      * Read file digest
      * @param filePath Full path of the file to be read
+     * @param token A cancellation token
      * @return A thenable that resolves to digest information
      */
-    readFileDigest(filePath: string): Thenable<BoardFileDigest> {
+    readFileDigest(filePath: string, token?: CancellationToken): Thenable<Digest> {
         return this.readFile(filePath)
         .then((buffer) => {
-            return <BoardFileDigest>{
-                type: "md5",
-                value: md5(buffer)
-            };
+            return new Digest(buffer);
         });
     }
 
@@ -232,9 +221,10 @@ export class Board {
      * Enumerate files
      * @param dirPath Full path of directory (Wildcards not accepted)
      * @param recursive Set true to search recursively
+     * @param token A cancellation token
      * @return A thenable that resolves to an array of full path of files found
      */
-    enumerateFiles(dirPath: string, recursive?: boolean): Thenable<string[]> {
+    enumerateFiles(dirPath: string, recursive?: boolean, token?: CancellationToken): Thenable<string[]> {
         return Promise.reject(new NotSupportedError());
     }
 
@@ -283,7 +273,7 @@ export class Board {
     /**
      * An event to signal a program has been finished.
      */
-    get onDidFinish(): vscode_types.Event<BoardResult> { throw new NotSupportedError(); }
+    get onDidFinish(): Event<BoardResult> { throw new NotSupportedError(); }
 
     /**
      * Abort program

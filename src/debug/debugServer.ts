@@ -39,7 +39,7 @@ export class DebugServer {
      * @param token A cancellation token.
      * @return The resolved debug configuration or undefined.
      */
-    static resolveDebugConfiguration?(folder: WorkspaceFolder | undefined, debugConfiguration: DebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
+    static async resolveDebugConfiguration?(folder: WorkspaceFolder | undefined, debugConfiguration: DebugConfiguration, token?: CancellationToken): Promise<DebugConfiguration | undefined> {
         if (folder == null) {
             vscode.window.showErrorMessage(localize(
                 "open-folder-first",
@@ -47,7 +47,7 @@ export class DebugServer {
             ));
             return undefined;
         }
-        const sketch = Sketch.find(folder);
+        const sketch = await Sketch.find(folder);
         if (sketch == null) {
             vscode.window.showInformationMessage(localize(
                 "setup-first",

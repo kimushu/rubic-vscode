@@ -8,9 +8,6 @@ const BIT_REVERSE: number[] = [];
  * @param rpd RPD data
  */
 export function convertRpdToBytes(rpd: Buffer): Buffer {
-    if (rpd == null) {
-        return null;
-    }
     if (BIT_REVERSE.length === 0) {
         for (let i = 0; i < 256; ++i) {
             BIT_REVERSE[i] =

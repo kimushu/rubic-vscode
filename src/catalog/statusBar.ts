@@ -42,14 +42,14 @@ export class StatusBar implements Disposable {
     }
 
     private _changeSketches(): void {
-        let count = Sketch.managedSketches.length;
+        let count = Sketch.list.length;
         if (count === 0) {
             this._updateSketch();
         } else if (count === 1) {
             if (this._sketchWatcher != null) {
                 this._sketchWatcher.dispose();
             }
-            const sketch = Sketch.managedSketches[0];
+            const sketch = Sketch.list[0];
             this._sketchWatcher = sketch.onDidChange((sketch) => {
                 this._updateSketch(sketch);
             });

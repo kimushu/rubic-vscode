@@ -1,7 +1,6 @@
 import * as stream from "stream";
 import * as nls from "vscode-nls";
 import * as fse from "fs-extra";
-import * as pify from "pify";
 import * as path from "path";
 import * as tmp from "tmp";
 import * as delay from "delay";
@@ -12,6 +11,7 @@ import { enumerateRemovableDisks } from "../util/diskEnumerator";
 import { ProgressReporter, vscode } from "../extension";
 import { FileTransferError, NotSupportedError } from "../util/errors";
 import { SerialBoard } from "./serialBoard";
+import { promisify } from "util";
 
 const localize = nls.loadMessageBundle(__filename);
 
@@ -107,7 +107,7 @@ export class WakayamaRbBoard extends SerialBoard {
         const storagePath = this._parsePath(filePath);
         switch (storagePath.type) {
         case WrbbStorageType.WRBB_STORAGE_INTERNAL:
-            if (this.boardData.useHexForWriting) {
+            if ((this.boardData || {}).useHexForWriting) {
                 cmd = "U";
                 data = Buffer.from(data.toString("hex"));
             } else {
@@ -128,7 +128,7 @@ export class WakayamaRbBoard extends SerialBoard {
         await this.serialSend(data);
         await this.serialRecv("Saving");
         for (;;) {
-            let byte = await this.serialRecv(1)[0];
+            let byte = (await this.serialRecv(1))[0];
             if (byte === CHAR_CODE_PROMPT) {
                 break;
             }
@@ -170,6 +170,9 @@ export class WakayamaRbBoard extends SerialBoard {
         await this.serialSend("\r");
         lines = (await this.serialRecv("\r\n>")).split("\r\n");
         let footer = lines.findIndex((line) => line.startsWith(FOOTER_PREFIX));
+        if ((lines[footer - 2] || "").startsWith("..Read Error!")) {
+            throw new FileTransferError("File not found");
+        }
         let ascii = lines[footer - 1];
         ascii = ascii && ascii.substr(-(length * 2));
         if ((ascii == null) || (ascii.length !== (length * 2))) {
@@ -210,6 +213,26 @@ export class WakayamaRbBoard extends SerialBoard {
             }
         });
         return files;
+    }
+
+    /**
+     * Remove file
+     * @param filePath Full path of the file to be read
+     */
+    async removeFile(filePath: string): Promise<void> {
+        // Parse file path
+        const storagePath = this._parsePath(filePath);
+        switch (storagePath.type) {
+        case WrbbStorageType.WRBB_STORAGE_INTERNAL:
+            break;
+        default:
+            throw new FileTransferError(`Unsupported path for remove: ${filePath}`);
+        }
+
+        // Issue command
+        await this._requestBreak();
+        await this.serialSend(`D ${storagePath.path}\r`);
+        await this.serialRecv("\r\n>");
     }
 
     /**
@@ -261,13 +284,13 @@ export class WakayamaRbBoard extends SerialBoard {
         let temp = tmp.fileSync();
         try {
             // Create temporary file with firmware content
-            await pify(fse.write)(temp.fd, buffer);
-            await pify(fse.close)(temp.fd);
+            await promisify(fse.write)(temp.fd, buffer);
+            await promisify(fse.close)(temp.fd);
 
             let destPath = path.join(msdPath, "fwup_by_rubic.bin");
             let copy_cmd = (process.platform === "win32") ? "copy" : "cp";
             report(localize("updating-flash", "Updating flash") + warning);
-            await pify(exec)(`${copy_cmd} "${temp.name}" "${destPath}"`);
+            await promisify(exec)(`${copy_cmd} "${temp.name}" "${destPath}"`);
         } finally {
             temp.removeCallback();
         }
@@ -428,8 +451,8 @@ export class WakayamaRbBoard extends SerialBoard {
         if (this.port == null) {
             throw new Error("Not connected");
         }
-        await pify(this.port.set).call(this.port, { brk: true, dtr: false });
-        await pify(this.port.set).call(this.port, { brk: false, dtr: true });
+        await promisify(this.port.set).call(this.port, { brk: true, dtr: false });
+        await promisify(this.port.set).call(this.port, { brk: false, dtr: true });
     }
 
     /**

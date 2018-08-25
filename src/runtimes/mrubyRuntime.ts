@@ -1,6 +1,6 @@
 import { Runtime, ExecutableCandidate } from "./runtime";
 import * as nls from "vscode-nls";
-import * as pify from "pify";
+import { promisify } from "util";
 import * as glob from "glob";
 const localize = nls.loadMessageBundle(__filename);
 
@@ -10,13 +10,16 @@ export class MrubyRuntime extends Runtime {
     enumerateExecutables(workspaceRoot: string): Thenable<ExecutableCandidate[]> {
         let globOptions = { cwd: workspaceRoot };
         return Promise.all([
-            <Thenable<string[]>>pify(glob)("**/*.mrb", globOptions),
-            <Thenable<string[]>>pify(glob)("**/*.rb", globOptions),
+            <Thenable<(string | null)[]>>promisify(glob)("**/*.mrb", globOptions),
+            <Thenable<string[]>>promisify(glob)("**/*.rb", globOptions),
         ])
         .then(([mrbList, rbList]) => {
             let list: ExecutableCandidate[] = [];
             rbList.forEach((rb) => {
                 let mrb = this.getExecutableFile(rb);
+                if (mrb == null) {
+                    return;
+                }
                 list.push({ relPath: mrb, relSource: rb });
                 let i = mrbList.indexOf(mrb);
                 if (i >= 0) {
@@ -32,7 +35,7 @@ export class MrubyRuntime extends Runtime {
         });
     }
 
-    getExecutableFile(file: string): string {
+    getExecutableFile(file: string): string | undefined {
         if (file.match(/\.mrb$/)) {
             return file;
         }
@@ -50,7 +53,7 @@ export class MrubyRuntime extends Runtime {
             localizedTooltip: (
                 (info.version != null)
                 ? `${Runtime.LOCALIZED_VERSION}: ${info.version}`
-                : null
+                : undefined
             )
         });
         for (let gem of (info.mrbgems || [])) {

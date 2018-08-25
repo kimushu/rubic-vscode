@@ -23,6 +23,8 @@ declare namespace V1_0_x {
             include?: string[];
             /** List of files or glob patterns not to be transfered to the board */
             exclude?: string[];
+            /** Always write all files without read back */
+            writeAlways?: boolean;
         }
         /** DO NOT EDIT: Version history */
         rubicVersion: {

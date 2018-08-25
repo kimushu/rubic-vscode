@@ -1,6 +1,6 @@
-import * as pify from "pify";
 import * as request from "request";
 import * as GitHub from "github";
+import { promisify } from "util";
 
 const RAWGITHUB_HOST = "https://raw.githubusercontent.com";
 
@@ -10,10 +10,10 @@ export interface GitHubRepository {
     branch?: string;
 }
 
-export function readGithubFile(repo: GitHubRepository, filename: string, encoding: string = null): Promise<Buffer|string> {
+export function readGithubFile(repo: GitHubRepository, filename: string, encoding?: string): Promise<Buffer|string> {
     let url = `${RAWGITHUB_HOST}/${repo.owner}/${repo.repo}/${repo.branch||"master"}/${filename}`;
     // First, try access from direct rawgithub URL
-    return pify(request)({url, encoding: null}).then((resp) => {
+    return promisify(request)({url, encoding: null}).then((resp) => {
         return resp.body;
     }).catch((error) => {
         // If direct access failed, try again via GitHub API

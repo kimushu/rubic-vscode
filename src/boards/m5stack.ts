@@ -4,7 +4,7 @@ import { Pyboard } from "./pyboard";
 /**
  * M5Stack
  */
-class M5Stack extends Pyboard {
+export class M5Stack extends Pyboard {
     /**
      * A list of USB serial VendorID / ProductID list
      */

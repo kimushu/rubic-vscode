@@ -5,11 +5,13 @@ import * as fse from "fs-extra";
 import * as semver from "semver";
 import * as CJSON from "comment-json";
 import * as chokidar from "chokidar";
-import { EventEmitter, workspace, WorkspaceFolder, Uri, Disposable, ExtensionContext } from "vscode";
-import { RUBIC_VERSION, updateRubicEnabledContext } from "./extension";
+import { EventEmitter, WorkspaceFolder, Uri, Disposable, ExtensionContext, CancellationToken, WorkspaceFoldersChangeEvent } from "vscode";
+import { vscode, RUBIC_VERSION, updateRubicEnabledContext, ProgressReporter } from "./extension";
 import { SystemComposition } from "./util/systemComposition";
 import { CatalogViewer } from "./catalog/catalogViewer";
 import { Board } from "./boards/board";
+import * as glob from "glob";
+import { promisify } from "util";
 
 const RUBIC_JSON  = "rubic.json";
 const SKETCH_ENCODING = "utf8";
@@ -38,28 +40,57 @@ enum SketchState {
  * (.vscode/rubic.json)
  */
 export class Sketch implements Disposable {
-    private static _managedSketches: Sketch[] = [];
+    private static _sketches: Sketch[] = [];
     private static _onDidChange = new EventEmitter<void>();
 
     /**
      * Activate sketch-related features
+     * @param context
      */
     static activateExtension(context: ExtensionContext): Thenable<void> {
-        if (workspace.workspaceFolders == null) {
-            return Promise.resolve();
+        context.subscriptions.push(
+            this,
+            vscode.workspace.onDidChangeWorkspaceFolders(this.scanWorkspaces, this),
+        );
+        return this.scanWorkspaces({
+            added: vscode.workspace.workspaceFolders || [],
+            removed: [],
+        });
+    }
+
+    /**
+     * Dispose all sketches
+     */
+    static async dispose(): Promise<void> {
+        const sketches = this._sketches;
+        this._sketches = [];
+        await Promise.all(
+            sketches.map((sketch) => sketch.dispose())
+        );
+    }
+
+    /**
+     * Scan workspaces
+     * @param event
+     */
+    static async scanWorkspaces(event: WorkspaceFoldersChangeEvent): Promise<void> {
+        for (const workspaceFolder of event.removed) {
+            const sketch = this._sketches.find((sketch) => sketch.folderUri === workspaceFolder.uri);
+            if (sketch != null) {
+                sketch.dispose();
+            }
         }
-        return workspace.workspaceFolders.reduce((promise, workspaceFolder) => {
-            return promise.then(() => {
-                let sketch = new Sketch(workspaceFolder);
-                return sketch.open().then((opened) => {
-                    if (!opened) {
-                        return sketch.dispose();
-                    } else {
-                        context.subscriptions.push(sketch);
-                    }
-                });
-            });
-        }, Promise.resolve());
+        for (const workspaceFolder of event.added) {
+            try {
+                await this.find(workspaceFolder);
+            } catch (reason) {
+                vscode.window.showErrorMessage(localize(
+                    "cannot-handle-x-from-rubic",
+                    "Cannot handle {0} from Rubic",
+                    workspaceFolder.uri.fsPath
+                ) + ": " + reason);
+            }
+        }
     }
 
     /**
@@ -68,30 +99,31 @@ export class Sketch implements Disposable {
     static get onDidChange() { return this._onDidChange.event; }
 
     /**
-     * A number of managed sketches
+     * A list of opened sketches
      */
-    static get managedSketches() { return this._managedSketches.concat(); }
+    static get list() { return this._sketches.concat(); }
 
     /**
-     * Find sketch instance from managed sketch list
+     * Find or create sketch instance
+     * @param workspaceFolder
+     * @param createNew
      */
-    static find(workspaceFolder: WorkspaceFolder): Sketch | undefined {
-        let fsPathToFind = workspaceFolder.uri.fsPath;
-        return this._managedSketches.find((sketch) => {
+    static async find(workspaceFolder: WorkspaceFolder, createNew: boolean = false): Promise<Sketch | undefined> {
+        const fsPathToFind = workspaceFolder.uri.fsPath;
+        const sketch = this._sketches.find((sketch) => {
             return (sketch.folderUri.fsPath === fsPathToFind);
         });
-    }
-
-    /**
-     * Dispose all managed sketches
-     */
-    static disposeAll(): any {
-        let sketches = this._managedSketches.concat();
-        this._managedSketches = [];
-        return sketches.reduce(
-            (promise, sketch) => promise.then(() => sketch.dispose()),
-            Promise.resolve()
-        );
+        if (sketch != null) {
+            return sketch;
+        }
+        const newSketch = new this(workspaceFolder);
+        await newSketch._load();
+        if ((!newSketch.hasConfig) && (!createNew)) {
+            newSketch.dispose();
+            return undefined;
+        }
+        this._sketches.push(newSketch);
+        return newSketch;
     }
 
     private _onDidOpen = new EventEmitter<Sketch>();
@@ -153,10 +185,10 @@ export class Sketch implements Disposable {
      * Construct sketch instance
      * @param workspaceFolder Workspace folder to be associated
      */
-    constructor(workspaceFolder: WorkspaceFolder) {
+    private constructor(workspaceFolder: WorkspaceFolder) {
         this.folderName = workspaceFolder.name;
         this.folderUri = workspaceFolder.uri;
-        let { fsPath } = this.folderUri;
+        const { fsPath } = this.folderUri;
         this._rubicFile = path.join(fsPath, ".vscode", RUBIC_JSON);
         this._launchFile = path.join(fsPath, ".vscode", LAUNCH_JSON);
         this._watcher = chokidar.watch(this._rubicFile);
@@ -195,60 +227,38 @@ export class Sketch implements Disposable {
     }
 
     /**
-     * Open sketch as managed
-     * @param createNew Accept a new folder for Rubic
-     * @return A thenable that resolves to a boolean value (`true` if loaded)
-     */
-    open(createNew?: boolean): Thenable<boolean> {
-        if (Sketch._managedSketches.indexOf(this) >= 0) {
-            /* Already opened */
-            return Promise.resolve(true);
-        }
-        return this._load()
-        .then(() => {
-            if (!this.hasConfig && !createNew) {
-                this.close();
-                return false;
-            }
-            /* Register as managed sketch */
-            Sketch._managedSketches.push(this);
-            Sketch._onDidChange.fire();
-            workspace.onDidChangeWorkspaceFolders((event) => this.dispose(), this, this._disposables);
-            this._onDidOpen.fire(this);
-            return true;
-        });
-    }
-
-    /**
      * Close managed sketch (Never fails even if already closed)
      */
-    close(): void {
+    async close(): Promise<void> {
+        if (this._catViewer != null) {
+            await this._catViewer.close();
+        }
+        if (this._board != null) {
+            await this._board.disconnect();
+        }
         this._state = SketchState.SKETCH_NOT_LOADED;
         this._data = undefined;
-        let position = Sketch._managedSketches.indexOf(this);
-        if (position >= 0) {
-            /* Unregister from managed sketch list */
-            Sketch._managedSketches.splice(position, 1);
-            Sketch._onDidChange.fire();
-        }
         this._onDidClose.fire(this);
     }
 
     /**
      * Dispose object
      */
-    dispose(): any {
-        this.close();
-        if (this._board != null) {
-            this._board.dispose();
-            this._board = undefined;
+    dispose(): void {
+        const catViewer = this._catViewer;
+        if (catViewer != null) {
+            this._catViewer = undefined;
+            catViewer.dispose();
         }
-        let disposables = this._disposables;
+        const board = this._board;
+        if (board != null) {
+            this._board = undefined;
+            board.dispose();
+        }
+        this.close();
+        const disposables = this._disposables;
         this._disposables = [];
-        return disposables.reduce(
-            (promise, disposable) => promise.then(() => disposable.dispose()),
-            Promise.resolve()
-        );
+        disposables.forEach((disposable) => Promise.resolve(disposable.dispose()));
     }
 
     /**
@@ -257,7 +267,7 @@ export class Sketch implements Disposable {
     showCatalog(): CatalogViewer {
         if (this._catViewer == null) {
             this._catViewer = new CatalogViewer(this);
-            let disposable = this._catViewer.onDidClose(() => {
+            const disposable = this._catViewer.onDidClose(() => {
                 this._catViewer = undefined;
                 disposable.dispose();
             });
@@ -270,7 +280,7 @@ export class Sketch implements Disposable {
      * Get system composition
      */
     getSystemComposition(): SystemComposition {
-        let currentComposition = new SystemComposition();
+        const currentComposition = new SystemComposition();
         if ((this._data != null) && (this._data.hardware != null)) {
             currentComposition.boardClassName = this._data.hardware.boardClass;
             currentComposition.repositoryUuid = this._data.hardware.repositoryUuid;
@@ -371,6 +381,75 @@ export class Sketch implements Disposable {
      */
     getLatestSaved(): string | undefined {
         return (this._data && this._data.rubicVersion && this._data.rubicVersion.last) || undefined;
+    }
+
+    /**
+     * Synchronize files
+     */
+    async syncFiles(progress?: ProgressReporter, token?: CancellationToken): Promise<number> {
+        const { board } = this;
+        if (board == null) {
+            throw new Error("No board instance");
+        }
+        if (!board.isConnected) {
+            throw new Error("Board not connected");
+        }
+        const storages = await board.getStorageInfo();
+        if (storages.length < 1) {
+            throw new Error("No storage on this board");
+        }
+
+        const data = this._data! || {};
+        const transfer = data.transfer! || {};
+        const include = transfer.include || ["**/*.mrb", "**/*.js", "**/*.py"];
+        const exclude = transfer.exclude || [];
+        const targets: string[] = [];
+        const globopt: glob.IOptions = { cwd: this.folderUri.fsPath };
+
+        // Enumerate target files
+        for (let pattern of include) {
+            targets.push(...await promisify(glob)(pattern, globopt));
+        }
+        for (let pattern of exclude) {
+            (await promisify(glob)(pattern, globopt)).forEach((file) => {
+                const index = targets.indexOf(file);
+                if (index >= 0) {
+                    targets.splice(index, 1);
+                }
+            });
+        }
+
+        // Synchronize files
+        let skipped = 0;
+        for (let file of targets) {
+            const filePath = `${storages[0].mountPoint}/${file.replace(/\\/g, "/")}`;
+            const content = await promisify(fse.readFile)(path.join(this.folderUri.fsPath, file)) as Buffer;
+            if (!transfer.writeAlways) {
+                try {
+                    const digest = await board.readFileDigest(filePath, token);
+                    if (digest.match(content)) {
+                        ++skipped;
+                        continue;
+                    }
+                } catch (reason) {
+                    // Ignore error
+                }
+            }
+            if (progress != null) {
+                progress.report(localize("writing-file-x", "Writing file {0}", file));
+            }
+            await board.writeFile(filePath, content, progress, token);
+        }
+
+        if ((progress != null)) {
+            if (skipped >= 2) {
+                progress.report(localize("skipped-n-files", "Skipped {0} files", skipped));
+            } else if (skipped === 1) {
+                progress.report(localize("skipped-1-file", "Skipped {0} file", skipped));
+            }
+        }
+
+        return targets.length;
     }
 
     /**
