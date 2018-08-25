@@ -1,4 +1,4 @@
-import * as python3 from "../../src/util/python3";
+import * as python3 from "../../../src/util/python3";
 import * as chai from "chai";
 const { assert } = chai;
 
@@ -43,6 +43,14 @@ describe("python3.evaluate", function() {
     });
     it("can convert str to string", function() {
         assert.strictEqual(python3.eval_("'12345'"), "12345");
+    });
+    it("can convert str with escape to string", function() {
+        assert.strictEqual(python3.eval_("'\\x30\\x00\\n\\r\\t\\''"), "0\x00\n\r\t'");
+    });
+    it("can convert bytes to Buffer", function() {
+        const actual = python3.eval_("b'\\xff\\x00\\'\\n\\r\\t'");
+        assert.instanceOf(actual, Buffer);
+        assert.deepStrictEqual(actual, Buffer.from([0xff, 0x00, 0x27, 0x0a, 0x0d, 0x09]));
     });
     it("fails conversion of non-terminated string", function() {
         assert.throws(() => python3.eval_("'12345"), TypeError);
