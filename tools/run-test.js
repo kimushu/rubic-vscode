@@ -17,7 +17,8 @@ tests.forEach((test) => {
     console.log("");
     let env = Object.assign({}, process.env, {
         CODE_TESTS_PATH: testRoot,
-        CODE_TESTS_WORKSPACE: workspace
+        CODE_TESTS_WORKSPACE: workspace,
+        CODE_VERSION: "insiders",
     });
     delete env["ELECTRON_RUN_AS_NODE"];
     let result = cp.spawnSync("node", [tester], {
