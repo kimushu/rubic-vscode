@@ -2,6 +2,10 @@
     "$schema": "http://json-schema.org/draft-04/schema#",
     "additionalProperties": false,
     "properties": {
+        "constantConnection": {
+            "description": "常時接続フラグ",
+            "type": "boolean"
+        },
         "hardware": {
             "additionalProperties": false,
             "description": "ハードウェア構成",
@@ -77,6 +81,10 @@
                         "type": "string"
                     },
                     "type": "array"
+                },
+                "writeAlways": {
+                    "description": "読み込みと比較による変更検知を行わず、常に全てのファイルを書き込む",
+                    "type": "boolean"
                 }
             },
             "type": "object"
