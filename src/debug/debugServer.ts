@@ -1,14 +1,8 @@
 import { DebugProtocol } from "vscode-debugprotocol";
 import { IPC as NodeIPC } from "node-ipc";
-import { ExtensionContext, WorkspaceFolder, CancellationToken, ProviderResult, DebugConfiguration, Disposable } from "vscode";
-import { vscode } from "../extension";
 import { Socket } from "net";
 import { AssertionError } from "assert";
 import { Sketch } from "../sketch";
-import { CatalogViewer } from "../catalog/catalogViewer";
-
-import * as nls from "vscode-nls";
-const localize = nls.loadMessageBundle(__filename);
 
 /**
  * Debug server for extension host process
@@ -16,58 +10,6 @@ const localize = nls.loadMessageBundle(__filename);
  */
 export class DebugServer {
     private static _servers: { [id: string]: DebugServer } = {};
-
-    /**
-     * Activate debug server related features
-     */
-    static activateExtension(context: ExtensionContext): any {
-        context.subscriptions.push(
-            vscode.debug.registerDebugConfigurationProvider(
-                "rubic", this
-            )
-        );
-    }
-
-    /**
-     * Resolves a [debug configuration](#DebugConfiguration) by filling in missing values or by adding/changing/removing attributes.
-     * If more than one debug configuration provider is registered for the same type, the resolveDebugConfiguration calls are chained
-     * in arbitrary order and the initial debug configuration is piped through the chain.
-     * Returning the value 'undefined' prevents the debug session from starting.
-     *
-     * @param folder The workspace folder from which the configuration originates from or undefined for a folderless setup.
-     * @param debugConfiguration The [debug configuration](#DebugConfiguration) to resolve.
-     * @param token A cancellation token.
-     * @return The resolved debug configuration or undefined.
-     */
-    static async resolveDebugConfiguration?(folder: WorkspaceFolder | undefined, debugConfiguration: DebugConfiguration, token?: CancellationToken): Promise<DebugConfiguration | undefined> {
-        if (folder == null) {
-            vscode.window.showErrorMessage(localize(
-                "open-folder-first",
-                "Please open a folder to place files before starting debugging with Rubic"
-            ));
-            return undefined;
-        }
-        const sketch = await Sketch.find(folder);
-        if (sketch == null) {
-            vscode.window.showInformationMessage(localize(
-                "setup-first",
-                "Please setup board configuration before starting debugging with Rubic"
-            ), localize("open-catalog", "Open catalog"))
-            .then((choice) => {
-                if (choice != null) {
-                    CatalogViewer.open(folder);
-                }
-            });
-            return undefined;
-        }
-        const server = new DebugServer(sketch);
-        server.startServer();
-        this._servers[server.id] = server;
-        if (debugConfiguration.boardData == null) {
-            debugConfiguration.boardData = {};
-        }
-        return server.extendLaunchArgs(debugConfiguration);
-    }
 
     /** Server ID */
     public readonly id: string;
@@ -81,9 +23,6 @@ export class DebugServer {
     /** VSCode debug session ID */
     private _sessionId?: string;
 
-    /** Disposable */
-    protected _disposables: Disposable[] = [];
-
     /**
      * Get VSCode debug session ID
      */
@@ -91,10 +30,10 @@ export class DebugServer {
 
     /**
      * Construct instance
-     * @param sketch The instance of Sketch associated to this debug server
      */
-    protected constructor(readonly sketch: Sketch) {
+    protected constructor() {
         this.id = `DebugServer@${Math.random().toString(36).substr(2)}`;
+        DebugServer._servers[this.id] = this;
         this._ipc.config.appspace = "kimushu.rubic";
         this._ipc.config.id = this.id;
         this._ipc.config.silent = true;
@@ -136,19 +75,10 @@ export class DebugServer {
     /**
      * Dispose object
      */
-    dispose(): Thenable<void> {
+    dispose(): void {
         this.stopServer();
-        const disposables = this._disposables;
-        this._disposables = [];
-        return disposables.reduce((promise, disposable) => {
-            return promise.then(() => {
-                return disposable.dispose();
-            }).catch(() => {});
-        }, Promise.resolve())
-        .then(() => {
-            delete DebugServer._servers[this.id];
-            console.log(`Disposing debug server (id=${this.id})`);
-        });
+        delete DebugServer._servers[this.id];
+        console.log(`Disposing debug server (id=${this.id})`);
     }
 
     private _service(): void {
