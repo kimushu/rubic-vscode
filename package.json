@@ -1,6 +1,6 @@
 {
   "name": "rubic",
-  "version": "0.99.18",
+  "version": "1.0.0",
   "publisher": "kimushu",
   "engines": {
     "vscode": "^1.26.0",
@@ -153,6 +153,16 @@
         ],
         "aliases": [
           "JavaScript"
+        ]
+      },
+      {
+        "id": "python",
+        "extensions": [
+          ".py"
+        ],
+        "aliases": [
+          "Python",
+          "MicroPython"
         ]
       }
     ],

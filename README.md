@@ -5,7 +5,7 @@
 
 * [Japanese explanation is here / 日本語の説明はこちら](#ja)
 
-This extension makes it easy to develop embedded-board such as PERIDOT and GR-CITRUS from VSCode.<br>
+This extension makes it easy to develop embedded-board such as GR-CITRUS, M5Stack and PERIDOT from VSCode.<br>
 To start development with Rubic, open the work folder in VSCode, press `F1` to open command palette and type "rubic". Find "Show Rubic board catalog" in command pallete and select it. See [Quick Start](#quick-start) for detail.
 
 ## Quick Start
@@ -36,10 +36,12 @@ To start development with Rubic, open the work folder in VSCode, press `F1` to o
   * [PERIDOT Piccolo](https://peridotcraft.buyshop.jp/items/7877090)
   * [GR-CITRUS](http://gadget.renesas.com/en/product/citrus.html)
   * [Wakayama.rb board](https://github.com/wakayamarb/wrbb-v2lib-firm)
+  " [M5Stack](http://www.m5stack.com/)
 
 * Supported programming language:
   * Ruby (mruby engine)
   * JavaScript (Duktape engine)
+  * Python (MicroPython)
 
 ## Known Issues
 
@@ -67,7 +69,7 @@ MIT
 
 * [English explanation is here / 英語の説明はこちら](#en)
 
-この拡張機能は、PERIDOTやGR-CITRUSなどの組み込みボードをVSCode上で開発するためのものです。<br>
+この拡張機能は、GR-CITRUS、M5Stack、PERIDOTなどの組み込みボードをVSCode上で開発するためのものです。<br>
 Rubicを使った開発を始めるには、作業用のフォルダをVSCodeで開き、`F1`でコマンドパレットを開いて「rubic」と入力します。そして「Rubicのボードカタログを開く」を選択してください。詳しい手順については[クイックスタート](#quick-start-ja)をご覧下さい。
 
 ## <a id="quick-start-ja"></a>クイックスタート
@@ -99,10 +101,12 @@ Rubicを使った開発を始めるには、作業用のフォルダをVSCodeで
   * [PERIDOT Piccolo](https://peridotcraft.buyshop.jp/items/7877090)
   * [GR-CITRUS](http://gadget.renesas.com/ja/product/citrus.html)
   * [Wakayama.rb board](https://github.com/wakayamarb/wrbb-v2lib-firm)
+  " [M5Stack](http://www.m5stack.com/)
 
 * プログラミング言語 (ボードにより対応言語は異なります)
   * Ruby (mruby engine)
   * JavaScript (Duktape engine)
+  * Python (MicroPython)
 
 ## 既知の問題
 
@@ -113,7 +117,7 @@ Rubicを使った開発を始めるには、作業用のフォルダをVSCodeで
 * rubic.catalog.showPreview (デフォルト値: false)
   * プレビュー版を表示するか否か。trueにすると、一般向け公開していないファームウェアがカタログに列挙されます。
   * Rubic自体の開発者ならびにファームウェア開発者向けの機能です。
-  * プレビュー版のファームウェアは十分なテストがされてない場合があります。
+  * プレビュー版のファームウェアは十分なテストがされていない場合があります。
 
 ## フィードバック
 
