@@ -5,7 +5,8 @@ import {
     EventEmitter, ExtensionContext,
     Uri, ViewColumn,
     WebviewPanel,
-    WorkspaceFolder
+    WorkspaceFolder,
+    ProgressLocation
 } from "vscode";
 import { CatalogData, toLocalizedString } from "./catalogData";
 import { Sketch } from "../sketch";
@@ -67,7 +68,17 @@ export class CatalogViewer implements Disposable {
     }
 
     private static _updateCatalog(): void {
-
+        vscode.window.withProgress({
+            location: ProgressLocation.Window,
+            title: localize("fetching-catalog", "Fetching latest catalog")
+        }, (progress, token): Thenable<void> => {
+            return CatalogData.instance.update({
+                report: (message: string) => {
+                    progress.report({ message });
+                }
+            }, true)
+            .then(() => {});
+        });
     }
 
     static async open(workspaceFolder?: WorkspaceFolder): Promise<CatalogViewer | undefined> {
