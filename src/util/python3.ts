@@ -75,23 +75,22 @@ module python3 {
                 switch (byte) {
                 case 0x27:
                     // Single quotation
-                    buffer[length++] = 0x27;
                     break;
                 case 0x74:
                     // Tab
-                    buffer[length++] = 0x09;
+                    byte = 0x09;
                     break;
                 case 0x72:
                     // CR
-                    buffer[length++] = 0x0d;
+                    byte = 0x0d;
                     break;
                 case 0x6e:
                     // LF
-                    buffer[length++] = 0x0a;
+                    byte = 0x0a;
                     break;
                 case 0x78:
                     // Hex
-                    buffer[length++] = parseInt(repr.slice(offset, offset + 2).toString(), 16);
+                    byte = parseInt(repr.slice(offset, offset + 2).toString(), 16);
                     offset += 2;
                     break;
                 default:
