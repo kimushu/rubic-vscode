@@ -78,11 +78,13 @@ module RubicExtension {
         const { CatalogViewer } = require("./catalog/catalogViewer");
         const { StatusBar } = require("./catalog/statusBar");
         const { BoardDebugServer } = require("./debug/boardDebugServer");
+        const { BoardFileExplorer } = require("./explorer");
         return Promise.all([
             Sketch.activateExtension(context),
             CatalogViewer.activateExtension(context),
             StatusBar.activateExtension(context),
             BoardDebugServer.activateExtension(context),
+            BoardFileExplorer.activateExtension(context),
         ]);
     }
 

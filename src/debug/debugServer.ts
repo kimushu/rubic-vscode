@@ -2,7 +2,6 @@ import { DebugProtocol } from "vscode-debugprotocol";
 import { IPC as NodeIPC } from "node-ipc";
 import { Socket } from "net";
 import { AssertionError } from "assert";
-import { Sketch } from "../sketch";
 
 /**
  * Debug server for extension host process

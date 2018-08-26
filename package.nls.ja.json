@@ -8,6 +8,10 @@
   "configuration.catalog.branch.description": "ボードカタログのブランチ名。設定されていない場合、masterが使用されます。",
   "command.showCatalog.title": "Rubicのボードカタログを開く",
   "command.updateCatalog.title": "カタログを更新する",
+  "command.explorer.download.title": "このPCにダウンロード",
+  "command.explorer.remove.title": "削除",
+  "command.explorer.format.title": "フォーマット",
+  "command.explorer.refresh.title": "更新",
   "debug.rubic.label": "Rubic デバッガ",
   "debug.rubic.attribute.workspaceRoot.description": "ワークスペースのパス",
   "debug.rubic.attribute.boardData.description": "ボード固有のパラメータ",
@@ -22,5 +26,6 @@
   "debug.rubic.snippet.download.name": "書き込み",
   "jsonValidation.rubic.json": "./schemas/sketch.schema.ja.json",
   "jsonValidation.mrbconfig.json": "./schemas/mrbconfig.schema.ja.json",
+  "views.explorer.name": "ボード上のファイル (Rubic)",
   "dummy": "dummy"
 }

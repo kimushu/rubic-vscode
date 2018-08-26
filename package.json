@@ -108,20 +108,33 @@
           "light": "images/light/refresh.svg",
           "dark": "images/dark/refresh.svg"
         }
+      },
+      {
+        "command": "extension.rubic.explorer.download",
+        "title": "%command.explorer.download.title%"
+      },
+      {
+        "command": "extension.rubic.explorer.remove",
+        "title": "%command.explorer.remove.title%"
+      },
+      {
+        "command": "extension.rubic.explorer.format",
+        "title": "%command.explorer.format.title%"
+      },
+      {
+        "command": "extension.rubic.explorer.refresh",
+        "title": "%command.explorer.refresh.title%",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
       }
     ],
     "views": {
       "explorer": [
         {
-          "id": "testRubicView",
-          "name": "Rubic Test",
-          "when": "rubic.isEnabled"
-        }
-      ],
-      "debug": [
-        {
-          "id": "testRubicDebugView",
-          "name": "Rubic Debug",
+          "id": "rubicFileExplorer",
+          "name": "%views.explorer.name%",
           "when": "rubic.isEnabled"
         }
       ]
@@ -131,6 +144,31 @@
         {
           "when": "rubicCatalogFocus",
           "command": "extension.rubic.updateCatalog",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "extension.rubic.explorer.download",
+          "when": "view == rubicFileExplorer && viewItem == file"
+        },
+        {
+          "command": "extension.rubic.explorer.remove",
+          "when": "view == rubicFileExplorer && viewItem == file"
+        },
+        {
+          "command": "extension.rubic.explorer.format",
+          "when": "view == rubicFileExplorer && viewItem == storage"
+        },
+        {
+          "command": "extension.rubic.showCatalog",
+          "when": "view == rubicFileExplorer && viewItem == board"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "extension.rubic.explorer.refresh",
+          "when": "view == rubicFileExplorer",
           "group": "navigation"
         }
       ]

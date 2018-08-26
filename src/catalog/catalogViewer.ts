@@ -6,7 +6,8 @@ import {
     Uri, ViewColumn,
     WebviewPanel,
     WorkspaceFolder,
-    ProgressLocation
+    ProgressLocation,
+    QuickPickItem,
 } from "vscode";
 import { CatalogData, toLocalizedString } from "./catalogData";
 import { Sketch } from "../sketch";
@@ -18,6 +19,7 @@ import { CacheStorage } from "../util/cacheStorage";
 import * as dedent from "dedent";
 
 import HandlebarsType = require("handlebars");
+import { BoardConstructor } from "../boards/board";
 const handlebars: typeof HandlebarsType = require("./handlebars");
 require("./webview/catalog.hbs");
 const localize = nls.loadMessageBundle(__filename);
@@ -33,12 +35,13 @@ export class CatalogViewer implements Disposable {
     static activateExtension(context: ExtensionContext): any {
         context.subscriptions.push(
             vscode.commands.registerCommand(CMD_SHOW_CATALOG, this._showCatalog, this),
-            vscode.commands.registerCommand(CMD_UPDATE_CATALOG, this._updateCatalog, this)
+            vscode.commands.registerCommand(CMD_UPDATE_CATALOG, this._updateCatalog, this),
+            vscode.commands.registerCommand(CMD_SELECT_PORT, this._selectPort, this),
         );
     }
 
-    private static _showCatalog(): void {
-        const func_name = "CatalogViewer._showCatalog";
+    private static _pickWorkspaceFolder(callback: (workspaceFolder: WorkspaceFolder) => any): void {
+        const func_name = `${this.name}._pickWorkspaceFolder`;
         Promise.resolve()
         .then(() => {
             const workspaces = (vscode.workspace.workspaceFolders || []).length;
@@ -60,10 +63,18 @@ export class CatalogViewer implements Disposable {
             }
         })
         .then((workspaceFolder) => {
-            return this.open(workspaceFolder);
+            if (workspaceFolder != null) {
+                return callback(workspaceFolder);
+            }
         })
         .catch((reason) => {
             console.warn(`[${func_name}] unexpected rejection:`, reason);
+        });
+    }
+
+    private static _showCatalog(): void {
+        this._pickWorkspaceFolder((workspaceFolder) => {
+            return this.open(workspaceFolder);
         });
     }
 
@@ -78,6 +89,88 @@ export class CatalogViewer implements Disposable {
                 }
             }, true)
             .then(() => {});
+        });
+    }
+
+    private static _selectPort(sketch?: Sketch): void {
+        this._pickWorkspaceFolder((workspaceFolder) => {
+            Sketch.find(workspaceFolder)
+            .then((sketch) => {
+                if (sketch != null) {
+                    return this.selectPort(sketch);
+                }
+            });
+        });
+    }
+
+    private static async selectPort(sketch: Sketch): Promise<void> {
+        const { board } = sketch;
+        if (board == null) {
+            throw new Error("No board instance");
+        }
+        const boardClass = board.constructor as BoardConstructor;
+        let choose = async (filter: boolean): Promise<string | undefined> => {
+            interface PortQuickPickItem extends QuickPickItem {
+                path?: string;
+                rescan?: boolean;
+            }
+            const items: PortQuickPickItem[] = [];
+            let hidden = 0;
+            const ports = await boardClass.list();
+            ports.sort((a, b) => (a.name < b.name) ? -1 : 1);
+            ports.forEach((port) => {
+                if (filter && port.unsupported) {
+                    ++hidden;
+                    return;
+                }
+                let item: PortQuickPickItem = {
+                    label: port.path,
+                    description: port.name,
+                    path: port.path
+                };
+                if (port.vendorId != null && port.productId != null) {
+                    let vid = ("0000" + port.vendorId.toString(16)).substr(-4);
+                    let pid = ("0000" + port.productId.toString(16)).substr(-4);
+                    item.description += ` (VID:0x${vid}, PID:0x${pid})`;
+                }
+                if (port.unsupported) {
+                    item.description += " $(alert)";
+                    item.detail = localize("may-not-supported", "The board on this port may be not supported");
+                }
+                items.push(item);
+            });
+            if (hidden > 0) {
+                let item: PortQuickPickItem = {
+                    label: `$(issue-opened)\t${localize("show-hidden-ports", "Show hidden ports")}`,
+                    description: "" // filled after
+                };
+                if (hidden > 1) {
+                    item.description = localize("ports-hidden-n", "{0} ports hidden", hidden);
+                } else {
+                    item.description = localize("ports-hidden-1", "{0} port hidden", 1);
+                }
+                items.push(item);
+            }
+            items.push({
+                label: `$(sync)\t${localize("refresh", "Refresh")}`,
+                description: localize("rescan-ports", "Rescan ports"),
+                rescan: true
+            });
+            const item = await vscode.window.showQuickPick(items, {
+                placeHolder: localize(
+                    "select-port-msg", "Which {0} do you use?", boardClass.getBoardName()
+                )
+            });
+            if (item == null) { return undefined; }
+            if (item.rescan) { return choose(filter); }
+            if (item.path == null) { return choose(false); }
+            return item.path;
+        };
+        return choose(true).then((boardPath: string) => {
+            if (boardPath != null) {
+                sketch.boardPath = boardPath;
+                return sketch.save();
+            }
         });
     }
 

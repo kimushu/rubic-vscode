@@ -8,6 +8,10 @@
   "configuration.catalog.branch.description": "Branch of board catalog repository. If not set, \"master\" will be used.",
   "command.showCatalog.title": "Show Rubic board catalog",
   "command.updateCatalog.title": "Update catalog",
+  "command.explorer.download.title": "Download to this PC",
+  "command.explorer.remove.title": "Remove",
+  "command.explorer.format.title": "Format",
+  "command.explorer.refresh.title": "Refresh",
   "debug.rubic.label": "Rubic Debugger",
   "debug.rubic.attribute.workspaceRoot.description": "Path of the workspace",
   "debug.rubic.attribute.boardData.description": "Board specific parameters",
@@ -22,5 +26,6 @@
   "debug.rubic.snippet.download.name": "Write",
   "jsonValidation.rubic.json": "./schemas/sketch.schema.json",
   "jsonValidation.mrbconfig.json": "./schemas/mrbconfig.schema.json",
+  "views.explorer.name": "Files on embedded board (Rubic)",
   "dummy": "dummy"
 }

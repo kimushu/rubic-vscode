@@ -61,12 +61,9 @@ export class Sketch implements Disposable {
     /**
      * Dispose all sketches
      */
-    static async dispose(): Promise<void> {
-        const sketches = this._sketches;
-        this._sketches = [];
-        await Promise.all(
-            sketches.map((sketch) => sketch.dispose())
-        );
+    static dispose(): void {
+        this._sketches.map((sketch) => sketch.dispose());
+        this._onDidChange.dispose();
     }
 
     /**
@@ -123,6 +120,7 @@ export class Sketch implements Disposable {
             return undefined;
         }
         this._sketches.push(newSketch);
+        this._onDidChange.fire();
         return newSketch;
     }
 
@@ -259,6 +257,7 @@ export class Sketch implements Disposable {
         const disposables = this._disposables;
         this._disposables = [];
         disposables.forEach((disposable) => Promise.resolve(disposable.dispose()));
+        this._onDidChange.fire();
     }
 
     /**
@@ -356,7 +355,7 @@ export class Sketch implements Disposable {
     /**
      * Get constant connection flag
      */
-    get constantConnect(): boolean | undefined {
+    get constantConnection(): boolean | undefined {
         if (this._data != null) {
             return this._data.constantConnection;
         }
@@ -366,7 +365,7 @@ export class Sketch implements Disposable {
     /**
      * Set constant connection flag
      */
-    set constantConnection(newValue: boolean) {
+    set constantConnection(newValue: boolean | undefined) {
         if (this._data == null) {
             this._data = {} as any;
         }
@@ -469,7 +468,7 @@ export class Sketch implements Disposable {
         if (this._data!["//^"] == null) {
             this._data!["//^"] = ["// Rubic configuration file"];
         }
-        return fse.writeFile(this._rubicFile, CJSON.stringify(this._data), SKETCH_ENCODING);
+        return fse.writeFile(this._rubicFile, CJSON.stringify(this._data, undefined, 4), SKETCH_ENCODING);
     }
 
     private _watchHandler(event: string, path: string): void {
