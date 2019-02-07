@@ -14,10 +14,9 @@ docs/**
 *.yml
 tsconfig.json
 vsc-extension-quickstart.md
-node_modules/serialport/build/**
-node_modules/serialport/node_modules/**
-node_modules/serialport/prebuild/**
-node_modules/serialport/src/**
+node_modules/@serialport/bindings/build/**
+node_modules/@serialport/bindings/node_modules/**
+node_modules/@serialport/bindings/src/**
 node_modules/prebuild/**
 node_modules/prebuild-install/**
 node_modules/node-gyp/**

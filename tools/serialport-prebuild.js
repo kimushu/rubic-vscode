@@ -12,7 +12,7 @@ const BASE_URL = "https://github.com/EmergingTechnologyAdvisors/node-serialport/
 const ARCHS = ["darwin-x64", "linux-ia32", "linux-x64", "win32-ia32", "win32-x64"];
 
 const CACHE_DIR = path.join(__dirname, "prebuild-cache");
-const PKG_DIR = path.join(__dirname, "..", "node_modules", "serialport");
+const PKG_DIR = path.join(__dirname, "..", "node_modules", "@serialport/bindings");
 const DEST_DIR = path.join(PKG_DIR, "compiled");
 
 const SP_VERSION = require(path.join(PKG_DIR, "package.json")).version;
@@ -24,6 +24,7 @@ const ELECTRON_VERSION_MAP = {
     "1.6.6": {node: "7.4.0", modules: "53"},
     "1.7.3": {node: "7.9.0", modules: "54"},
     "2.0.5": {node: "8.9.3", modules: "57"},
+    "3.1.2": {node: "10.2.0", modules: "64"},
 };
 
 EL_VERSIONS.reduce((promise, elVer) => {
@@ -35,7 +36,7 @@ EL_VERSIONS.reduce((promise, elVer) => {
         }
         console.log(`- Electron v${elVer} => node: ${vers.node}, modules: ${vers.modules}`);
         return ARCHS.reduce((promise, arch) => {
-            let fn = `serialport-v${SP_VERSION}-electron-v${vers.modules}-${arch}.tar.gz`;
+            let fn = `bindings-v${SP_VERSION}-electron-v${vers.modules}-${arch}.tar.gz`;
             let fp = path.join(CACHE_DIR, fn);
             return promise
             .then(() => {
@@ -43,7 +44,7 @@ EL_VERSIONS.reduce((promise, elVer) => {
                     // Already downloaded
                     return;
                 }
-                let url = `${BASE_URL}/v${SP_VERSION}/${fn}`;
+                let url = `${BASE_URL}/%40serialport%2Fbindings%40${SP_VERSION}/${fn}`;
                 console.log(`  - Downloading ${url}`);
                 return download(url, CACHE_DIR);
             })
@@ -51,12 +52,12 @@ EL_VERSIONS.reduce((promise, elVer) => {
                 return decompress(fp);
             })
             .then((files) => {
-                let file = files.find((f) => f.path === "build/Release/serialport.node");
+                let file = files.find((f) => f.path === "build/Release/bindings.node");
                 if (file == null) {
                     return Promise.reject(new Error(`Prebuild binary not found in ${fp}`));
                 }
                 let destDir = path.join(DEST_DIR, vers.node, ...arch.split("-"));
-                let destFile = path.join(destDir, "serialport.node");
+                let destFile = path.join(destDir, "bindings.node");
                 fs.ensureDirSync(destDir);
                 console.log(`  - Copying binary ${destFile} (${file.data.length} bytes)`);
                 return pify(fs.writeFile)(destFile, file.data);
